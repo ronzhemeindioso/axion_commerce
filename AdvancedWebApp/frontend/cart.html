@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Cart</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css">
+</head>
+<body>
+
+<nav class="navbar navbar-dark bg-dark px-4">
+    <span class="navbar-brand">🛒 MyShop</span>
+    <div>
+        <a href="products.html" class="btn btn-secondary btn-sm me-2">← Back to Products</a>
+        <button class="btn btn-danger btn-sm" id="btnLogout">Logout</button>
+    </div>
+</nav>
+
+<div class="container mt-4">
+    <h2>My Cart</h2>
+
+    <table id="cartTable" class="table table-bordered">
+        <thead>
+            <tr>
+                <th>Image</th>
+                <th>Name</th>
+                <th>Price</th>
+                <th>Quantity</th>
+                <th>Subtotal</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody></tbody>
+    </table>
+
+    <div class="text-end mt-3">
+        <h4>Total: ₱<span id="totalAmount">0.00</span></h4>
+        <button class="btn btn-success btn-lg" id="btnCheckout">
+            Checkout 🛒
+        </button>
+    </div>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
+
+<script>
+const CART_URL = 'http://localhost:5000/api/cart';
+const UPLOADS_URL = 'http://localhost:5000/uploads/';
+
+const token = localStorage.getItem('token');
+const user = JSON.parse(localStorage.getItem('user'));
+
+// Redirect if not logged in
+if (!token || !user) {
+    window.location.href = 'login.html';
+}
+
+function loadCart() {
+    $.ajax({
+        url: CART_URL + '/' + user.id,
+        method: 'GET',
+        success: function(data) {
+            if ($.fn.DataTable.isDataTable('#cartTable')) {
+                $('#cartTable').DataTable().destroy();
+            }
+            $('#cartTable tbody').empty();
+
+            let total = 0;
+            data.forEach(item => {
+                total += parseFloat(item.price) * item.quantity;
+            });
+            $('#totalAmount').text(total.toFixed(2));
+
+            $('#cartTable').DataTable({
+                data: data,
+                columns: [
+                    {
+                        data: 'images',
+                        render: function(images) {
+                            if (!images) return 'No image';
+                            const first = images.split(',')[0];
+                            return `<img src="${UPLOADS_URL}${first}" height="50" style="border-radius:4px;">`;
+                        }
+                    },
+                    { data: 'name' },
+                    {
+                        data: 'price',
+                        render: function(price) {
+                            return '₱' + parseFloat(price).toFixed(2);
+                        }
+                    },
+                    {
+                        data: null,
+                        render: function(data) {
+                            return `
+                                <div class="input-group" style="width:120px">
+                                    <button class="btn btn-sm btn-secondary btnMinus" data-id="${data.id}" data-qty="${data.quantity}">-</button>
+                                    <input type="number" class="form-control form-control-sm text-center qtyInput"
+                                        value="${data.quantity}" min="1" data-id="${data.id}" style="width:50px">
+                                    <button class="btn btn-sm btn-secondary btnPlus" data-id="${data.id}" data-qty="${data.quantity}">+</button>
+                                </div>
+                            `;
+                        }
+                    },
+                    {
+                        data: null,
+                        render: function(data) {
+                            const subtotal = parseFloat(data.price) * data.quantity;
+                            return '₱' + subtotal.toFixed(2);
+                        }
+                    },
+                    {
+                        data: 'id',
+                        render: function(id) {
+                            return `
+                                <button class="btn btn-sm btn-danger btnRemove" data-id="${id}">Remove</button>
+                            `;
+                        }
+                    }
+                ]
+            });
+        }
+    });
+}
+
+// Increase quantity
+$(document).on('click', '.btnPlus', function() {
+    const id = $(this).data('id');
+    const qty = parseInt($(this).data('qty')) + 1;
+    updateQuantity(id, qty);
+});
+
+// Decrease quantity
+$(document).on('click', '.btnMinus', function() {
+    const id = $(this).data('id');
+    const qty = parseInt($(this).data('qty')) - 1;
+    if (qty < 1) return;
+    updateQuantity(id, qty);
+});
+
+// Manual quantity input
+$(document).on('change', '.qtyInput', function() {
+    const id = $(this).data('id');
+    const qty = parseInt($(this).val());
+    if (qty < 1) return;
+    updateQuantity(id, qty);
+});
+
+function updateQuantity(id, quantity) {
+    $.ajax({
+        url: CART_URL + '/' + id,
+        method: 'PUT',
+        contentType: 'application/json',
+        data: JSON.stringify({ quantity }),
+        success: function() {
+            loadCart();
+        }
+    });
+}
+
+// Remove item
+$(document).on('click', '.btnRemove', function() {
+    const id = $(this).data('id');
+    if (confirm('Remove this item from cart?')) {
+        $.ajax({
+            url: CART_URL + '/' + id,
+            method: 'DELETE',
+            success: function() {
+                loadCart();
+            }
+        });
+    }
+});
+
+// Checkout
+$('#btnCheckout').click(function() {
+    if (confirm('Place your order now?')) {
+        $.ajax({
+            url: CART_URL + '/checkout',
+            method: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify({ user_id: user.id }),
+            success: function(data) {
+                alert('Order placed successfully! Order ID: ' + data.order_id + '\nTotal: ₱' + parseFloat(data.total_amount).toFixed(2));
+                window.location.href = 'shop.html';
+            },
+            error: function(xhr) {
+                const msg = xhr.responseJSON ? xhr.responseJSON.message : 'Checkout failed';
+                alert(msg);
+            }
+        });
+    }
+});
+
+// Logout
+$('#btnLogout').click(function() {
+    $.ajax({
+        url: 'http://localhost:5000/api/auth/logout',
+        method: 'POST',
+        contentType: 'application/json',
+        data: JSON.stringify({ id: user.id }),
+        success: function() {
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+            window.location.href = 'login.html';
+        }
+    });
+});
+
+$(document).ready(function() {
+    loadCart();
+});
+</script>
+
+</body>
+</html>

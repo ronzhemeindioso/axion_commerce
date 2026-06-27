@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Advanced Web App</title>
+
+    <!-- Bootstrap -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- DataTables -->
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css">
+</head>
+<body>
+
+<div class="container mt-5">
+    <h2>Items Management</h2>
+    <a href="products.html" class="btn btn-success mb-3">Go to Products →</a>
+
+    <button class="btn btn-primary mb-3" id="btnAdd">Add Item</button>
+
+    <table id="itemsTable" class="table table-bordered">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Name</th>
+                <th>Description</th>
+                <th>Price</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody></tbody>
+    </table>
+</div>
+
+<!-- Modal -->
+<div class="modal fade" id="itemModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Item</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="itemId">
+                <div class="mb-3">
+                    <label>Name</label>
+                    <input type="text" id="itemName" class="form-control">
+                </div>
+                <div class="mb-3">
+                    <label>Description</label>
+                    <textarea id="itemDescription" class="form-control"></textarea>
+                </div>
+                <div class="mb-3">
+                    <label>Price</label>
+                    <input type="number" id="itemPrice" class="form-control">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button class="btn btn-primary" id="btnSave">Save</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Scripts -->
+<script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
+
+<script>
+// NodeJS API URL
+const API_URL = 'http://localhost:5000/api/items';
+let table;
+let editMode = false;
+
+function loadItems() {
+    $.ajax({
+        url: API_URL,
+        method: 'GET',
+        success: function(data) {
+            if ($.fn.DataTable.isDataTable('#itemsTable')) {
+                $('#itemsTable').DataTable().destroy();
+            }
+            $('#itemsTable tbody').empty();
+            table = $('#itemsTable').DataTable({
+                data: data,
+                columns: [
+                    { data: 'id' },
+                    { data: 'name' },
+                    { data: 'description' },
+                    { data: 'price' },
+                    {
+                        data: 'id',
+                        render: function(id) {
+                            return `
+                                <button class="btn btn-sm btn-warning btnEdit" data-id="${id}">Edit</button>
+                                <button class="btn btn-sm btn-danger btnDelete" data-id="${id}">Delete</button>
+                            `;
+                        }
+                    }
+                ]
+            });
+        },
+        error: function(xhr) {
+            console.log('Error loading items:', xhr.status, xhr.responseText);
+        }
+    });
+}
+
+$('#btnAdd').click(function() {
+    editMode = false;
+    $('#itemId').val('');
+    $('#itemName').val('');
+    $('#itemDescription').val('');
+    $('#itemPrice').val('');
+    $('#itemModal').modal('show');
+});
+
+$('#btnSave').click(function() {
+    const data = {
+        name: $('#itemName').val(),
+        description: $('#itemDescription').val(),
+        price: $('#itemPrice').val()
+    };
+
+    if (editMode) {
+        $.ajax({
+            url: API_URL + '/' + $('#itemId').val(),
+            method: 'PUT',
+            contentType: 'application/json',
+            data: JSON.stringify(data),
+            success: function() {
+                $('#itemModal').modal('hide');
+                loadItems();
+            },
+            error: function(xhr) {
+                console.log('Error updating:', xhr.responseText);
+                alert('Error updating item');
+            }
+        });
+    } else {
+        $.ajax({
+            url: API_URL,
+            method: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify(data),
+            success: function() {
+                $('#itemModal').modal('hide');
+                loadItems();
+            },
+            error: function(xhr) {
+                console.log('Error creating:', xhr.responseText);
+                alert('Error creating item');
+            }
+        });
+    }
+});
+
+$(document).on('click', '.btnEdit', function() {
+    editMode = true;
+    const id = $(this).data('id');
+    $.ajax({
+        url: API_URL + '/' + id,
+        method: 'GET',
+        success: function(item) {
+            $('#itemId').val(item.id);
+            $('#itemName').val(item.name);
+            $('#itemDescription').val(item.description);
+            $('#itemPrice').val(item.price);
+            $('#itemModal').modal('show');
+        },
+        error: function(xhr) {
+            console.log('Error fetching item:', xhr.responseText);
+        }
+    });
+});
+
+$(document).on('click', '.btnDelete', function() {
+    if (confirm('Are you sure you want to delete this item?')) {
+        const id = $(this).data('id');
+        $.ajax({
+            url: API_URL + '/' + id,
+            method: 'DELETE',
+            success: function() {
+                loadItems();
+            },
+            error: function(xhr) {
+                console.log('Error deleting:', xhr.responseText);
+                alert('Error deleting item');
+            }
+        });
+    }
+});
+
+$(document).ready(function() {
+    loadItems();
+});
+</script>
+
+</body>
+</html>

@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Users Management</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css">
+</head>
+<body>
+
+<div class="container mt-5">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2>Users Management</h2>
+        <button class="btn btn-danger" id="btnLogout">Logout</button>
+    </div>
+
+    <a href="products.html" class="btn btn-success mb-3">Go to Products →</a>
+
+    <table id="usersTable" class="table table-bordered">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Name</th>
+                <th>Email</th>
+                <th>Role</th>
+                <th>Status</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody></tbody>
+    </table>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
+
+<script>
+const API_URL = 'http://localhost:5000/api/auth';
+const token = localStorage.getItem('token');
+const user = JSON.parse(localStorage.getItem('user'));
+
+// Redirect if not logged in or not admin
+if (!token || !user || user.role !== 'admin') {
+    window.location.href = 'login.html';
+}
+
+function loadUsers() {
+    $.ajax({
+        url: API_URL + '/users',
+        method: 'GET',
+        headers: { 'Authorization': 'Bearer ' + token },
+        success: function(data) {
+            if ($.fn.DataTable.isDataTable('#usersTable')) {
+                $('#usersTable').DataTable().destroy();
+            }
+            $('#usersTable tbody').empty();
+            $('#usersTable').DataTable({
+                data: data,
+                columns: [
+                    { data: 'id' },
+                    { data: 'name' },
+                    { data: 'email' },
+                    {
+                        data: 'role',
+                        render: function(role, type, row) {
+                            return `
+                                <select class="form-select form-select-sm roleSelect" data-id="${row.id}">
+                                    <option value="user" ${role === 'user' ? 'selected' : ''}>User</option>
+                                    <option value="admin" ${role === 'admin' ? 'selected' : ''}>Admin</option>
+                                </select>
+                            `;
+                        }
+                    },
+                    {
+                        data: 'is_active',
+                        render: function(is_active) {
+                            return is_active
+                                ? '<span class="badge bg-success">Active</span>'
+                                : '<span class="badge bg-danger">Inactive</span>';
+                        }
+                    },
+                    {
+                        data: null,
+                        render: function(data, type, row) {
+                            const btnText = row.is_active ? 'Deactivate' : 'Activate';
+                            const btnClass = row.is_active ? 'btn-danger' : 'btn-success';
+                            return `
+                                <button class="btn btn-sm ${btnClass} btnToggle"
+                                    data-id="${row.id}"
+                                    data-active="${row.is_active}">
+                                    ${btnText}
+                                </button>
+                            `;
+                        }
+                    }
+                ]
+            });
+        },
+        error: function(xhr) {
+            console.log('Error loading users:', xhr.responseText);
+        }
+    });
+}
+
+// Update Role
+$(document).on('change', '.roleSelect', function() {
+    const id = $(this).data('id');
+    const role = $(this).val();
+
+    $.ajax({
+        url: API_URL + '/users/' + id + '/role',
+        method: 'PUT',
+        contentType: 'application/json',
+        headers: { 'Authorization': 'Bearer ' + token },
+        data: JSON.stringify({ role }),
+        success: function() {
+            alert('Role updated successfully!');
+            loadUsers();
+        },
+        error: function(xhr) {
+            alert('Error updating role');
+        }
+    });
+});
+
+// Toggle Active/Inactive
+$(document).on('click', '.btnToggle', function() {
+    const id = $(this).data('id');
+    const currentActive = $(this).data('active');
+    const newActive = currentActive ? 0 : 1;
+
+    $.ajax({
+        url: API_URL + '/users/' + id + '/toggle',
+        method: 'PUT',
+        contentType: 'application/json',
+        headers: { 'Authorization': 'Bearer ' + token },
+        data: JSON.stringify({ is_active: newActive }),
+        success: function() {
+            loadUsers();
+        },
+        error: function(xhr) {
+            alert('Error updating user status');
+        }
+    });
+});
+
+// Logout
+$('#btnLogout').click(function() {
+    $.ajax({
+        url: API_URL + '/logout',
+        method: 'POST',
+        contentType: 'application/json',
+        data: JSON.stringify({ id: user.id }),
+        success: function() {
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+            window.location.href = 'login.html';
+        }
+    });
+});
+
+$(document).ready(function() {
+    loadUsers();
+});
+</script>
+
+</body>
+</html>
