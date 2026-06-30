@@ -366,7 +366,7 @@
         </form>
 
         <div class="signup-row">
-            Don't have an account? <a href="http://127.0.0.1:5500/AdvancedWebApp/frontend/register.html">Create one</a>
+            Don't have an account? <a href="/register">Create one</a>
         </div>
 
         <!-- Security note fills the remaining vertical space naturally -->
@@ -422,7 +422,8 @@
 
             if (res.ok) {
                 if (data.token) localStorage.setItem('token', data.token);
-                window.location.href = 'products.html';
+                if (data.user)  localStorage.setItem('user', JSON.stringify(data.user));
+                window.location.href = '/products';
             } else {
                 errorTxt.textContent = data.message || 'Invalid email or password.';
                 errorMsg.classList.remove('hidden');

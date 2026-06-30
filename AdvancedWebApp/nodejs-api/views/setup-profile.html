@@ -1,0 +1,607 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Set Up Profile — Aperture</title>
+    <style>
+        :root {
+            --seashell:        #FFF4EB;
+            --wheat:           #F6E0B6;
+            --powder-blue:     #A6BCC9;
+            --french-blue:     #3E4B8E;
+            --midnight-violet: #3D1534;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            background: #dde4ec;
+            min-height: 100vh;
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem 1rem;
+        }
+
+        .setup-wrapper {
+            display: flex;
+            width: 820px;
+            min-height: 580px;
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 24px 64px rgba(62,75,142,0.18);
+        }
+
+        .left-panel {
+            width: 300px;
+            flex-shrink: 0;
+            background: var(--french-blue);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 2.8rem 2.4rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .left-panel::before {
+            content: '';
+            position: absolute;
+            width: 300px; height: 300px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.05);
+            top: -100px; right: -120px;
+            pointer-events: none;
+        }
+
+        .left-panel::after {
+            content: '';
+            position: absolute;
+            width: 260px; height: 260px;
+            border-radius: 50%;
+            background: rgba(166,188,201,0.08);
+            bottom: -100px; left: -60px;
+            pointer-events: none;
+        }
+
+        .brand { position: relative; z-index: 1; }
+
+        .brand-name {
+            font-size: .75rem;
+            font-weight: 700;
+            color: rgba(255,255,255,0.9);
+            letter-spacing: 3px;
+            text-transform: uppercase;
+        }
+
+        .left-body { position: relative; z-index: 1; }
+
+        .left-body h2 {
+            font-size: 1.8rem;
+            font-weight: 800;
+            color: #fff;
+            line-height: 1.2;
+            margin-bottom: 1rem;
+        }
+
+        .left-body h2 em {
+            font-style: normal;
+            color: var(--wheat);
+        }
+
+        .left-body p {
+            font-size: .8rem;
+            color: rgba(166,188,201,0.75);
+            line-height: 1.75;
+        }
+
+        .steps {
+            position: relative;
+            z-index: 1;
+            display: flex;
+            flex-direction: column;
+            gap: .75rem;
+            margin-top: 2rem;
+        }
+
+        .step {
+            display: flex;
+            align-items: center;
+            gap: .75rem;
+        }
+
+        .step-dot {
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            border: 2px solid rgba(255,255,255,0.25);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            font-size: .6rem;
+            font-weight: 700;
+            color: rgba(255,255,255,0.4);
+            transition: all .2s;
+        }
+
+        .step-dot.active {
+            background: var(--wheat);
+            border-color: var(--wheat);
+            color: var(--midnight-violet);
+        }
+
+        .step-dot.done {
+            background: rgba(255,255,255,0.15);
+            border-color: rgba(255,255,255,0.3);
+            color: rgba(255,255,255,0.6);
+        }
+
+        .step-label {
+            font-size: .72rem;
+            color: rgba(255,255,255,0.35);
+            font-weight: 600;
+            letter-spacing: .3px;
+        }
+
+        .step.active .step-label { color: rgba(255,255,255,0.9); }
+        .step.done .step-label { color: rgba(255,255,255,0.45); }
+
+        .left-footer {
+            position: relative; z-index: 1;
+            font-size: .66rem;
+            color: rgba(255,255,255,0.2);
+            letter-spacing: .4px;
+        }
+
+        .right-panel {
+            flex: 1;
+            background: #fff;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            padding: 2.8rem 3rem;
+            overflow: hidden;
+        }
+
+        .form-header { margin-bottom: 1.8rem; }
+
+        .form-header .step-tag {
+            font-size: .65rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1.2px;
+            color: var(--powder-blue);
+            margin-bottom: .4rem;
+        }
+
+        .form-header h1 {
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: var(--midnight-violet);
+            letter-spacing: -.4px;
+            margin-bottom: .3rem;
+        }
+
+        .form-header p {
+            font-size: .8rem;
+            color: var(--powder-blue);
+        }
+
+        .avatar-row {
+            display: flex;
+            align-items: center;
+            gap: 1.2rem;
+            margin-bottom: 1.4rem;
+        }
+
+        .avatar-preview {
+            width: 64px;
+            height: 64px;
+            border-radius: 50%;
+            background: var(--seashell);
+            border: 2px dashed #d4d8e8;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            flex-shrink: 0;
+            transition: border-color .15s;
+        }
+
+        .avatar-preview img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: none;
+        }
+
+        .avatar-preview svg { opacity: .3; }
+
+        .avatar-preview.has-image svg { display: none; }
+        .avatar-preview.has-image img { display: block; }
+
+        .avatar-actions { display: flex; flex-direction: column; gap: .4rem; }
+
+        .btn-upload {
+            padding: .4rem .85rem;
+            border: 1.5px solid #eceef4;
+            border-radius: 8px;
+            font-size: .75rem;
+            font-weight: 600;
+            color: var(--french-blue);
+            background: #fff;
+            cursor: pointer;
+            font-family: inherit;
+            transition: border-color .13s, background .13s;
+        }
+
+        .btn-upload:hover {
+            border-color: var(--french-blue);
+            background: #f5f6fc;
+        }
+
+        .avatar-hint {
+            font-size: .68rem;
+            color: #c8ccd8;
+        }
+
+        .field { margin-bottom: 1rem; }
+
+        .field label {
+            display: block;
+            font-size: .67rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: .9px;
+            color: var(--midnight-violet);
+            opacity: .45;
+            margin-bottom: .4rem;
+        }
+
+        .field input,
+        .field select,
+        .field textarea {
+            width: 100%;
+            padding: .65rem 1rem;
+            border: 1.5px solid #eceef4;
+            border-radius: 10px;
+            font-size: .875rem;
+            color: var(--midnight-violet);
+            background: #fafbfc;
+            outline: none;
+            transition: border-color .15s, box-shadow .15s, background .15s;
+            font-family: inherit;
+        }
+
+        .field input:focus,
+        .field select:focus,
+        .field textarea:focus {
+            border-color: var(--french-blue);
+            background: #fff;
+            box-shadow: 0 0 0 3px rgba(62,75,142,0.08);
+        }
+
+        .field input::placeholder,
+        .field textarea::placeholder { color: #c8ccd8; font-size: .85rem; }
+
+        .field select {
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg width='10' height='6' viewBox='0 0 10 6' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%23A6BCC9' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 1rem center;
+            padding-right: 2.5rem;
+            cursor: pointer;
+        }
+
+        .field select option[value=""] { color: #c8ccd8; }
+
+        .field-row { display: flex; gap: 1rem; }
+        .field-row .field { flex: 1; }
+
+        .error-msg {
+            background: #fdf0f0;
+            border: 1px solid #f5c2c2;
+            border-radius: 8px;
+            padding: .55rem .9rem;
+            font-size: .78rem;
+            color: #b83232;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: .5rem;
+        }
+        .error-msg.hidden { display: none; }
+
+        .btn-save {
+            width: 100%;
+            margin-top: 1.4rem;
+            padding: .75rem;
+            background: var(--french-blue);
+            color: #fff;
+            border: none;
+            border-radius: 10px;
+            font-size: .875rem;
+            font-weight: 700;
+            cursor: pointer;
+            letter-spacing: .3px;
+            display: flex; align-items: center; justify-content: center; gap: .5rem;
+            transition: background .15s, transform .12s;
+            font-family: inherit;
+        }
+
+        .btn-save:hover {
+            background: var(--midnight-violet);
+            transform: translateY(-1px);
+        }
+
+        .btn-save:active { transform: translateY(0); }
+        .btn-save .arrow { transition: transform .15s; font-style: normal; }
+        .btn-save:hover .arrow { transform: translateX(3px); }
+
+        .skip-row {
+            text-align: center;
+            margin-top: 1rem;
+            font-size: .77rem;
+        }
+
+        .skip-row a {
+            color: var(--powder-blue);
+            text-decoration: none;
+            transition: color .13s;
+        }
+
+        .skip-row a:hover { color: var(--french-blue); }
+    </style>
+</head>
+<body>
+
+<div class="setup-wrapper">
+
+    <div class="left-panel">
+        <div class="brand">
+            <div class="brand-name">Aperture</div>
+        </div>
+
+        <div class="left-body">
+            <h2>Almost <em>there.</em></h2>
+            <p>Add your shipping details so checkout is fast and your gear arrives at the right place.</p>
+
+            <div class="steps">
+                <div class="step done">
+                    <div class="step-dot done">✓</div>
+                    <span class="step-label">Create account</span>
+                </div>
+                <div class="step active">
+                    <div class="step-dot active">2</div>
+                    <span class="step-label">Set up profile</span>
+                </div>
+                <div class="step">
+                    <div class="step-dot">3</div>
+                    <span class="step-label">Start exploring</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="left-footer">© 2025 Aperture Store</div>
+    </div>
+
+    <div class="right-panel">
+
+        <div class="form-header">
+            <div class="step-tag">Step 2 of 2</div>
+            <h1>Shipping details</h1>
+            <p>Where should we send your orders?</p>
+        </div>
+
+        <div class="error-msg hidden" id="errorMsg">
+            ⚠️ <span id="errorText">Something went wrong.</span>
+        </div>
+
+        <!-- Avatar -->
+        <div class="avatar-row">
+            <div class="avatar-preview" id="avatarPreview">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#3E4B8E" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                    <circle cx="12" cy="7" r="4"/>
+                </svg>
+                <img id="avatarImg" src="" alt="Avatar preview">
+            </div>
+            <div class="avatar-actions">
+                <button type="button" class="btn-upload" id="avatarBtn">Upload photo</button>
+                <span class="avatar-hint">JPG or PNG, up to 2 MB</span>
+            </div>
+            <input type="file" id="avatarInput" accept="image/jpeg,image/png" style="display:none">
+        </div>
+
+        <form id="profileForm" novalidate>
+
+            <div class="field-row">
+                <div class="field">
+                    <label for="username">Username</label>
+                    <input type="text" id="username" placeholder="e.g. juandc" autocomplete="username">
+                </div>
+                <div class="field">
+                    <label for="phone">Phone</label>
+                    <input type="tel" id="phone" placeholder="+63 900 000 0000" autocomplete="tel">
+                </div>
+            </div>
+
+            <div class="field">
+                <label for="addressLine1">Address line 1</label>
+                <input type="text" id="addressLine1" placeholder="House/Unit no., Street name" autocomplete="address-line1">
+            </div>
+
+            <div class="field">
+                <label for="addressLine2">Address line 2 (optional)</label>
+                <input type="text" id="addressLine2" placeholder="Barangay, Subdivision, Building" autocomplete="address-line2">
+            </div>
+
+            <div class="field-row">
+                <div class="field">
+                    <label for="city">City / Municipality</label>
+                    <input type="text" id="city" placeholder="e.g. Cainta" autocomplete="address-level2">
+                </div>
+                <div class="field">
+                    <label for="province">Province / State</label>
+                    <input type="text" id="province" placeholder="e.g. Rizal" autocomplete="address-level1">
+                </div>
+            </div>
+
+            <div class="field-row">
+                <div class="field">
+                    <label for="zipCode">ZIP / Postal code</label>
+                    <input type="text" id="zipCode" placeholder="e.g. 1900" autocomplete="postal-code">
+                </div>
+                <div class="field">
+                    <label for="country">Country</label>
+                    <select id="country">
+                        <option value="">Select country…</option>
+                        <option value="PH" selected>Philippines</option>
+                        <option value="US">United States</option>
+                        <option value="SG">Singapore</option>
+                        <option value="MY">Malaysia</option>
+                        <option value="JP">Japan</option>
+                        <option value="OTHER">Other</option>
+                    </select>
+                </div>
+            </div>
+
+            <button type="submit" class="btn-save">
+                Save & Continue <em class="arrow">→</em>
+            </button>
+
+        </form>
+
+        <div class="skip-row">
+            <a href="/products" id="skipLink">Skip for now — I'll fill this in later</a>
+        </div>
+
+    </div>
+</div>
+
+<script>
+    // ── Avatar upload preview ──
+    const avatarBtn     = document.getElementById('avatarBtn');
+    const avatarInput   = document.getElementById('avatarInput');
+    const avatarPreview = document.getElementById('avatarPreview');
+    const avatarImg     = document.getElementById('avatarImg');
+
+    avatarBtn.addEventListener('click', () => avatarInput.click());
+
+    avatarInput.addEventListener('change', function () {
+        const file = this.files[0];
+        if (!file) return;
+
+        if (file.size > 2 * 1024 * 1024) {
+            showError('Photo must be under 2 MB.');
+            avatarInput.value = '';
+            return;
+        }
+
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            avatarImg.src = e.target.result;
+            avatarPreview.classList.add('has-image');
+        };
+        reader.readAsDataURL(file);
+    });
+
+    function showError(msg) {
+        const box = document.getElementById('errorMsg');
+        document.getElementById('errorText').textContent = msg;
+        box.classList.remove('hidden');
+    }
+
+    function hideError() {
+        document.getElementById('errorMsg').classList.add('hidden');
+    }
+
+    document.getElementById('profileForm').addEventListener('submit', async function (e) {
+        e.preventDefault();
+        hideError();
+
+        const username     = document.getElementById('username').value.trim();
+        const phone        = document.getElementById('phone').value.trim();
+        const addressLine1 = document.getElementById('addressLine1').value.trim();
+        const addressLine2 = document.getElementById('addressLine2').value.trim();
+        const city         = document.getElementById('city').value.trim();
+        const province     = document.getElementById('province').value.trim();
+        const zipCode      = document.getElementById('zipCode').value.trim();
+        const country      = document.getElementById('country').value;
+        const btn          = document.querySelector('.btn-save');
+        const token        = localStorage.getItem('token');
+
+        if (!username) {
+            showError('Please enter a username.');
+            return;
+        }
+
+        if (!addressLine1 || !city || !province || !zipCode || !country) {
+            showError('Please fill in your full shipping address.');
+            return;
+        }
+
+        const avatarFile = avatarInput.files[0];
+        let avatarBase64 = null;
+
+        const proceed = async () => {
+            btn.innerHTML = 'Saving… <em class="arrow">→</em>';
+            btn.disabled = true;
+
+           try {
+            const res = await fetch('http://localhost:5000/api/auth/profile/setup', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+                },
+                body: JSON.stringify({
+                    username, phone, addressLine1, addressLine2,
+                    city, province, zipCode, country,
+                    avatar: avatarBase64
+                })
+            });
+
+            if (res.status === 413) {
+                showError('Your photo is too large to upload. Please choose an image under 2 MB.');
+                return;
+            }
+
+            let data = {};
+            try {
+                data = await res.json();
+            } catch (parseErr) {
+                // Non-JSON error response (e.g. server error page)
+            }
+
+            if (res.ok) {
+                window.location.href = '/products';
+            } else {
+                showError(data.message || 'Could not save profile.');
+            }
+        } catch (err) {
+            showError('Could not connect to server.');
+        } finally {
+            btn.innerHTML = 'Save & Continue <em class="arrow">→</em>';
+            btn.disabled = false;
+        }
+        };
+
+        if (avatarFile) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                avatarBase64 = e.target.result;
+                proceed();
+            };
+            reader.readAsDataURL(avatarFile);
+        } else {
+            proceed();
+        }
+    });
+</script>
+
+</body>
+</html>

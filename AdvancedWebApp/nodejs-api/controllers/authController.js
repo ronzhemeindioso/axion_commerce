@@ -1,37 +1,87 @@
-const db = require('../config/db');
+const User = require('../sequelize/models/User');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 
-const SECRET_KEY = 'your_secret_key_here';
+const SECRET_KEY = process.env.JWT_SECRET || 'your_secret_key_here';
 
 // REGISTER
-exports.register = (req, res) => {
-    const { name, email, password } = req.body;
+exports.register = async (req, res) => {
+    try {
+        const { name, firstName, lastName, email, password } = req.body;
+        const fullName = name || [firstName, lastName].filter(Boolean).join(' ');
 
-    db.query('SELECT * FROM users WHERE email = ?', [email], (err, results) => {
-        if (err) return res.status(500).json({ error: err.message });
-        if (results.length > 0) return res.status(400).json({ message: 'Email already exists' });
+        if (!fullName || !email || !password) {
+            return res.status(400).json({ message: 'Name, email, and password are required' });
+        }
+
+        const existing = await User.findOne({ where: { email } });
+        if (existing) return res.status(400).json({ message: 'Email already exists' });
 
         const hashedPassword = bcrypt.hashSync(password, 10);
 
-        db.query('INSERT INTO users (name, email, password) VALUES (?, ?, ?)',
-            [name, email, hashedPassword],
-            (err, results) => {
-                if (err) return res.status(500).json({ error: err.message });
-                res.status(201).json({ message: 'User registered successfully' });
-            });
-    });
+        const user = await User.create({ name: fullName, email, password: hashedPassword });
+
+        const token = jwt.sign(
+            { id: user.id, email: user.email, role: user.role },
+            SECRET_KEY,
+            { expiresIn: '24h' }
+        );
+
+        await user.update({ token });
+
+        res.status(201).json({
+            message: 'User registered successfully',
+            token: token,
+            user: {
+                id: user.id,
+                name: user.name,
+                email: user.email,
+                role: user.role
+            }
+        });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+};
+// SETUP PROFILE
+exports.setupProfile = async (req, res) => {
+    try {
+        const {
+            username, phone,
+            addressLine1, addressLine2,
+            city, province, zipCode, country,
+            avatar
+        } = req.body;
+        const id = req.user.id;
+
+        await User.update(
+            {
+                username,
+                phone,
+                address_line1: addressLine1,
+                address_line2: addressLine2,
+                city,
+                province,
+                zip_code: zipCode,
+                country,
+                avatar
+            },
+            { where: { id } }
+        );
+
+        res.json({ message: 'Profile updated successfully' });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
 };
 
 // LOGIN
-exports.login = (req, res) => {
-    const { email, password } = req.body;
+exports.login = async (req, res) => {
+    try {
+        const { email, password } = req.body;
 
-    db.query('SELECT * FROM users WHERE email = ?', [email], (err, results) => {
-        if (err) return res.status(500).json({ error: err.message });
-        if (results.length === 0) return res.status(404).json({ message: 'User not found' });
-
-        const user = results[0];
+        const user = await User.findOne({ where: { email } });
+        if (!user) return res.status(404).json({ message: 'User not found' });
 
         if (!user.is_active) return res.status(403).json({ message: 'Account is deactivated' });
 
@@ -44,55 +94,64 @@ exports.login = (req, res) => {
             { expiresIn: '24h' }
         );
 
-        db.query('UPDATE users SET token = ? WHERE id = ?', [token, user.id], (err) => {
-            if (err) return res.status(500).json({ error: err.message });
+        await user.update({ token });
 
-            res.json({
-                message: 'Login successful',
-                token: token,
-                user: {
-                    id: user.id,
-                    name: user.name,
-                    email: user.email,
-                    role: user.role
-                }
-            });
+        res.json({
+            message: 'Login successful',
+            token: token,
+            user: {
+                id: user.id,
+                name: user.name,
+                email: user.email,
+                role: user.role
+            }
         });
-    });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
 };
 
 // LOGOUT
-exports.logout = (req, res) => {
-    const { id } = req.body;
-
-    db.query('UPDATE users SET token = NULL WHERE id = ?', [id], (err) => {
-        if (err) return res.status(500).json({ error: err.message });
+exports.logout = async (req, res) => {
+    try {
+        const id = req.user.id; // now from verified token, not client input
+        await User.update({ token: null }, { where: { id } });
         res.json({ message: 'Logged out successfully' });
-    });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
 };
 
 // GET ALL USERS
-exports.getAll = (req, res) => {
-    db.query('SELECT id, name, email, role, is_active, created_at FROM users', (err, results) => {
-        if (err) return res.status(500).json({ error: err.message });
-        res.json(results);
-    });
+exports.getAll = async (req, res) => {
+    try {
+        const users = await User.findAll({
+            attributes: ['id', 'name', 'email', 'role', 'is_active', 'created_at']
+        });
+        res.json(users);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
 };
 
 // UPDATE ROLE
-exports.updateRole = (req, res) => {
-    const { role } = req.body;
-    db.query('UPDATE users SET role = ? WHERE id = ?', [role, req.params.id], (err) => {
-        if (err) return res.status(500).json({ error: err.message });
+exports.updateRole = async (req, res) => {
+    try {
+        const { role } = req.body;
+        await User.update({ role }, { where: { id: req.params.id } });
         res.json({ message: 'Role updated successfully' });
-    });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
 };
 
 // DEACTIVATE / ACTIVATE USER
-exports.toggleActive = (req, res) => {
-    const { is_active } = req.body;
-    db.query('UPDATE users SET is_active = ? WHERE id = ?', [is_active, req.params.id], (err) => {
-        if (err) return res.status(500).json({ error: err.message });
+exports.toggleActive = async (req, res) => {
+    try {
+        const { is_active } = req.body;
+        await User.update({ is_active }, { where: { id: req.params.id } });
         res.json({ message: is_active ? 'User activated' : 'User deactivated' });
-    });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
 };

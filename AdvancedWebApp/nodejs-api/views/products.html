@@ -11,9 +11,9 @@
 
 <div class="container mt-5">
     <h2>Products Management</h2>
-    <a href="index.html" class="btn btn-secondary mb-3">← Back to Items</a>
-    <a href="users.html" class="btn btn-info mb-3 ms-2">👥 Users</a>
-    <a href="orders.html" class="btn btn-success mb-3 ms-2">📦 Orders</a>
+    <a href="/" class="btn btn-secondary mb-3">← Back to Home</a>
+    <a href="/users" class="btn btn-info mb-3 ms-2">👥 Users</a>
+    <a href="/orders" class="btn btn-success mb-3 ms-2">📦 Orders</a>
     <button class="btn btn-primary mb-3 ms-2" id="btnAdd">Add Product</button>
 
     <table id="productsTable" class="table table-bordered">
@@ -89,6 +89,7 @@
 <script>
 const API_URL = 'http://localhost:5000/api/products';
 const UPLOADS_URL = 'http://localhost:5000/uploads/';
+const token = localStorage.getItem('token');
 let table;
 let editMode = false;
 
@@ -159,6 +160,7 @@ function saveProduct() {
 
     $.ajax({
         url, method,
+        headers: { 'Authorization': 'Bearer ' + token },
         data: formData,
         processData: false,
         contentType: false,
@@ -236,12 +238,9 @@ $(document).on('click', '.btnDelete', function() {
         $.ajax({
             url: API_URL + '/' + id,
             method: 'DELETE',
-            success: function() {
-                loadProducts();
-            },
-            error: function() {
-                alert('Error deleting product');
-            }
+            headers: { 'Authorization': 'Bearer ' + token },
+            success: function() { loadProducts(); },
+            error: function() { alert('Error deleting product'); }
         });
     }
 });

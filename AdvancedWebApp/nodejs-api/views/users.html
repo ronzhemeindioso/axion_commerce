@@ -15,7 +15,7 @@
         <button class="btn btn-danger" id="btnLogout">Logout</button>
     </div>
 
-    <a href="products.html" class="btn btn-success mb-3">Go to Products →</a>
+    <a href="/products" class="btn btn-success mb-3">Go to Products →</a>
 
     <table id="usersTable" class="table table-bordered">
         <thead>
@@ -44,7 +44,7 @@ const user = JSON.parse(localStorage.getItem('user'));
 
 // Redirect if not logged in or not admin
 if (!token || !user || user.role !== 'admin') {
-    window.location.href = 'login.html';
+    window.location.href = '/login';
 }
 
 function loadUsers() {
@@ -157,7 +157,7 @@ $('#btnLogout').click(function() {
         success: function() {
             localStorage.removeItem('token');
             localStorage.removeItem('user');
-            window.location.href = 'login.html';
+            window.location.href = '/login';
         }
     });
 });

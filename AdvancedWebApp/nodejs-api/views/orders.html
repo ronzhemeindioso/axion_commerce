@@ -133,6 +133,7 @@
 
 <script>
     const API = 'http://localhost:5000/api';
+    const token = localStorage.getItem('token');
     let deleteTargetId = null;
     let ordersTable;
 
@@ -145,50 +146,61 @@
 
     // ── Load all orders ──────────────────────────────────────────
     function loadOrders() {
-        $.get(`${API}/orders`, function (data) {
-            $('#total-badge').text(`${data.length} Orders`);
-            ordersTable.clear();
-
-            data.forEach(order => {
-                ordersTable.row.add([
-                    `#${order.id}`,
-                    order.user_id,
-                    formatCurrency(order.total_amount),
-                    statusBadge(order.status),
-                    new Date(order.created_at).toLocaleString(),
-                    `<button class="btn btn-sm btn-info me-1" onclick="viewOrder(${order.id})">View</button>
-                     <button class="btn btn-sm btn-warning me-1" onclick="openStatusModal(${order.id}, '${order.status}')">Status</button>
-                     <button class="btn btn-sm btn-danger" onclick="openDeleteModal(${order.id})">Delete</button>`
-                ]);
-            });
-
-            ordersTable.draw();
-        }).fail(() => alert('Failed to load orders. Is the server running?'));
+        $.ajax({
+            url: `${API}/orders`,
+            method: 'GET',
+            headers: { 'Authorization': 'Bearer ' + token },
+            success: function (data) {
+                $('#total-badge').text(`${data.length} Orders`);
+                ordersTable.clear();
+                data.forEach(order => {
+                    ordersTable.row.add([
+                        `#${order.id}`,
+                        order.user_id,
+                        formatCurrency(order.total_amount),
+                        statusBadge(order.status),
+                        new Date(order.created_at).toLocaleString(),
+                        `<button class="btn btn-sm btn-info me-1" onclick="viewOrder(${order.id})">View</button>
+                        <button class="btn btn-sm btn-warning me-1" onclick="openStatusModal(${order.id}, '${order.status}')">Status</button>
+                        <button class="btn btn-sm btn-danger" onclick="openDeleteModal(${order.id})">Delete</button>`
+                    ]);
+                });
+                ordersTable.draw();
+            }
+        });
     }
 
     // ── View order items ─────────────────────────────────────────
     function viewOrder(id) {
-        $.get(`${API}/orders/${id}`, function (data) {
-            $('#order-meta').html(`
-                <p class="mb-1"><strong>Order ID:</strong> #${data.id}</p>
-                <p class="mb-1"><strong>User ID:</strong> ${data.user_id}</p>
-                <p class="mb-1"><strong>Status:</strong> ${statusBadge(data.status)}</p>
-                <p class="mb-1"><strong>Date:</strong> ${new Date(data.created_at).toLocaleString()}</p>
-            `);
+         $.ajax({
+            url: `${API}/orders/${id}`,
+            method: 'GET',
+            headers: { 'Authorization': 'Bearer ' + token },
+            success: function (data) {
+                $('#order-meta').html(`
+                    <p class="mb-1"><strong>Order ID:</strong> #${data.id}</p>
+                    <p class="mb-1"><strong>User ID:</strong> ${data.user_id}</p>
+                    <p class="mb-1"><strong>Status:</strong> ${statusBadge(data.status)}</p>
+                    <p class="mb-1"><strong>Date:</strong> ${new Date(data.created_at).toLocaleString()}</p>
+                `);
 
-            let rows = '';
-            data.items.forEach(item => {
-                rows += `<tr>
-                    <td>${item.name}</td>
-                    <td>${formatCurrency(item.price)}</td>
-                    <td>${item.quantity}</td>
-                    <td>${formatCurrency(item.subtotal)}</td>
-                </tr>`;
-            });
+                let rows = '';
+                data.items.forEach(item => {
+                    rows += `<tr>
+                        <td>${item.name}</td>
+                        <td>${formatCurrency(item.price)}</td>
+                        <td>${item.quantity}</td>
+                        <td>${formatCurrency(item.subtotal)}</td>
+                    </tr>`;
+                });
 
-            $('#order-items-body').html(rows);
-            $('#order-total').text('Total: ' + formatCurrency(data.total_amount));
-            new bootstrap.Modal(document.getElementById('viewModal')).show();
+                $('#order-items-body').html(rows);
+                $('#order-total').text('Total: ' + formatCurrency(data.total_amount));
+                new bootstrap.Modal(document.getElementById('viewModal')).show();
+            },
+            error: function () {
+                alert('Failed to load order details.');
+            }
         });
     }
 
@@ -211,6 +223,7 @@
         $.ajax({
             url: `${API}/orders/${id}/status`,
             method: 'PUT',
+            headers: { 'Authorization': 'Bearer ' + token },
             contentType: 'application/json',
             data: JSON.stringify({ status, email }),
             success: function (res) {
@@ -241,6 +254,7 @@
         $.ajax({
             url: `${API}/orders/${deleteTargetId}`,
             method: 'DELETE',
+            headers: { 'Authorization': 'Bearer ' + token },
             success: function () {
                 bootstrap.Modal.getInstance(document.getElementById('deleteModal')).hide();
                 loadOrders();
