@@ -3,77 +3,742 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Products Management</title>
+    <title>Products</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css">
+    <style>
+        :root{
+            --ink:#1F2A44;
+            --muted:#7480A0;
+            --muted-strong:#5B6688;
+            --faint:#B7C6DC;
+            --line:#E2E9F3;
+            --panel:#FFFFFF;
+            --canvas:#F1F4FA;
+            --accent:#3E4B8E;
+            --accent-dark:#2E3A70;
+            --accent-soft:#E6E9F7;
+            --violet:#3D1534;
+            --cream:#FFF4EB;
+            --wheat:#F6E0B6;
+            --good:#1EA672;
+            --good-soft:#E7F8F1;
+            --warn:#C97A1E;
+            --warn-soft:#FBF0E1;
+            --bad:#D6483F;
+            --bad-soft:#FBEBEA;
+            --radius:14px;
+        }
+        *{box-sizing:border-box;}
+        body{
+            background:var(--canvas);
+            color:var(--ink);
+            font-family:'Inter',system-ui,-apple-system,sans-serif;
+            font-size:14px;
+            -webkit-font-smoothing:antialiased;
+            margin:0;
+        }
+
+        /* ── Top menu bar ────────────────────────── */
+        .topnav{
+            background:var(--panel);
+            border-bottom:1px solid var(--line);
+            padding:0 24px;
+        }
+        .topnav-inner{
+            max-width:1180px;
+            margin:0 auto;
+            display:flex;
+            align-items:center;
+            justify-content:space-between;
+            height:60px;
+        }
+        .brand{
+            display:flex;
+            align-items:center;
+            gap:8px;
+            font-weight:800;
+            font-size:15px;
+            letter-spacing:-0.01em;
+            color:var(--ink);
+        }
+        .brand-dot{
+            width:9px; height:9px;
+            border-radius:50%;
+            background:var(--accent);
+        }
+        .topnav-links{ display:flex; gap:4px; }
+        .topnav-links a{
+            display:inline-flex;
+            align-items:center;
+            gap:6px;
+            text-decoration:none;
+            color:var(--muted);
+            padding:8px 14px;
+            border-radius:9px;
+            font-size:13.5px;
+            font-weight:500;
+            position:relative;
+            transition:color .15s ease;
+        }
+        .topnav-links a:hover{ color:var(--accent); }
+        .topnav-links a.active{
+            color:var(--accent);
+            font-weight:600;
+        }
+        .topnav-links a.active::after{
+            content:"";
+            position:absolute;
+            left:14px;
+            right:14px;
+            bottom:2px;
+            height:2px;
+            border-radius:2px;
+            background:var(--accent);
+        }
+
+        .shell{
+            max-width:1180px;
+            margin:0 auto;
+            padding:28px 24px 60px;
+        }
+
+        /* ── Page header ─────────────────────────── */
+        .topbar{ margin-bottom:24px; }
+        .topbar h1{
+            font-size:28px;
+            font-weight:800;
+            letter-spacing:-0.02em;
+            margin:0 0 4px;
+            color:var(--ink);
+        }
+        .topbar p{
+            color:var(--muted);
+            margin:0;
+            font-size:13.5px;
+        }
+        .topbar p strong{ color:var(--accent); font-weight:600; }
+
+        /* ── Stat cards ──────────────────────────── */
+        .stats{
+            display:grid;
+            grid-template-columns:repeat(4,1fr);
+            gap:14px;
+            margin-bottom:20px;
+        }
+        .stat-card{
+            background:var(--panel);
+            border:1px solid var(--line);
+            border-radius:var(--radius);
+            padding:16px 18px;
+            display:flex;
+            align-items:center;
+            gap:14px;
+            transition:border-color .15s ease, background .15s ease;
+        }
+        .stat-icon{
+            width:40px; height:40px;
+            border-radius:10px;
+            background:var(--accent-soft);
+            color:var(--accent);
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            flex-shrink:0;
+        }
+        .stat-icon svg{ width:20px; height:20px; }
+        .stat-card .num{
+            font-size:24px;
+            font-weight:800;
+            letter-spacing:-0.02em;
+            line-height:1;
+            color:var(--accent);
+        }
+        .stat-card .label{
+            color:var(--muted);
+            font-size:12.5px;
+            margin-top:6px;
+            font-weight:500;
+        }
+        .stat-card.is-alert{
+            border-color:#F0CBA8;
+            background:var(--warn-soft);
+        }
+        .stat-card.is-alert .stat-icon{
+            background:#F6DDBC;
+            color:var(--warn);
+        }
+        .stat-card.is-alert .num{ color:var(--warn); }
+
+        /* ── Panel / table card ──────────────────── */
+        .panel{
+            background:var(--panel);
+            border:1px solid var(--line);
+            border-radius:var(--radius);
+            padding:8px 8px 0;
+            overflow:hidden;
+        }
+        .panel-head{
+            display:flex;
+            align-items:center;
+            justify-content:space-between;
+            gap:16px;
+            padding:16px 16px 12px;
+            flex-wrap:wrap;
+        }
+        .panel-head h2{
+            font-size:15px;
+            font-weight:700;
+            margin:0;
+            white-space:nowrap;
+            color:var(--ink);
+        }
+        .panel-head-right{
+            display:flex;
+            align-items:center;
+            gap:10px;
+            margin-left:auto;
+            flex-wrap:wrap;
+        }
+        .filter-select{
+            border:1px solid var(--line);
+            border-radius:9px;
+            padding:8px 28px 8px 12px;
+            font-size:12.5px;
+            color:var(--ink);
+            background:var(--canvas) url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='6'><path d='M0 0l5 6 5-6z' fill='%237480A0'/></svg>") no-repeat right 10px center;
+            background-size:9px 5px;
+            -webkit-appearance:none;
+            -moz-appearance:none;
+            appearance:none;
+            outline:none;
+            cursor:pointer;
+        }
+        .filter-select:focus{ border-color:var(--accent); background-color:var(--panel); }
+        .search-box{
+            position:relative;
+        }
+        .search-box input{
+            border:1px solid var(--line);
+            border-radius:9px;
+            padding:8px 12px 8px 32px;
+            font-size:13px;
+            outline:none;
+            width:200px;
+            background:var(--canvas);
+            color:var(--ink);
+        }
+        .search-box input:focus{ border-color:var(--accent); background:var(--panel); }
+        .search-box::before{
+            content:"⌕";
+            position:absolute;
+            left:11px;
+            top:50%;
+            transform:translateY(-50%);
+            color:var(--muted);
+            font-size:14px;
+        }
+        .btn-add{
+            background:var(--accent);
+            color:#fff;
+            border:none;
+            border-radius:10px;
+            padding:9px 16px;
+            font-size:13px;
+            font-weight:600;
+            display:inline-flex;
+            align-items:center;
+            gap:6px;
+            white-space:nowrap;
+            transition:background .15s ease;
+        }
+        .btn-add:hover{ background:var(--accent-dark); color:#fff; }
+
+        /* ── Table ───────────────────────────────── */
+        table.dataTable{ border-collapse:separate !important; border-spacing:0; width:100% !important; }
+        table.dataTable thead th{
+            border:none !important;
+            border-bottom:1px solid var(--line) !important;
+            color:var(--muted);
+            font-weight:600;
+            font-size:11.5px;
+            text-transform:uppercase;
+            letter-spacing:.04em;
+            padding:12px 14px !important;
+            background:transparent;
+        }
+        table.dataTable tbody td{
+            border:none !important;
+            border-bottom:1px solid var(--line) !important;
+            padding:14px !important;
+            vertical-align:middle;
+            color:var(--ink);
+        }
+        table.dataTable tbody tr:last-child td{ border-bottom:none !important; }
+        table.dataTable tbody tr:hover{ background:var(--accent-soft); }
+
+        .prod-name{ font-weight:600; display:block; color:var(--ink); }
+        .prod-desc{
+            color:var(--muted-strong);
+            display:-webkit-box;
+            -webkit-line-clamp:2;
+            -webkit-box-orient:vertical;
+            overflow:hidden;
+            max-width:220px;
+            font-size:12.5px;
+            line-height:1.4;
+        }
+        .prod-price{ font-weight:700; color:var(--accent); }
+
+        .thumb-stack{ display:flex; align-items:center; }
+        .thumb{
+            width:34px; height:34px;
+            border-radius:50%;
+            object-fit:cover;
+            border:2.5px solid var(--panel);
+            box-shadow:0 0 0 1.5px var(--line);
+            margin-left:-10px;
+        }
+        .thumb:first-child{ margin-left:0; }
+        .thumb-more{
+            width:34px; height:34px;
+            border-radius:50%;
+            background:var(--accent-soft);
+            color:var(--accent);
+            font-size:11px;
+            font-weight:700;
+            display:flex; align-items:center; justify-content:center;
+            margin-left:-10px;
+            border:2.5px solid var(--panel);
+            box-shadow:0 0 0 1.5px var(--line);
+        }
+        .no-img{ color:var(--muted); font-size:12.5px; }
+
+        .pill{
+            display:inline-flex;
+            align-items:center;
+            gap:6px;
+            padding:4px 11px;
+            border-radius:999px;
+            font-size:12px;
+            font-weight:600;
+        }
+        .pill-dot{ width:6px; height:6px; border-radius:50%; }
+        .pill-good{ background:var(--good-soft); color:var(--good); }
+        .pill-good .pill-dot{ background:var(--good); }
+        .pill-warn{ background:var(--warn-soft); color:var(--warn); }
+        .pill-warn .pill-dot{ background:var(--warn); }
+        .pill-bad{ background:var(--bad-soft); color:var(--bad); }
+        .pill-bad .pill-dot{ background:var(--bad); }
+
+        .cat-tag{
+            background:var(--accent-soft);
+            border:1px solid var(--line);
+            color:var(--accent);
+            padding:4px 10px;
+            border-radius:8px;
+            font-size:12px;
+            font-weight:500;
+        }
+
+        .row-actions{ display:flex; gap:6px; }
+        .icon-btn{
+            width:32px; height:32px;
+            border-radius:8px;
+            border:1px solid var(--line);
+            background:var(--panel);
+            display:inline-flex;
+            align-items:center;
+            justify-content:center;
+            cursor:pointer;
+            font-size:13px;
+            color:var(--ink);
+            transition:background .15s ease, border-color .15s ease;
+        }
+        .icon-btn:hover{ background:var(--accent-soft); border-color:var(--faint); }
+        .icon-btn.danger:hover{ background:var(--bad-soft); border-color:#F0B8B4; }
+
+        /* ── DataTables footer (length / info / pagination) ── */
+        .dataTables_wrapper > .d-flex{
+            border-top:1px solid var(--line);
+            margin:10px -8px -8px -8px !important;
+            padding:16px 16px 14px !important;
+            background:var(--canvas);
+            border-radius:0 0 var(--radius) var(--radius);
+        }
+
+        .dataTables_wrapper .dataTables_length{
+            display:flex;
+            align-items:center;
+            gap:6px;
+            color:var(--muted);
+            font-size:12.5px;
+            padding:0 !important;
+            margin:0;
+        }
+        .dataTables_wrapper .dataTables_length select{
+            -webkit-appearance:none;
+            -moz-appearance:none;
+            appearance:none;
+            border:1px solid var(--line);
+            border-radius:7px;
+            padding:5px 24px 5px 9px;
+            font-size:12.5px;
+            color:var(--ink);
+            background:var(--panel) url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='6'><path d='M0 0l5 6 5-6z' fill='%237480A0'/></svg>") no-repeat right 9px center;
+            background-size:9px 5px;
+            cursor:pointer;
+            outline:none;
+        }
+        .dataTables_wrapper .dataTables_length select:focus{ border-color:var(--accent); }
+
+        .dataTables_wrapper .dataTables_info{
+            color:var(--muted);
+            font-size:12.5px;
+            padding:0 !important;
+            margin:0;
+            white-space:nowrap;
+        }
+
+        .dataTables_wrapper .dataTables_paginate{
+            padding:0 !important;
+            margin:0;
+            display:flex !important;
+            gap:6px;
+            flex-wrap:wrap;
+        }
+
+        .dataTables_wrapper .dataTables_paginate .pagination{
+            display:flex;
+            gap:6px;
+            margin:0;
+            padding:0;
+            list-style:none;
+        }
+
+        /* The <li> wrapper — must be fully transparent, no border/background of its own */
+        .dataTables_wrapper .dataTables_paginate li.paginate_button,
+        .dataTables_wrapper .dataTables_paginate .page-item{
+            margin:0;
+            padding:0;
+            border:none !important;
+            background:transparent !important;
+            list-style:none;
+        }
+
+        /* The actual clickable element — all visual styling lives here */
+        .dataTables_wrapper .dataTables_paginate a.paginate_button,
+        .dataTables_wrapper .dataTables_paginate .page-link{
+            display:inline-flex !important;
+            align-items:center !important;
+            justify-content:center !important;
+            box-sizing:border-box !important;
+            width:auto !important;
+            min-width:32px !important;
+            height:32px !important;
+            max-height:32px !important;
+            border-radius:8px !important;
+            border:1px solid var(--faint) !important;
+            background:var(--accent-soft) !important;
+            padding:0 12px !important;
+            margin:0 !important;
+            color:var(--accent) !important;
+            font-weight:600 !important;
+            font-size:12.5px !important;
+            line-height:1 !important;
+            flex:0 0 auto !important;
+            transition:background .15s ease, border-color .15s ease, color .15s ease;
+            user-select:none;
+            -webkit-user-select:none;
+            -moz-user-select:none;
+            text-decoration:none !important;
+            box-shadow:none;
+        }
+        .dataTables_wrapper .dataTables_paginate a.paginate_button::selection,
+        .dataTables_wrapper .dataTables_paginate a.paginate_button *::selection{
+            background:transparent;
+        }
+        .dataTables_wrapper .dataTables_paginate a.paginate_button:focus,
+        .dataTables_wrapper .dataTables_paginate a.paginate_button:active{
+            outline:none !important;
+            box-shadow:0 0 0 3px var(--accent-soft) !important;
+            background:var(--panel) !important;
+            color:var(--ink) !important;
+        }
+        .dataTables_wrapper .dataTables_paginate li.paginate_button.current a.paginate_button,
+        .dataTables_wrapper .dataTables_paginate .page-item.active .page-link{
+            background:var(--accent) !important;
+            color:#fff !important;
+            border-color:var(--accent) !important;
+            font-weight:600 !important;
+        }
+        .dataTables_wrapper .dataTables_paginate li.paginate_button.current a.paginate_button:focus{
+            box-shadow:0 0 0 3px rgba(62,75,142,.35) !important;
+        }
+        .dataTables_wrapper .dataTables_paginate a.paginate_button:hover:not(.disabled),
+        .dataTables_wrapper .dataTables_paginate .page-link:hover{
+            background:var(--accent-soft) !important;
+            border-color:var(--faint) !important;
+            color:var(--accent) !important;
+        }
+        .dataTables_wrapper .dataTables_paginate li.paginate_button.disabled a.paginate_button,
+        .dataTables_wrapper .dataTables_paginate .page-item.disabled .page-link{
+            color:var(--faint) !important;
+            border-color:var(--line) !important;
+            background:var(--canvas) !important;
+            cursor:not-allowed;
+            box-shadow:none !important;
+            font-weight:500 !important;
+        }
+        .dataTables_wrapper .dataTables_paginate li.paginate_button.disabled a.paginate_button:hover{
+            background:var(--panel) !important;
+            border-color:var(--line) !important;
+            color:var(--faint) !important;
+        }
+
+        /* ── Modal ───────────────────────────────── */
+        .modal-content{
+            border:none;
+            border-radius:18px;
+            overflow:hidden;
+        }
+        .modal-header{
+            border-bottom:1px solid var(--line);
+            padding:20px 24px;
+        }
+        .modal-title{ font-weight:700; font-size:16px; color:var(--ink); }
+        .modal-body{ padding:22px 24px; }
+        .modal-footer{
+            border-top:1px solid var(--line);
+            padding:16px 24px;
+        }
+        .modal-body label{
+            font-size:12.5px;
+            font-weight:600;
+            color:var(--muted);
+            margin-bottom:6px;
+            display:block;
+        }
+
+        .modal-dialog-scrollable{
+            max-height:calc(100vh - 60px);
+        }
+        .modal-dialog-scrollable .modal-content{
+            max-height:calc(100vh - 60px);
+        }
+        .modal-body{
+            overflow-y:auto;
+        }
+
+        #productDescription{
+            resize:vertical;
+            min-height:220px;
+            max-height:340px;
+        }
+        .form-control{
+            border:1px solid var(--line);
+            border-radius:10px;
+            padding:9px 12px;
+            font-size:13.5px;
+            color:var(--ink);
+        }
+        .form-control:focus{
+            border-color:var(--accent);
+            box-shadow:0 0 0 3px var(--accent-soft);
+        }
+        .is-invalid{ border-color:var(--bad) !important; }
+        .invalid-feedback{ color:var(--bad); font-size:12px; }
+        .modal-footer .btn-secondary{
+            background:transparent;
+            border:1px solid var(--line);
+            color:var(--ink);
+            border-radius:10px;
+            font-size:13px;
+            font-weight:500;
+            padding:9px 16px;
+        }
+        .modal-footer .btn-secondary:hover{ background:var(--canvas); }
+        .modal-footer .btn-primary{
+            background:var(--accent);
+            border:none;
+            border-radius:10px;
+            font-size:13px;
+            font-weight:600;
+            padding:9px 18px;
+        }
+        .modal-footer .btn-primary:hover{ background:var(--accent-dark); }
+        #currentImages img{
+            width:44px; height:44px;
+            object-fit:cover;
+            border-radius:50%;
+            margin-right:6px;
+            border:1px solid var(--line);
+        }
+
+        @media (max-width:720px){
+            .stats{ grid-template-columns:repeat(2,1fr); }
+            .prod-desc{ max-width:140px; }
+            .panel-head{ flex-direction:column; align-items:stretch; }
+            .panel-head-right{ margin-left:0; width:100%; }
+            .search-box{ flex:1; }
+            .search-box input{ width:100%; }
+            .dataTables_wrapper > .d-flex{ flex-direction:column; gap:12px; align-items:flex-start !important; }
+            #productDescription{min-height:120px; max-height:200px;}
+        }
+    </style>
 </head>
 <body>
 
-<div class="container mt-5">
-    <h2>Products Management</h2>
-    <a href="/" class="btn btn-secondary mb-3">← Back to Home</a>
-    <a href="/users" class="btn btn-info mb-3 ms-2">👥 Users</a>
-    <a href="/orders" class="btn btn-success mb-3 ms-2">📦 Orders</a>
-    <button class="btn btn-primary mb-3 ms-2" id="btnAdd">Add Product</button>
+<div class="topnav">
+    <div class="topnav-inner">
+        <div class="brand"><span class="brand-dot"></span>Store Admin</div>
+        <div class="topnav-links">
+            <a href="/">Home</a>
+            <a href="/users">Users</a>
+            <a href="/orders">Orders</a>
+            <a href="/products" class="active">Products</a>
+            <a href="/products/deleted">Deleted</a>
+        </div>
+    </div>
+</div>
 
-    <table id="productsTable" class="table table-bordered">
-        <thead>
-            <tr>
-                <th>ID</th>
-                <th>Name</th>
-                <th>Description</th>
-                <th>Price</th>
-                <th>Stock</th>
-                <th>Category</th>
-                <th>Images</th>
-                <th>Actions</th>
-            </tr>
-        </thead>
-        <tbody></tbody>
-    </table>
+<div class="shell">
+
+    <div class="topbar">
+        <h1>Products</h1>
+        <p><strong id="statTotal">0</strong> total, proceed to manage them</p>
+    </div>
+
+    <div class="stats">
+        <div class="stat-card">
+            <div class="stat-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg>
+            </div>
+            <div>
+                <div class="num" id="statCount">—</div>
+                <div class="label">Products</div>
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M8 7V5a4 4 0 0 1 8 0v2"/></svg>
+            </div>
+            <div>
+                <div class="num" id="statStock">—</div>
+                <div class="label">Units in stock</div>
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.59 13.41 11 3.83A2 2 0 0 0 9.59 3.17L4 3a1 1 0 0 0-1 1l.17 5.59a2 2 0 0 0 .66 1.41l9.58 9.59a2 2 0 0 0 2.83 0l4.35-4.35a2 2 0 0 0 0-2.83Z"/><circle cx="7.5" cy="7.5" r="1.5"/></svg>
+            </div>
+            <div>
+                <div class="num" id="statCategories">—</div>
+                <div class="label">Categories</div>
+            </div>
+        </div>
+        <div class="stat-card" id="lowStockCard">
+            <div class="stat-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>
+            </div>
+            <div>
+                <div class="num" id="statLow">—</div>
+                <div class="label">Low stock</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="panel">
+        <div class="panel-head">
+            <h2>All products</h2>
+            <div class="panel-head-right">
+                <select id="categoryFilter" class="filter-select">
+                    <option value="">All categories</option>
+                </select>
+                <select id="stockFilter" class="filter-select">
+                    <option value="">All stock</option>
+                    <option value="in">In stock</option>
+                    <option value="low">Low stock</option>
+                    <option value="out">Out of stock</option>
+                </select>
+                <div class="search-box">
+                    <input type="text" id="customSearch" placeholder="Search products...">
+                </div>
+                <button class="btn-add" id="btnAdd">+ Add product</button>
+            </div>
+        </div>
+
+        <table id="productsTable" class="table" style="width:100%">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Product</th>
+                    <th>Description</th>
+                    <th>Price</th>
+                    <th>Stock</th>
+                    <th>Category</th>
+                    <th>Images</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </div>
 </div>
 
 <!-- Modal -->
+<!-- Modal -->
 <div class="modal fade" id="productModal" tabindex="-1">
-    <div class="modal-dialog">
+    <div class="modal-dialog modal-dialog-scrollable modal-dialog-centered modal-lg">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title">Product</h5>
+                <h5 class="modal-title" id="modalTitle">Add product</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
                 <form id="productForm" novalidate>
                     <input type="hidden" id="productId">
-                    <div class="mb-3">
-                        <label>Name</label>
-                        <input type="text" id="productName" name="productName" class="form-control">
+                    <div class="row">
+                        <!-- Left column -->
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label>Name</label>
+                                <input type="text" id="productName" name="productName" class="form-control">
+                            </div>
+                            <div class="mb-3">
+                                <label>Description</label>
+                                <textarea id="productDescription" name="productDescription" class="form-control" rows="10"></textarea>
+                            </div>
+                        </div>
+                        <!-- Right column -->
+                        <div class="col-md-6">
+                            <div class="row">
+                                <div class="col-6 mb-3">
+                                    <label>Price</label>
+                                    <input type="number" id="productPrice" name="productPrice" class="form-control">
+                                </div>
+                                <div class="col-6 mb-3">
+                                    <label>Stock</label>
+                                    <input type="number" id="productStock" name="productStock" class="form-control">
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <label>Category</label>
+                                <input type="text" id="productCategory" name="productCategory" class="form-control">
+                            </div>
+                            <div class="mb-3">
+                                <label>Images (up to 5)</label>
+                                <input type="file" id="productImages" class="form-control" multiple accept="image/*">
+                            </div>
+                            <div id="currentImages" class="mb-2"></div>
+                        </div>
                     </div>
-                    <div class="mb-3">
-                        <label>Description</label>
-                        <textarea id="productDescription" name="productDescription" class="form-control"></textarea>
-                    </div>
-                    <div class="mb-3">
-                        <label>Price</label>
-                        <input type="number" id="productPrice" name="productPrice" class="form-control">
-                    </div>
-                    <div class="mb-3">
-                        <label>Stock</label>
-                        <input type="number" id="productStock" name="productStock" class="form-control">
-                    </div>
-                    <div class="mb-3">
-                        <label>Category</label>
-                        <input type="text" id="productCategory" name="productCategory" class="form-control">
-                    </div>
-                    <div class="mb-3">
-                        <label>Images (up to 5)</label>
-                        <input type="file" id="productImages" class="form-control" multiple accept="image/*">
-                    </div>
-                    <div id="currentImages" class="mb-3"></div>
                 </form>
             </div>
             <div class="modal-footer">
-                <button class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                <button type="submit" form="productForm" class="btn btn-primary" id="btnSave">Save</button>
+                <button class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="submit" form="productForm" class="btn btn-primary" id="btnSave">Save product</button>
             </div>
         </div>
     </div>
@@ -92,14 +757,65 @@ const UPLOADS_URL = 'http://localhost:5000/uploads/';
 const token = localStorage.getItem('token');
 let table;
 let editMode = false;
+let currentData = [];
+
+// Standardized stock pill — color communicates urgency, wording stays consistent
+function stockPill(stock) {
+    stock = Number(stock) || 0;
+    if (stock === 0) return `<span class="pill pill-bad"><span class="pill-dot"></span>Out of stock</span>`;
+    if (stock <= 10) return `<span class="pill pill-warn"><span class="pill-dot"></span>${stock} in stock</span>`;
+    return `<span class="pill pill-good"><span class="pill-dot"></span>${stock} in stock</span>`;
+}
+
+function stockStatus(stock) {
+    stock = Number(stock) || 0;
+    if (stock === 0) return 'out';
+    if (stock <= 10) return 'low';
+    return 'in';
+}
+
+function updateStats(data) {
+    const total = data.length;
+    const totalStock = data.reduce((sum, p) => sum + (Number(p.stock) || 0), 0);
+    const categories = new Set(data.map(p => p.category).filter(Boolean)).size;
+    const low = data.filter(p => (Number(p.stock) || 0) <= 10).length;
+
+    $('#statTotal').text(total);
+    $('#statCount').text(total);
+    $('#statStock').text(totalStock);
+    $('#statCategories').text(categories);
+    $('#statLow').text(low);
+
+    // Visually flag the low-stock card only when it actually needs attention
+    $('#lowStockCard').toggleClass('is-alert', low > 0);
+}
+
+function populateCategoryFilter(data) {
+    const categories = [...new Set(data.map(p => p.category).filter(Boolean))].sort();
+    const $filter = $('#categoryFilter');
+    const current = $filter.val();
+    $filter.find('option:not(:first)').remove();
+    categories.forEach(cat => {
+        $filter.append(`<option value="${cat}">${cat}</option>`);
+    });
+    if (current) $filter.val(current);
+}
+
+function escapeAttr(str) {
+    return String(str).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
 
 // ── Load ALL products for admin table (fetch all pages) ──────
 function loadProducts() {
     $.ajax({
-        url: API_URL + '?page=1&limit=500',  // large limit to get all for admin view
+        url: API_URL + '?page=1&limit=500',
         method: 'GET',
         success: function(response) {
             const data = response.data !== undefined ? response.data : response;
+            currentData = data;
+
+            updateStats(data);
+            populateCategoryFilter(data);
 
             if ($.fn.DataTable.isDataTable('#productsTable')) {
                 $('#productsTable').DataTable().destroy();
@@ -107,32 +823,73 @@ function loadProducts() {
             $('#productsTable tbody').empty();
             table = $('#productsTable').DataTable({
                 data: data,
+                dom: 'rt<"d-flex justify-content-between align-items-center"lip>',
+                columnDefs: [
+                    { orderable: false, targets: [2, 5, 6] }
+                ],
                 columns: [
-                    { data: 'id' },
-                    { data: 'name' },
-                    { data: 'description' },
-                    { data: 'price' },
-                    { data: 'stock' },
-                    { data: 'category' },
+                    { data: 'id', visible: false },
+                    {
+                        data: 'name',
+                        render: function(name) {
+                            return `<span class="prod-name">${name}</span>`;
+                        }
+                    },
+                    {
+                        data: 'description',
+                        render: function(desc) {
+                            return desc
+                                ? `<span class="prod-desc" title="${escapeAttr(desc)}">${desc}</span>`
+                                : `<span class="no-img">—</span>`;
+                        }
+                    },
+                    {
+                        data: 'price',
+                        render: function(price) {
+                            return `<span class="prod-price">$${Number(price).toFixed(2)}</span>`;
+                        }
+                    },
+                    {
+                        data: 'stock',
+                        render: function(stock) { return stockPill(stock); }
+                    },
+                    {
+                        data: 'category',
+                        render: function(cat) {
+                            return cat ? `<span class="cat-tag">${cat}</span>` : '';
+                        }
+                    },
                     {
                         data: 'images',
                         render: function(images) {
-                            if (!images) return 'No images';
-                            return images.split(',').map(img =>
-                                `<img src="${UPLOADS_URL}${img}" height="50" style="margin:2px; border-radius:4px;">`
+                            if (!images) return '<span class="no-img">No images</span>';
+                            const list = images.split(',');
+                            const shown = list.slice(0, 3).map(img =>
+                                `<img class="thumb" src="${UPLOADS_URL}${img}">`
                             ).join('');
+                            const extra = list.length > 3
+                                ? `<span class="thumb-more">+${list.length - 3}</span>` : '';
+                            return `<div class="thumb-stack">${shown}${extra}</div>`;
                         }
                     },
                     {
                         data: 'id',
+                        orderable: false,
                         render: function(id) {
                             return `
-                                <button class="btn btn-sm btn-warning btnEdit" data-id="${id}">Edit</button>
-                                <button class="btn btn-sm btn-danger btnDelete" data-id="${id}">Delete</button>
+                                <div class="row-actions">
+                                    <button class="icon-btn btnEdit" data-id="${id}" title="Edit">✎</button>
+                                    <button class="icon-btn danger btnDelete" data-id="${id}" title="Delete">🗑</button>
+                                </div>
                             `;
                         }
                     }
                 ]
+            });
+
+            // Wire up custom search box to DataTables search
+            $('#customSearch').off('keyup').on('keyup', function() {
+                table.search(this.value).draw();
             });
         },
         error: function(xhr) {
@@ -140,6 +897,26 @@ function loadProducts() {
         }
     });
 }
+
+// ── Category / stock-status filters ───────────────────────────
+$.fn.dataTable.ext.search.push(function(settings, data, dataIndex) {
+    if (settings.nTable.id !== 'productsTable') return true;
+
+    const row = currentData[dataIndex];
+    if (!row) return true;
+
+    const categoryVal = $('#categoryFilter').val();
+    const stockVal = $('#stockFilter').val();
+
+    if (categoryVal && row.category !== categoryVal) return false;
+    if (stockVal && stockStatus(row.stock) !== stockVal) return false;
+
+    return true;
+});
+
+$('#categoryFilter, #stockFilter').on('change', function() {
+    table.draw();
+});
 
 // ── Save product (called by validator) ──────────────────────
 function saveProduct() {
@@ -177,6 +954,7 @@ function saveProduct() {
 // ── Add button ───────────────────────────────────────────────
 $('#btnAdd').click(function() {
     editMode = false;
+    $('#modalTitle').text('Add product');
     $('#productId').val('');
     $('#productName').val('');
     $('#productDescription').val('');
@@ -198,6 +976,7 @@ $('#btnAdd').click(function() {
 // ── Edit button ──────────────────────────────────────────────
 $(document).on('click', '.btnEdit', function() {
     editMode = true;
+    $('#modalTitle').text('Edit product');
     const id = $(this).data('id');
     $.ajax({
         url: API_URL + '/' + id,
@@ -213,9 +992,9 @@ $(document).on('click', '.btnEdit', function() {
 
             if (product.images) {
                 const imgs = product.images.split(',').map(img =>
-                    `<img src="${UPLOADS_URL}${img}" height="60" style="margin:2px; border-radius:4px;">`
+                    `<img src="${UPLOADS_URL}${img}">`
                 ).join('');
-                $('#currentImages').html('<label>Current Images:</label><br>' + imgs);
+                $('#currentImages').html('<label>Current images</label>' + imgs);
             } else {
                 $('#currentImages').html('');
             }

@@ -118,3 +118,44 @@ exports.search = async (req, res) => {
         res.status(500).json({ error: err.message });
     }
 };
+
+// GET /api/products/deleted/all — list soft-deleted products (admin)
+exports.getDeleted = async (req, res) => {
+    try {
+        const products = await Product.findAll({
+            paranoid: false,
+            where: { deleted_at: { [Op.ne]: null } },
+            order: [['deleted_at', 'DESC']]
+        });
+        res.json(products);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+};
+
+// PATCH /api/products/:id/restore — restore a soft-deleted product (admin)
+// PATCH /api/products/:id/restore — restore a soft-deleted product (admin)
+exports.restore = async (req, res) => {
+    try {
+        const product = await Product.findByPk(req.params.id, { paranoid: false });
+        if (!product) return res.status(404).json({ message: 'Product not found' });
+        if (!product.deleted_at) return res.status(400).json({ message: 'Product is not deleted' });
+
+        await product.restore();
+        res.json({ message: 'Product restored successfully' });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+};
+
+// DELETE /api/products/:id/permanent — permanently delete (hard delete, admin)
+exports.hardDelete = async (req, res) => {
+    try {
+        const product = await Product.findByPk(req.params.id, { paranoid: false });
+        if (!product) return res.status(404).json({ message: 'Product not found' });
+        await product.destroy({ force: true });
+        res.json({ message: 'Product permanently deleted' });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+};

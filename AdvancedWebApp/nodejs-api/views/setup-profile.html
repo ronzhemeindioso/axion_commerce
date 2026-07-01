@@ -421,11 +421,11 @@
             <div class="field-row">
                 <div class="field">
                     <label for="username">Username</label>
-                    <input type="text" id="username" placeholder="e.g. juandc" autocomplete="username">
+                   <input type="text" id="username" placeholder="e.g. juandc" autocomplete="username">
                 </div>
                 <div class="field">
                     <label for="phone">Phone</label>
-                    <input type="tel" id="phone" placeholder="+63 900 000 0000" autocomplete="tel">
+                    <input type="text" id="phone" placeholder="+63 900 000 0000" autocomplete="tel">
                 </div>
             </div>
 
@@ -453,7 +453,7 @@
             <div class="field-row">
                 <div class="field">
                     <label for="zipCode">ZIP / Postal code</label>
-                    <input type="text" id="zipCode" placeholder="e.g. 1900" autocomplete="postal-code">
+                        <input type="text" id="zipCode" placeholder="e.g. 1900" autocomplete="postal-code">
                 </div>
                 <div class="field">
                     <label for="country">Country</label>
@@ -498,8 +498,13 @@
         if (file.size > 2 * 1024 * 1024) {
             showError('Photo must be under 2 MB.');
             avatarInput.value = '';
+            avatarPreview.classList.remove('has-image');
+            avatarImg.src = '';
             return;
         }
+
+        // Valid file selected — clear any previous warning
+        hideError();
 
         const reader = new FileReader();
         reader.onload = (e) => {
@@ -518,6 +523,21 @@
     function hideError() {
         document.getElementById('errorMsg').classList.add('hidden');
     }
+
+    // ZIP code: digits only
+    // ZIP code: digits only
+    const zipInput = document.getElementById('zipCode');
+    zipInput.addEventListener('input', function () {
+        const cleaned = this.value.replace(/[^0-9]/g, '');
+        if (cleaned !== this.value) this.value = cleaned;
+    });
+
+    // Phone: digits, spaces, dashes, and a leading + only
+    const phoneInput = document.getElementById('phone');
+    phoneInput.addEventListener('input', function () {
+        const cleaned = this.value.replace(/[^0-9+\-\s]/g, '');
+        if (cleaned !== this.value) this.value = cleaned;
+    });
 
     document.getElementById('profileForm').addEventListener('submit', async function (e) {
         e.preventDefault();
@@ -539,8 +559,18 @@
             return;
         }
 
-        if (!addressLine1 || !city || !province || !zipCode || !country) {
+       if (!addressLine1 || !city || !province || !zipCode || !country) {
             showError('Please fill in your full shipping address.');
+            return;
+        }
+
+        if (!/^[0-9]{3,10}$/.test(zipCode)) {
+            showError('ZIP / postal code must contain numbers only.');
+            return;
+        }
+
+        if (!phone || !/^\+?[0-9\-\s]{7,15}$/.test(phone)) {
+            showError('Please enter a valid phone number (numbers only).');
             return;
         }
 

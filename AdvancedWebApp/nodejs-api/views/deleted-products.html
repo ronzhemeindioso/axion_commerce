@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Deleted Products</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css">
+    <style>
+        :root{
+            --ink:#1F2A44;
+            --muted:#7480A0;
+            --muted-strong:#5B6688;
+            --faint:#B7C6DC;
+            --line:#E2E9F3;
+            --panel:#FFFFFF;
+            --canvas:#F1F4FA;
+            --accent:#3E4B8E;
+            --accent-dark:#2E3A70;
+            --accent-soft:#E6E9F7;
+            --good:#1EA672;
+            --good-soft:#E7F8F1;
+            --warn:#C97A1E;
+            --warn-soft:#FBF0E1;
+            --bad:#D6483F;
+            --bad-soft:#FBEBEA;
+            --radius:14px;
+        }
+        *{box-sizing:border-box;}
+        body{
+            background:var(--canvas);
+            color:var(--ink);
+            font-family:'Inter',system-ui,-apple-system,sans-serif;
+            font-size:14px;
+            -webkit-font-smoothing:antialiased;
+            margin:0;
+        }
+        .topnav{ background:var(--panel); border-bottom:1px solid var(--line); padding:0 24px; }
+        .topnav-inner{ max-width:1180px; margin:0 auto; display:flex; align-items:center; justify-content:space-between; height:60px; }
+        .brand{ display:flex; align-items:center; gap:8px; font-weight:800; font-size:15px; letter-spacing:-0.01em; color:var(--ink); }
+        .brand-dot{ width:9px; height:9px; border-radius:50%; background:var(--accent); }
+        .topnav-links{ display:flex; gap:4px; }
+        .topnav-links a{
+            display:inline-flex; align-items:center; gap:6px; text-decoration:none;
+            color:var(--muted); padding:8px 14px; border-radius:9px; font-size:13.5px;
+            font-weight:500; position:relative; transition:color .15s ease;
+        }
+        .topnav-links a:hover{ color:var(--accent); }
+        .topnav-links a.active{ color:var(--accent); font-weight:600; }
+        .topnav-links a.active::after{
+            content:""; position:absolute; left:14px; right:14px; bottom:2px;
+            height:2px; border-radius:2px; background:var(--accent);
+        }
+
+        .shell{ max-width:1180px; margin:0 auto; padding:28px 24px 60px; }
+
+        .topbar{ display:flex; align-items:flex-end; justify-content:space-between; gap:16px; margin-bottom:24px; flex-wrap:wrap; }
+        .topbar h1{ font-size:28px; font-weight:800; letter-spacing:-0.02em; margin:0 0 4px; color:var(--ink); }
+        .topbar p{ color:var(--muted); margin:0; font-size:13.5px; }
+        .topbar p strong{ color:var(--accent); font-weight:600; }
+        .back-link{
+            display:inline-flex; align-items:center; gap:6px; text-decoration:none;
+            color:var(--muted-strong); font-size:13px; font-weight:600;
+            border:1px solid var(--line); border-radius:10px; padding:8px 14px; background:var(--panel);
+        }
+        .back-link:hover{ color:var(--accent); border-color:var(--faint); }
+
+        .panel{ background:var(--panel); border:1px solid var(--line); border-radius:var(--radius); padding:8px 8px 0; overflow:hidden; }
+        .panel-head{ display:flex; align-items:center; justify-content:space-between; gap:16px; padding:16px 16px 12px; flex-wrap:wrap; }
+        .panel-head h2{ font-size:15px; font-weight:700; margin:0; white-space:nowrap; color:var(--ink); }
+        .panel-head-right{ display:flex; align-items:center; gap:10px; margin-left:auto; flex-wrap:wrap; }
+        .search-box{ position:relative; }
+        .search-box input{
+            border:1px solid var(--line); border-radius:9px; padding:8px 12px 8px 32px;
+            font-size:13px; outline:none; width:220px; background:var(--canvas); color:var(--ink);
+        }
+        .search-box input:focus{ border-color:var(--accent); background:var(--panel); }
+        .search-box::before{ content:"⌕"; position:absolute; left:11px; top:50%; transform:translateY(-50%); color:var(--muted); font-size:14px; }
+
+        table.dataTable{ border-collapse:separate !important; border-spacing:0; width:100% !important; }
+        table.dataTable thead th{
+            border:none !important; border-bottom:1px solid var(--line) !important; color:var(--muted);
+            font-weight:600; font-size:11.5px; text-transform:uppercase; letter-spacing:.04em;
+            padding:12px 14px !important; background:transparent;
+        }
+        table.dataTable tbody td{ border:none !important; border-bottom:1px solid var(--line) !important; padding:14px !important; vertical-align:middle; color:var(--ink); }
+        table.dataTable tbody tr:last-child td{ border-bottom:none !important; }
+        table.dataTable tbody tr:hover{ background:var(--accent-soft); }
+
+        .prod-name{ font-weight:600; display:block; color:var(--ink); }
+        .prod-price{ font-weight:700; color:var(--accent); }
+        .cat-tag{ background:var(--accent-soft); border:1px solid var(--line); color:var(--accent); padding:4px 10px; border-radius:8px; font-size:12px; font-weight:500; }
+        .no-img{ color:var(--muted); font-size:12.5px; }
+        .thumb{ width:34px; height:34px; border-radius:50%; object-fit:cover; border:2.5px solid var(--panel); box-shadow:0 0 0 1.5px var(--line); }
+        .deleted-when{ color:var(--muted-strong); font-size:12.5px; }
+
+        .row-actions{ display:flex; gap:6px; }
+        .icon-btn{
+            width:32px; height:32px; border-radius:8px; border:1px solid var(--line); background:var(--panel);
+            display:inline-flex; align-items:center; justify-content:center; cursor:pointer; font-size:13px;
+            color:var(--ink); transition:background .15s ease, border-color .15s ease;
+        }
+        .icon-btn.restore:hover{ background:var(--good-soft); border-color:#A9E1C6; }
+        .icon-btn.danger:hover{ background:var(--bad-soft); border-color:#F0B8B4; }
+
+        .empty-state{ text-align:center; padding:60px 20px; color:var(--muted); }
+        .empty-state svg{ width:44px; height:44px; margin-bottom:12px; color:var(--faint); }
+        .empty-state p{ margin:0; font-size:13.5px; }
+
+        .dataTables_wrapper > .d-flex{
+            border-top:1px solid var(--line); margin:10px -8px -8px -8px !important;
+            padding:16px 16px 14px !important; background:var(--canvas); border-radius:0 0 var(--radius) var(--radius);
+        }
+        .dataTables_wrapper .dataTables_length{ display:flex; align-items:center; gap:6px; color:var(--muted); font-size:12.5px; padding:0 !important; margin:0; }
+        .dataTables_wrapper .dataTables_length select{
+            -webkit-appearance:none; -moz-appearance:none; appearance:none; border:1px solid var(--line);
+            border-radius:7px; padding:5px 24px 5px 9px; font-size:12.5px; color:var(--ink);
+            background:var(--panel) url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='6'><path d='M0 0l5 6 5-6z' fill='%237480A0'/></svg>") no-repeat right 9px center;
+            background-size:9px 5px; cursor:pointer; outline:none;
+        }
+        .dataTables_wrapper .dataTables_info{ color:var(--muted); font-size:12.5px; padding:0 !important; margin:0; white-space:nowrap; }
+        .dataTables_wrapper .dataTables_paginate{ padding:0 !important; margin:0; display:flex !important; gap:6px; flex-wrap:wrap; }
+        .dataTables_wrapper .dataTables_paginate .pagination{ display:flex; gap:6px; margin:0; padding:0; list-style:none; }
+        .dataTables_wrapper .dataTables_paginate li.paginate_button,
+        .dataTables_wrapper .dataTables_paginate .page-item{ margin:0; padding:0; border:none !important; background:transparent !important; list-style:none; }
+        .dataTables_wrapper .dataTables_paginate a.paginate_button,
+        .dataTables_wrapper .dataTables_paginate .page-link{
+            display:inline-flex !important; align-items:center !important; justify-content:center !important;
+            box-sizing:border-box !important; width:auto !important; min-width:32px !important; height:32px !important;
+            border-radius:8px !important; border:1px solid var(--faint) !important; background:var(--accent-soft) !important;
+            padding:0 12px !important; margin:0 !important; color:var(--accent) !important; font-weight:600 !important;
+            font-size:12.5px !important; text-decoration:none !important; box-shadow:none;
+        }
+        .dataTables_wrapper .dataTables_paginate li.paginate_button.current a.paginate_button{
+            background:var(--accent) !important; color:#fff !important; border-color:var(--accent) !important;
+        }
+        .dataTables_wrapper .dataTables_paginate li.paginate_button.disabled a.paginate_button{
+            color:var(--faint) !important; border-color:var(--line) !important; background:var(--canvas) !important; cursor:not-allowed;
+        }
+
+        @media (max-width:720px){
+            .panel-head{ flex-direction:column; align-items:stretch; }
+            .panel-head-right{ margin-left:0; width:100%; }
+            .search-box{ flex:1; }
+            .search-box input{ width:100%; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="topnav">
+    <div class="topnav-inner">
+        <div class="brand"><span class="brand-dot"></span>Store Admin</div>
+        <div class="topnav-links">
+            <a href="/">Home</a>
+            <a href="/users">Users</a>
+            <a href="/orders">Orders</a>
+            <a href="/products">Products</a>
+        </div>
+    </div>
+</div>
+
+<div class="shell">
+
+    <div class="topbar">
+        <div>
+            <h1>Deleted products</h1>
+            <p><strong id="statTotal">0</strong> product(s) in the trash</p>
+        </div>
+        <a href="/products" class="back-link">← Back to products</a>
+    </div>
+
+    <div class="panel">
+        <div class="panel-head">
+            <h2>Trash</h2>
+            <div class="panel-head-right">
+                <div class="search-box">
+                    <input type="text" id="customSearch" placeholder="Search deleted...">
+                </div>
+            </div>
+        </div>
+
+        <table id="deletedTable" class="table" style="width:100%">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Product</th>
+                    <th>Price</th>
+                    <th>Category</th>
+                    <th>Image</th>
+                    <th>Deleted</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </div>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
+
+<script>
+const API_URL = 'http://localhost:5000/api/products';
+const UPLOADS_URL = 'http://localhost:5000/uploads/';
+const token = localStorage.getItem('token');
+let table;
+
+function timeAgo(dateStr) {
+    if (!dateStr) return '—';
+    const d = new Date(dateStr);
+    return d.toLocaleString();
+}
+
+function loadDeleted() {
+    $.ajax({
+        url: API_URL + '/deleted/all',
+        method: 'GET',
+        headers: { 'Authorization': 'Bearer ' + token },
+        success: function(data) {
+            $('#statTotal').text(data.length);
+
+            if ($.fn.DataTable.isDataTable('#deletedTable')) {
+                $('#deletedTable').DataTable().destroy();
+            }
+            $('#deletedTable tbody').empty();
+
+            table = $('#deletedTable').DataTable({
+                data: data,
+                dom: 'rt<"d-flex justify-content-between align-items-center"lip>',
+                order: [[5, 'desc']],
+                columnDefs: [{ orderable: false, targets: [4, 6] }],
+                language: {
+                    emptyTable: '<div class="empty-state"><p>No deleted products. Anything you remove will show up here.</p></div>'
+                },
+                columns: [
+                    { data: 'id', visible: false },
+                    {
+                        data: 'name',
+                        render: function(name) { return `<span class="prod-name">${name}</span>`; }
+                    },
+                    {
+                        data: 'price',
+                        render: function(price) { return `<span class="prod-price">$${Number(price).toFixed(2)}</span>`; }
+                    },
+                    {
+                        data: 'category',
+                        render: function(cat) { return cat ? `<span class="cat-tag">${cat}</span>` : ''; }
+                    },
+                    {
+                        data: 'images',
+                        render: function(images) {
+                            if (!images) return '<span class="no-img">No image</span>';
+                            const first = images.split(',')[0];
+                            return `<img class="thumb" src="${UPLOADS_URL}${first}">`;
+                        }
+                    },
+                    {
+                        data: 'deleted_at',
+                        render: function(deletedAt) { return `<span class="deleted-when">${timeAgo(deletedAt)}</span>`; }
+                    },
+                    {
+                        data: 'id',
+                        orderable: false,
+                        render: function(id) {
+                            return `
+                                <div class="row-actions">
+                                    <button class="icon-btn restore btnRestore" data-id="${id}" title="Restore">↺</button>
+                                    <button class="icon-btn danger btnPurge" data-id="${id}" title="Delete permanently">🗑</button>
+                                </div>
+                            `;
+                        }
+                    }
+                ]
+            });
+
+            $('#customSearch').off('keyup').on('keyup', function() {
+                table.search(this.value).draw();
+            });
+        },
+        error: function(xhr) {
+            console.log('Error loading deleted products:', xhr.status, xhr.responseText);
+        }
+    });
+}
+
+// ── Restore ──────────────────────────────────────────────────
+$(document).on('click', '.btnRestore', function() {
+    const id = $(this).data('id');
+    $.ajax({
+        url: API_URL + '/' + id + '/restore',
+        method: 'PATCH',
+        headers: { 'Authorization': 'Bearer ' + token },
+        success: function() { loadDeleted(); },
+        error: function() { alert('Error restoring product'); }
+    });
+});
+
+// ── Permanently delete ───────────────────────────────────────
+$(document).on('click', '.btnPurge', function() {
+    if (confirm('This will permanently delete the product and cannot be undone. Continue?')) {
+        const id = $(this).data('id');
+        $.ajax({
+            url: API_URL + '/' + id + '/permanent',
+            method: 'DELETE',
+            headers: { 'Authorization': 'Bearer ' + token },
+            success: function() { loadDeleted(); },
+            error: function() { alert('Error permanently deleting product'); }
+        });
+    }
+});
+
+$(document).ready(function() {
+    loadDeleted();
+});
+</script>
+
+</body>
+</html>

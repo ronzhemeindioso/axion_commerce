@@ -32,6 +32,7 @@ app.get('/register', indexController.showRegister);
 app.get('/shop', indexController.showShop);
 app.get('/cart', indexController.showCart);
 app.get('/products', indexController.showProducts);
+app.get('/products/deleted', indexController.showDeletedProducts);
 app.get('/orders', indexController.showOrders);
 app.get('/users', indexController.showUsers);
 app.get('/charts', indexController.showCharts);

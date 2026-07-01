@@ -42,6 +42,10 @@ function showSetupProfile(req, res) {
     res.sendFile(path.join(viewsPath, 'setup-profile.html'));
 }
 
+function showDeletedProducts(req, res) {
+    res.sendFile(path.join(viewsPath, 'deleted-products.html'));
+}
+
 module.exports = {
     showIndex,
     showLogin,
@@ -52,5 +56,6 @@ module.exports = {
     showOrders,
     showUsers,
     showCharts,
-    showSetupProfile
+    showSetupProfile,
+    showDeletedProducts   // add this
 };

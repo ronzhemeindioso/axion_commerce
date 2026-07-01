@@ -32,7 +32,9 @@ const Product = sequelize.define('Product', {
     tableName: 'products',
     timestamps: true,
     createdAt: 'created_at',
-    updatedAt: 'updated_at'
+    updatedAt: 'updated_at',
+    paranoid: true,          // enables soft delete
+    deletedAt: 'deleted_at'  // column used to mark deletion
 });
 
 module.exports = Product;

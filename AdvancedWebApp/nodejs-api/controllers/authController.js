@@ -14,6 +14,14 @@ exports.register = async (req, res) => {
             return res.status(400).json({ message: 'Name, email, and password are required' });
         }
 
+        if (!/^[^\s@]+@gmail\.com$/i.test(email)) {
+            return res.status(400).json({ message: 'Please use a valid Gmail address' });
+        }
+
+        if (password.length < 8) {
+            return res.status(400).json({ message: 'Password must be at least 8 characters' });
+        }
+
         const existing = await User.findOne({ where: { email } });
         if (existing) return res.status(400).json({ message: 'Email already exists' });
 
@@ -53,6 +61,37 @@ exports.setupProfile = async (req, res) => {
             avatar
         } = req.body;
         const id = req.user.id;
+
+        if (!username || !String(username).trim()) {
+            return res.status(400).json({ message: 'Username is required' });
+        }
+        if (!addressLine1 || !String(addressLine1).trim()) {
+            return res.status(400).json({ message: 'Address line 1 is required' });
+        }
+        if (!city || !String(city).trim()) {
+            return res.status(400).json({ message: 'City / Municipality is required' });
+        }
+        if (!province || !String(province).trim()) {
+            return res.status(400).json({ message: 'Province / State is required' });
+        }
+        if (!country || !String(country).trim()) {
+            return res.status(400).json({ message: 'Country is required' });
+        }
+        if (!zipCode || !/^[0-9]{3,10}$/.test(String(zipCode).trim())) {
+            return res.status(400).json({ message: 'ZIP / Postal code must contain numbers only' });
+        }
+        if (!phone || !/^\+?[0-9\-\s]{7,15}$/.test(String(phone).trim())) {
+            return res.status(400).json({ message: 'Please enter a valid phone number' });
+        }
+
+        if (avatar) {
+            const base64Data = String(avatar).split(',').pop() || '';
+            const sizeInBytes = Math.ceil((base64Data.length * 3) / 4);
+            const MAX_AVATAR_BYTES = 2 * 1024 * 1024;
+            if (sizeInBytes > MAX_AVATAR_BYTES) {
+                return res.status(413).json({ message: 'Photo must be under 2 MB.' });
+            }
+        }
 
         await User.update(
             {
