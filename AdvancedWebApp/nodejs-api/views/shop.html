@@ -60,16 +60,77 @@
             padding: 20px 0;
         }
         .search-bar { max-width: 400px; }
+
+        /* Cart / nav additions */
+        .cart-link {
+            position: relative;
+            text-decoration: none;
+        }
+        .cart-badge {
+            position: absolute;
+            top: -6px;
+            right: -10px;
+            background: #dc3545;
+            color: #fff;
+            border-radius: 50px;
+            font-size: .65rem;
+            font-weight: 700;
+            padding: 1px 6px;
+            display: none;
+        }
+        .btn-add-cart {
+            font-size: .8rem;
+        }
+        .nav-user {
+            font-size: .8rem;
+            color: #6c757d;
+        }
+        #toastHost {
+            position: fixed;
+            top: 70px;
+            right: 16px;
+            z-index: 1080;
+        }
     </style>
 </head>
 <body>
+<div id="accessDeniedBanner" class="alert alert-danger alert-dismissible fade show d-none rounded-0 mb-0 text-center" role="alert">
+    <span id="accessDeniedText">You cannot access this page.</span>
+    <button type="button" class="btn-close" onclick="document.getElementById('accessDeniedBanner').classList.add('d-none')" aria-label="Close"></button>
+</div>
+<script>
+    // Runs immediately, no jQuery dependency, so it can never be skipped
+    // by a slow/blocked CDN or an error elsewhere on the page.
+    (function () {
+        var deniedMsg = sessionStorage.getItem('accessDeniedMessage');
+        if (deniedMsg) {
+            sessionStorage.removeItem('accessDeniedMessage');
+            document.getElementById('accessDeniedText').textContent = deniedMsg;
+            document.getElementById('accessDeniedBanner').classList.remove('d-none');
+        }
+    })();
+</script>
 
 <nav class="navbar navbar-light bg-white shadow-sm mb-4">
-    <div class="container">
-        <span class="navbar-brand fw-bold">🛍️ Shop</span>
-        <a href="/products" class="btn btn-outline-secondary btn-sm">Admin ⚙️</a>
+    <div class="container d-flex align-items-center">
+        <span class="navbar-brand fw-bold me-auto">🛍️ Shop</span>
+
+        <div class="d-flex align-items-center gap-3">
+            <span id="navUser" class="nav-user d-none"></span>
+
+            <a href="/products" id="navAdminLink" class="btn btn-outline-secondary btn-sm d-none">Admin ⚙️</a>
+
+            <a href="/cart" class="btn btn-outline-primary btn-sm cart-link">
+                🛒 Cart <span id="cartBadge" class="cart-badge">0</span>
+            </a>
+
+            <a href="/login" id="navLoginLink" class="btn btn-primary btn-sm">Login</a>
+            <button id="navLogoutBtn" class="btn btn-outline-danger btn-sm d-none">Logout</button>
+        </div>
     </div>
 </nav>
+
+<div id="toastHost"></div>
 
 <div class="container">
     <div class="d-flex align-items-center gap-3 mb-4 flex-wrap">
@@ -101,9 +162,10 @@
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
 <script>
-const API_URL     = 'http://localhost:5000/api/products';
-const CAT_URL     = 'http://localhost:5000/api/products/categories';
-const UPLOADS_URL = 'http://localhost:5000/uploads/';
+const API_URL     = '/api/products';
+const CAT_URL     = '/api/products/categories';
+const CART_URL    = '/api/cart';
+const UPLOADS_URL = '/uploads/';
 const PAGE_LIMIT  = 12;
 
 let currentPage   = 1;
@@ -113,13 +175,149 @@ let searchQuery   = '';
 let categoryQuery = '';
 let searchTimer   = null;
 
+function getToken() { return localStorage.getItem('token'); }
+function getUser()  { return JSON.parse(localStorage.getItem('user') || 'null'); }
+
+// ---------- Nav / auth state ----------
+function refreshNav() {
+    const token = getToken();
+    const user  = getUser();
+    const loggedIn = !!(token && user);
+
+    $('#navLoginLink').toggleClass('d-none', loggedIn);
+    $('#navLogoutBtn').toggleClass('d-none', !loggedIn);
+    $('#navAdminLink').toggleClass('d-none', !(loggedIn && user.role === 'admin'));
+
+    if (loggedIn) {
+        $('#navUser').removeClass('d-none').text('Hi, ' + user.name);
+    } else {
+        $('#navUser').addClass('d-none').text('');
+    }
+}
+
+function showToast(message, variant) {
+    const id = 'toast-' + Date.now();
+    const html = `
+        <div id="${id}" class="toast align-items-center text-bg-${variant || 'dark'} border-0 mb-2" role="alert">
+            <div class="d-flex">
+                <div class="toast-body">${message}</div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+            </div>
+        </div>`;
+    $('#toastHost').append(html);
+    const el = document.getElementById(id);
+    const toast = new bootstrap.Toast(el, { delay: 2500 });
+    toast.show();
+    el.addEventListener('hidden.bs.toast', () => el.remove());
+}
+
+// ---------- Cart badge ----------
+function refreshCartCount() {
+    const token = getToken();
+    const user  = getUser();
+    if (!token || !user) {
+        $('#cartBadge').hide().text('0');
+        return;
+    }
+    $.ajax({
+        url: CART_URL + '/' + user.id,
+        method: 'GET',
+        headers: { 'Authorization': 'Bearer ' + token },
+        success: function (items) {
+            const count = Array.isArray(items) ? items.reduce((sum, i) => sum + i.quantity, 0) : 0;
+            if (count > 0) {
+                $('#cartBadge').text(count).show();
+            } else {
+                $('#cartBadge').hide().text('0');
+            }
+        },
+        error: function (xhr) {
+            if (xhr.status === 401) {
+                // Session no longer valid server-side — clear it so the UI stays consistent.
+                localStorage.removeItem('token');
+                localStorage.removeItem('user');
+                refreshNav();
+            }
+        }
+    });
+}
+
+// ---------- Add to cart ----------
+function addToCart(product, btn) {
+    const token = getToken();
+    const user  = getUser();
+
+    if (!token || !user) {
+        showToast('Please log in to add items to your cart.', 'warning');
+        window.location.href = '/login';
+        return;
+    }
+
+    const original = btn.html();
+    btn.prop('disabled', true).text('Adding…');
+
+    $.ajax({
+        url: CART_URL,
+        method: 'POST',
+        contentType: 'application/json',
+        headers: { 'Authorization': 'Bearer ' + token },
+        data: JSON.stringify({
+            user_id: user.id,
+            product_id: product.id,
+            name: product.name,
+            description: product.description,
+            price: product.price,
+            quantity: 1,
+            images: product.images
+        }),
+        success: function () {
+            showToast(`Added "${product.name}" to your cart.`, 'success');
+            refreshCartCount();
+        },
+        error: function (xhr) {
+            if (xhr.status === 401) {
+                localStorage.removeItem('token');
+                localStorage.removeItem('user');
+                refreshNav();
+                showToast('Your session has expired. Please log in again.', 'warning');
+                window.location.href = '/login';
+                return;
+            }
+            const msg = xhr.responseJSON ? (xhr.responseJSON.message || xhr.responseJSON.error) : 'Could not add to cart.';
+            showToast(msg, 'danger');
+        },
+        complete: function () {
+            btn.prop('disabled', false).html(original);
+        }
+    });
+}
+
+// ---------- Logout ----------
+$('#navLogoutBtn').on('click', function () {
+    const token = getToken();
+    $.ajax({
+        url: '/api/auth/logout',
+        method: 'POST',
+        headers: { 'Authorization': 'Bearer ' + token },
+        complete: function () {
+            // Clear locally regardless of server response, so a stale/expired
+            // token can never leave the user stuck in a "logged in" UI.
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+            window.location.href = '/login';
+        }
+    });
+});
+
+// ---------- Product grid ----------
 function buildCard(p) {
     const firstImage = p.images ? p.images.split(',')[0] : null;
     const imgHtml = firstImage
         ? `<img src="${UPLOADS_URL}${firstImage}" alt="${p.name}" loading="lazy">`
         : `<div class="no-image">🖼️</div>`;
 
-    const stockBadge = p.stock <= 0
+    const outOfStock = p.stock <= 0;
+    const stockBadge = outOfStock
         ? `<span class="stock-low">Out of stock</span>`
         : p.stock <= 5
             ? `<span class="stock-low">Only ${p.stock} left!</span>`
@@ -140,10 +338,17 @@ function buildCard(p) {
                         <span class="price">₱${parseFloat(p.price).toFixed(2)}</span>
                         ${stockBadge}
                     </div>
+                    <button class="btn btn-success btn-sm btn-add-cart mt-2 w-100" data-id="${p.id}" ${outOfStock ? 'disabled' : ''}>
+                        ${outOfStock ? 'Out of stock' : '➕ Add to Cart'}
+                    </button>
                 </div>
             </div>
         </div>`;
 }
+
+// Keep a lookup of the currently rendered products so the Add to Cart
+// button doesn't need another round trip to the API.
+const productCache = {};
 
 function loadCategories() {
     $.get(CAT_URL, function(cats) {
@@ -183,7 +388,10 @@ function fetchPage() {
                 $('#resultCount').text(`${total} product${total !== 1 ? 's' : ''} found`);
             }
 
-            items.forEach(p => $('#productGrid').append(buildCard(p)));
+            items.forEach(p => {
+                productCache[p.id] = p;
+                $('#productGrid').append(buildCard(p));
+            });
 
             hasMore = more;
             if (!hasMore) {
@@ -229,6 +437,15 @@ $('#categoryFilter').on('change', function() {
     resetAndLoad();
 });
 
+// Event delegation, since cards are re-rendered on every page/filter change.
+$(document).on('click', '.btn-add-cart', function () {
+    const id = $(this).data('id');
+    const product = productCache[id];
+    if (product) addToCart(product, $(this));
+});
+
+refreshNav();
+refreshCartCount();
 loadCategories();
 fetchPage();
 </script>

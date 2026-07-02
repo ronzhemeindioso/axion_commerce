@@ -553,6 +553,7 @@
         const country      = document.getElementById('country').value;
         const btn          = document.querySelector('.btn-save');
         const token        = localStorage.getItem('token');
+        const user         = JSON.parse(localStorage.getItem('user') || 'null');
 
         if (!username) {
             showError('Please enter a username.');
@@ -582,7 +583,7 @@
             btn.disabled = true;
 
            try {
-            const res = await fetch('http://localhost:5000/api/auth/profile/setup', {
+            const res = await fetch('/api/auth/profile/setup', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -608,7 +609,7 @@
             }
 
             if (res.ok) {
-                window.location.href = '/products';
+                window.location.href = (user && user.role === 'admin') ? '/products' : '/shop';
             } else {
                 showError(data.message || 'Could not save profile.');
             }

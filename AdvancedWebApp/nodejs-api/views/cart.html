@@ -48,8 +48,8 @@
 <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
 
 <script>
-const CART_URL = 'http://localhost:5000/api/cart';
-const UPLOADS_URL = 'http://localhost:5000/uploads/';
+const CART_URL = '/api/cart';
+const UPLOADS_URL = '/uploads/';
 
 const token = localStorage.getItem('token');
 const user = JSON.parse(localStorage.getItem('user'));
@@ -199,7 +199,7 @@ $('#btnCheckout').click(function() {
 // Logout
 $('#btnLogout').click(function() {
     $.ajax({
-        url: 'http://localhost:5000/api/auth/logout',
+        url: '/api/auth/logout',
         method: 'POST',
         headers: { 'Authorization': 'Bearer ' + token },
         success: function() {

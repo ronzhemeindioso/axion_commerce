@@ -4,6 +4,7 @@ const path = require('path');
 require('dotenv').config();
 
 const sequelize = require('./sequelize/index');
+require('./sequelize/associations');
 
 const app = express();
 
@@ -44,10 +45,9 @@ app.use('/api/auth', authRoutes);
 app.use('/api/cart', cartRoutes);
 app.use('/api/orders', orderRoutes);
 
-// Test Sequelize connection
-sequelize.authenticate()
-    .then(() => console.log('Sequelize connected to database!'))
-    .catch(err => console.log('Sequelize connection error:', err));
+sequelize.sync()
+    .then(() => console.log('Database synced!'))
+    .catch(err => console.log('Sequelize sync error:', err));
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {

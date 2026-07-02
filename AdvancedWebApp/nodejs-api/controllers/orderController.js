@@ -1,5 +1,7 @@
 const Order = require('../sequelize/models/Order');
 const OrderItem = require('../sequelize/models/OrderItem');
+const User = require('../sequelize/models/User');
+const Product = require('../sequelize/models/Product');
 const transporter = require('../config/mailer');
 const PDFDocument = require('pdfkit');
 
@@ -27,12 +29,41 @@ exports.getByUser = async (req, res) => {
 };
 
 // GET single order with items
+// GET single order with items
 exports.getOne = async (req, res) => {
     try {
         const order = await Order.findByPk(req.params.id);
         if (!order) return res.status(404).json({ message: 'Order not found' });
+
         const items = await OrderItem.findAll({ where: { order_id: order.id } });
-        res.json({ ...order.toJSON(), items });
+
+        // Attach a thumbnail to each item, pulled from the current product record
+        const productIds = [...new Set(items.map(i => i.product_id).filter(Boolean))];
+        const products = await Product.findAll({
+            where: { id: productIds },
+            attributes: ['id', 'images']
+        });
+        const imageMap = {};
+        products.forEach(p => {
+            imageMap[p.id] = p.images ? p.images.split(',')[0] : null;
+        });
+        const itemsWithImages = items.map(i => ({
+            ...i.toJSON(),
+            image: imageMap[i.product_id] || null
+        }));
+
+        const user = await User.findByPk(order.user_id, {
+            attributes: ['id', 'name', 'email', 'phone', 'address_line1', 'address_line2', 'city', 'province', 'zip_code', 'country']
+        });
+
+        const orderCount = await Order.count({ where: { user_id: order.user_id } });
+
+        res.json({
+            ...order.toJSON(),
+            items: itemsWithImages,
+            customer: user,
+            customerOrderCount: orderCount
+        });
     } catch (err) {
         res.status(500).json({ error: err.message });
     }

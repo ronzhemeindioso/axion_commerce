@@ -1,6 +1,16 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <script>
+        (function () {
+            var token = localStorage.getItem('token');
+            var user = JSON.parse(localStorage.getItem('user') || 'null');
+            if (!token || !user || user.role !== 'admin') {
+                sessionStorage.setItem('accessDeniedMessage', 'The page you are trying to access is restricted to administrators only.');
+                window.location.replace('/shop');
+            }
+        })();
+    </script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Users Management</title>
@@ -40,12 +50,6 @@
 <script>
 const API_URL = 'http://localhost:5000/api/auth';
 const token = localStorage.getItem('token');
-const user = JSON.parse(localStorage.getItem('user'));
-
-// Redirect if not logged in or not admin
-if (!token || !user || user.role !== 'admin') {
-    window.location.href = '/login';
-}
 
 function loadUsers() {
     $.ajax({

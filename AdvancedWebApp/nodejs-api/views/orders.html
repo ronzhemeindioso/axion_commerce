@@ -1,43 +1,790 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <script>
+        (function () {
+            var token = localStorage.getItem('token');
+            var user = JSON.parse(localStorage.getItem('user') || 'null');
+            if (!token || !user || user.role !== 'admin') {
+                sessionStorage.setItem('accessDeniedMessage', 'The page you are trying to access is restricted to administrators only.');
+                window.location.replace('/shop');
+            }
+        })();
+    </script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin - Orders</title>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <title>Orders</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css">
     <style>
-        body { background: #f8f9fa; }
-        .navbar { background: #1a1a2e; }
-        .badge-pending    { background: #ffc107; color: #000; }
-        .badge-confirmed  { background: #198754; color: #fff; }
-        .badge-cancelled  { background: #dc3545; color: #fff; }
-        .table-responsive { background: #fff; border-radius: 8px; padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.07); }
+        :root{
+            --ink:#2B2220;
+            --muted:#948078;
+            --muted-strong:#6B5850;
+            --faint:#F0DDD5;
+            --line:#F8EFEA;
+            --panel:#FFFFFF;
+            --canvas:#FEFBF9;
+            --accent:#C1745B;
+            --accent-dark:#9C5844;
+            --accent-soft:#FAEFEA;
+            --neutral:#6B7280;
+            --neutral-soft:#F1F2F4;
+            --violet:#3D1534;
+            --cream:#FFF4EB;
+            --wheat:#F6E0B6;
+            --good:#1EA672;
+            --good-soft:#E7F8F1;
+            --warn:#C97A1E;
+            --warn-soft:#FBF0E1;
+            --bad:#D6483F;
+            --bad-soft:#FBEBEA;
+            --radius:14px;
+        }
+        *{box-sizing:border-box;}
+        body{
+            background:var(--canvas);
+            color:var(--ink);
+            font-family:'Inter',system-ui,-apple-system,sans-serif;
+            font-size:14px;
+            -webkit-font-smoothing:antialiased;
+            margin:0;
+        }
+
+        /* ── Top menu bar ────────────────────────── */
+        .topnav{
+            background:var(--panel);
+            border-bottom:1px solid var(--line);
+            padding:0 24px;
+        }
+        .topnav-inner{
+            max-width:1180px;
+            margin:0 auto;
+            display:flex;
+            align-items:center;
+            justify-content:space-between;
+            height:60px;
+        }
+        .brand{
+            display:flex;
+            align-items:center;
+            gap:8px;
+            font-weight:800;
+            font-size:15px;
+            letter-spacing:-0.01em;
+            color:var(--ink);
+        }
+        .brand-icon{
+            width:22px; height:22px;
+            border-radius:50%;
+            background:var(--accent-soft);
+            color:var(--accent);
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            flex-shrink:0;
+        }
+        .brand-icon svg{ width:13px; height:13px; }
+        .topnav-links{ display:flex; gap:4px; }
+        .topnav-links a{
+            display:inline-flex;
+            align-items:center;
+            gap:6px;
+            text-decoration:none;
+            color:var(--muted);
+            padding:8px 14px;
+            border-radius:9px;
+            font-size:13.5px;
+            font-weight:500;
+            position:relative;
+            transition:color .15s ease;
+        }
+        .topnav-links a:hover{ color:var(--accent); }
+        .topnav-links a.active{
+            color:var(--accent);
+            font-weight:600;
+        }
+        .topnav-links a.active::after{
+            content:"";
+            position:absolute;
+            left:14px;
+            right:14px;
+            bottom:2px;
+            height:2px;
+            border-radius:2px;
+            background:var(--accent);
+        }
+        #btnLogout{ color:var(--bad); }
+        #btnLogout:hover{ color:#B93A32; }
+
+        .shell{
+            max-width:1180px;
+            margin:0 auto;
+            padding:28px 24px 60px;
+        }
+
+        /* ── Page header ─────────────────────────── */
+        .topbar{ margin-bottom:24px; display:flex; align-items:center; justify-content:space-between; gap:16px; flex-wrap:wrap; }
+        .topbar h1{
+            font-size:28px;
+            font-weight:800;
+            letter-spacing:-0.02em;
+            margin:0 0 4px;
+            color:var(--ink);
+        }
+        .topbar p{
+            color:var(--muted);
+            margin:0;
+            font-size:13.5px;
+        }
+        .topbar p strong{ color:var(--accent); font-weight:600; }
+
+        /* ── Stat cards ──────────────────────────── */
+        .stats{
+            display:grid;
+            grid-template-columns:repeat(4,1fr);
+            gap:14px;
+            margin-bottom:20px;
+        }
+        .stat-card{
+            background:var(--panel);
+            border:1px solid var(--line);
+            border-radius:var(--radius);
+            padding:16px 18px;
+            display:flex;
+            align-items:center;
+            gap:14px;
+            transition:border-color .15s ease, background .15s ease;
+        }
+        .stat-icon{
+            width:40px; height:40px;
+            border-radius:10px;
+            background:var(--accent-soft);
+            color:var(--accent);
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            flex-shrink:0;
+        }
+        .stat-icon svg{ width:20px; height:20px; }
+        .stat-card .num{
+            font-size:24px;
+            font-weight:800;
+            letter-spacing:-0.02em;
+            line-height:1;
+            color:var(--accent);
+        }
+        .stat-card .label{
+            color:var(--muted);
+            font-size:12.5px;
+            margin-top:6px;
+            font-weight:500;
+        }
+        .stat-card.is-alert{
+            border-color:#F0CBA8;
+            background:var(--warn-soft);
+        }
+        .stat-card.is-alert .stat-icon{
+            background:#F6DDBC;
+            color:var(--warn);
+        }
+        .stat-card.is-alert .num{ color:var(--warn); }
+
+        /* ── Panel / table card ──────────────────── */
+        .panel{
+            background:var(--panel);
+            border:1px solid var(--line);
+            border-radius:var(--radius);
+            padding:8px 8px 0;
+            overflow:hidden;
+        }
+        .panel-head{
+            display:flex;
+            align-items:center;
+            justify-content:space-between;
+            gap:16px;
+            padding:16px 16px 12px;
+            flex-wrap:wrap;
+        }
+        .panel-head h2{
+            font-size:15px;
+            font-weight:700;
+            margin:0;
+            white-space:nowrap;
+            color:var(--ink);
+        }
+        .panel-head-right{
+            display:flex;
+            align-items:center;
+            gap:10px;
+            margin-left:auto;
+            flex-wrap:wrap;
+        }
+        .filter-select{
+            border:1px solid var(--line);
+            border-radius:9px;
+            padding:8px 28px 8px 12px;
+            font-size:12.5px;
+            color:var(--ink);
+            background:var(--canvas) url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='6'><path d='M0 0l5 6 5-6z' fill='%237480A0'/></svg>") no-repeat right 10px center;
+            background-size:9px 5px;
+            -webkit-appearance:none;
+            -moz-appearance:none;
+            appearance:none;
+            outline:none;
+            cursor:pointer;
+        }
+        .filter-select:focus{ border-color:var(--accent); background-color:var(--panel); }
+        .search-box{
+            position:relative;
+        }
+        .search-box input{
+            border:1px solid var(--line);
+            border-radius:9px;
+            padding:8px 12px 8px 32px;
+            font-size:13px;
+            outline:none;
+            width:200px;
+            background:var(--canvas);
+            color:var(--ink);
+        }
+        .search-box input:focus{ border-color:var(--accent); background:var(--panel); }
+        .search-box::before{
+            content:"⌕";
+            position:absolute;
+            left:11px;
+            top:50%;
+            transform:translateY(-50%);
+            color:var(--muted);
+            font-size:14px;
+        }
+
+        /* ── Table ───────────────────────────────── */
+        table.dataTable{ border-collapse:separate !important; border-spacing:0; width:100% !important; }
+        table.dataTable thead th{
+            border:none !important;
+            border-bottom:1px solid var(--line) !important;
+            color:var(--muted);
+            font-weight:600;
+            font-size:11.5px;
+            text-transform:uppercase;
+            letter-spacing:.04em;
+            padding:12px 14px !important;
+            background:transparent;
+        }
+        table.dataTable tbody td{
+            border:none !important;
+            border-bottom:1px solid var(--line) !important;
+            padding:14px !important;
+            vertical-align:middle;
+            color:var(--ink);
+        }
+        table.dataTable tbody tr:last-child td{ border-bottom:none !important; }
+        table.dataTable tbody tr:hover{ background:var(--accent-soft); }
+
+        .order-id{ font-weight:700; color:var(--ink); }
+        .order-user{ color:var(--muted-strong); }
+        .order-total{ font-weight:700; color:var(--accent); }
+        .order-date{ color:var(--muted-strong); font-size:12.5px; }
+
+        .pill{
+            display:inline-flex;
+            align-items:center;
+            gap:6px;
+            padding:4px 11px;
+            border-radius:999px;
+            font-size:12px;
+            font-weight:600;
+            text-transform:capitalize;
+        }
+        .pill-dot{ width:6px; height:6px; border-radius:50%; }
+        .pill-good{ background:var(--good-soft); color:var(--good); }
+        .pill-good .pill-dot{ background:var(--good); }
+        .pill-warn{ background:var(--warn-soft); color:var(--warn); }
+        .pill-warn .pill-dot{ background:var(--warn); }
+        .pill-bad{ background:var(--bad-soft); color:var(--bad); }
+        .pill-bad .pill-dot{ background:var(--bad); }
+        .pill-neutral{ background:var(--neutral-soft); color:var(--neutral); }
+        .pill-neutral .pill-dot{ background:var(--neutral); }
+        .pill-accent{ background:var(--accent-soft); color:var(--accent-dark); }
+        .pill-accent .pill-dot{ background:var(--accent); }
+        .pill-violet{ background:#F1E9EF; color:var(--violet); }
+        .pill-violet .pill-dot{ background:var(--violet); }
+
+        /* ── Order Details modal ─────────────────────────── */
+#viewModal .modal-content{ border:none; border-radius:var(--radius); }
+#viewModal .modal-header{ border-bottom:1px solid var(--line); padding:20px 24px; }
+#viewModal .modal-body{ padding:24px; }
+#viewModal .modal-footer{ padding:16px 24px; border-top:1px solid var(--line); }
+
+.od-header{
+    display:flex; align-items:flex-start; justify-content:space-between;
+    padding-bottom:20px; margin-bottom:20px;
+    border-bottom:1px solid var(--line);
+}
+.od-id{ font-size:18px; font-weight:700; color:var(--ink); }
+.od-date{ font-size:12.5px; color:var(--muted); margin-top:3px; }
+.od-pills{ display:flex; gap:8px; align-items:center; margin-top:1px; }
+
+/* Two-column body: left = customer/payment, right = product.
+   Left column gets its own card so both columns read as equal-weight blocks. */
+.od-body-grid{ display:grid; grid-template-columns:240px 1fr; gap:20px; align-items:start; }
+
+.od-col-left, .od-col-right{
+    background:var(--canvas);
+    border:1px solid var(--line);
+    border-radius:10px;
+    padding:16px;
+    align-self:stretch;
+}
+.od-col-left{ display:flex; flex-direction:column; gap:0; }
+
+.od-section{ padding-bottom:20px; margin-bottom:20px; border-bottom:1px solid var(--line); }
+.od-section:last-child{ border-bottom:none; padding-bottom:0; margin-bottom:0; }
+.od-col-left .od-section{ padding-bottom:16px; margin-bottom:16px; border-bottom:1px solid var(--line); }
+.od-col-left .od-section:last-child{ padding-bottom:0; margin-bottom:0; border-bottom:none; }
+.od-col-right .od-section:last-child{ padding-bottom:0; margin-bottom:0; border-bottom:none; }
+
+.od-label{
+    font-size:11px; font-weight:700; text-transform:uppercase;
+    letter-spacing:.06em; color:var(--muted); margin-bottom:12px;
+    display:flex; align-items:center; gap:6px;
+}
+
+.od-info-grid{ display:flex; flex-direction:column; gap:11px; }
+.od-info-grid dt{ font-size:11px; color:var(--muted); font-weight:500; margin-bottom:1px; }
+.od-info-grid dd{ font-size:13.5px; color:var(--ink); margin:0; }
+.od-info-grid dd a{ color:var(--muted-strong); text-decoration:none; }
+.od-info-grid dd a:hover{ color:var(--accent); text-decoration:underline; }
+
+.od-order-count{
+    display:inline-flex; align-items:center; margin-top:2px;
+    font-size:11.5px; color:var(--accent-dark); font-weight:600;
+    background:var(--accent-soft); padding:4px 10px; border-radius:999px;
+}
+.od-empty{ font-size:13px; color:var(--muted); font-style:italic; }
+
+/* Payment placeholder — styled like a genuine "coming soon" info card,
+   not dead whitespace, so the left column stays visually full. */
+.od-payment-section .od-label{ margin-bottom:10px; }
+.od-payment-placeholder{
+    display:flex;
+    align-items:flex-start;
+    gap:10px;
+    background:var(--panel);
+    border:1px dashed var(--faint);
+    border-radius:8px;
+    padding:12px;
+}
+.od-payment-placeholder .od-payment-icon{
+    width:28px; height:28px;
+    border-radius:8px;
+    background:var(--accent-soft);
+    color:var(--accent);
+    display:flex; align-items:center; justify-content:center;
+    flex-shrink:0;
+}
+.od-payment-placeholder .od-payment-icon svg{ width:15px; height:15px; }
+.od-payment-placeholder-text{ font-size:12.5px; color:var(--muted-strong); line-height:1.45; }
+.od-payment-placeholder-text strong{ display:block; color:var(--ink); font-size:13px; font-weight:600; margin-bottom:2px; }
+
+.od-items-block{ background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:14px 16px; }
+.od-items-wrap{ max-height:280px; overflow-y:auto; }
+.od-items-table{ width:100%; border-collapse:collapse; table-layout:fixed; }
+.od-items-table col.col-product{ width:auto; }
+.od-items-table col.col-num{ width:64px; }
+.od-items-table thead th{
+    position:sticky; top:0; background:var(--canvas);
+    text-align:left; font-size:10.5px; text-transform:uppercase; letter-spacing:.03em;
+    color:var(--muted); font-weight:600; padding:0 6px 8px 0;
+    border-bottom:1px solid var(--line);
+}
+.od-items-table tbody td{
+    padding:10px 6px 10px 0; font-size:13px; color:var(--ink);
+    border-bottom:1px solid var(--line); vertical-align:middle;
+}
+.od-items-table tbody tr:last-child td{ border-bottom:none; }
+.od-items-table td.num, .od-items-table th.num{ text-align:right; padding-right:0; }
+.od-product-cell{ display:flex; align-items:center; gap:8px; min-width:0; }
+.od-product-cell span{ overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.od-thumb{ width:30px; height:30px; border-radius:6px; object-fit:cover; background:var(--faint); flex-shrink:0; }
+.od-thumb-placeholder{
+    width:30px; height:30px; border-radius:6px; background:var(--faint);
+    display:flex; align-items:center; justify-content:center; font-size:13px; flex-shrink:0;
+}
+
+.od-total-row{
+    display:flex; justify-content:space-between; align-items:center;
+    margin-top:14px; padding-top:14px; border-top:1px solid var(--line);
+}
+.od-total-label{ font-size:13px; color:var(--muted); }
+.od-total-value{ font-size:19px; font-weight:700; color:var(--accent); }
+
+/* Skeleton loading state */
+.od-skel{ background:var(--faint); border-radius:6px; animation:od-pulse 1.2s ease-in-out infinite; }
+.od-skel-line{ height:12px; margin-bottom:8px; }
+@keyframes od-pulse{ 0%,100%{ opacity:1; } 50%{ opacity:.4; } }
+
+/* Give the modal a bit more width for two columns */
+#viewModal .modal-dialog{ max-width:820px; }
+
+        .row-actions{ display:flex; gap:6px; align-items:center; }
+        .status-select{
+            height:32px;
+            border:1px solid var(--line);
+            border-radius:8px;
+            background:var(--panel) url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='6'><path d='M0 0l5 6 5-6z' fill='%23948078'/></svg>") no-repeat right 10px center;
+            background-size:9px 5px;
+            -webkit-appearance:none;
+            -moz-appearance:none;
+            appearance:none;
+            padding:0 26px 0 10px;
+            font-size:12.5px;
+            font-weight:600;
+            color:var(--ink);
+            cursor:pointer;
+            outline:none;
+            transition:border-color .15s ease, opacity .15s ease;
+        }
+        .status-select:hover{ border-color:var(--accent); }
+        .status-select:focus{ border-color:var(--accent); box-shadow:0 0 0 3px var(--accent-soft); }
+        .status-select:disabled{ opacity:.6; cursor:not-allowed; }
+        .icon-btn{
+            width:32px; height:32px;
+            border-radius:8px;
+            border:1px solid var(--line);
+            background:var(--panel);
+            display:inline-flex;
+            align-items:center;
+            justify-content:center;
+            cursor:pointer;
+            font-size:13px;
+            color:var(--ink);
+            transition:background .15s ease, border-color .15s ease;
+        }
+        .icon-btn:hover{ background:var(--accent-soft); border-color:var(--faint); }
+        .icon-btn.danger:hover{ background:var(--bad-soft); border-color:#F0B8B4; }
+        .icon-btn:disabled{
+            opacity:.4;
+            cursor:not-allowed;
+            background:var(--panel) !important;
+            border-color:var(--line) !important;
+        }
+
+        /* ── DataTables footer (length / info / pagination) ── */
+        .dataTables_wrapper > .d-flex{
+            border-top:1px solid var(--line);
+            margin:10px -8px -8px -8px !important;
+            padding:16px 16px 14px !important;
+            background:var(--canvas);
+            border-radius:0 0 var(--radius) var(--radius);
+        }
+        .dataTables_wrapper .dataTables_length{
+            display:flex;
+            align-items:center;
+            gap:6px;
+            color:var(--muted);
+            font-size:12.5px;
+            padding:0 !important;
+            margin:0;
+        }
+        .dataTables_wrapper .dataTables_length select{
+            -webkit-appearance:none;
+            -moz-appearance:none;
+            appearance:none;
+            border:1px solid var(--line);
+            border-radius:7px;
+            padding:5px 24px 5px 9px;
+            font-size:12.5px;
+            color:var(--ink);
+            background:var(--panel) url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='6'><path d='M0 0l5 6 5-6z' fill='%237480A0'/></svg>") no-repeat right 9px center;
+            background-size:9px 5px;
+            cursor:pointer;
+            outline:none;
+        }
+        .dataTables_wrapper .dataTables_length select:focus{ border-color:var(--accent); }
+        .dataTables_wrapper .dataTables_info{
+            color:var(--muted);
+            font-size:12.5px;
+            padding:0 !important;
+            margin:0;
+            white-space:nowrap;
+        }
+        .dataTables_wrapper .dataTables_paginate{
+            padding:0 !important;
+            margin:0;
+            display:flex !important;
+            gap:6px;
+            flex-wrap:wrap;
+        }
+        .dataTables_wrapper .dataTables_paginate .pagination{
+            display:flex;
+            gap:6px;
+            margin:0;
+            padding:0;
+            list-style:none;
+        }
+        .dataTables_wrapper .dataTables_paginate li.paginate_button,
+        .dataTables_wrapper .dataTables_paginate .page-item{
+            margin:0;
+            padding:0;
+            border:none !important;
+            background:transparent;
+        }
+        .dataTables_wrapper .dataTables_paginate a.paginate_button,
+        .dataTables_wrapper .dataTables_paginate .page-link{
+            min-width:32px;
+            height:32px;
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            border-radius:8px !important;
+            border:1px solid var(--line) !important;
+            color:var(--ink) !important;
+            font-size:12.5px;
+            font-weight:500;
+            padding:0 8px !important;
+            background:var(--panel);
+        }
+        .dataTables_wrapper .dataTables_paginate a.paginate_button:focus,
+        .dataTables_wrapper .dataTables_paginate a.paginate_button:active{
+            outline:none !important;
+            box-shadow:0 0 0 3px var(--accent-soft) !important;
+            background:var(--panel) !important;
+            color:var(--ink) !important;
+        }
+        .dataTables_wrapper .dataTables_paginate li.paginate_button.current a.paginate_button,
+        .dataTables_wrapper .dataTables_paginate .page-item.active .page-link{
+            background:var(--accent) !important;
+            color:#fff !important;
+            border-color:var(--accent) !important;
+            font-weight:600 !important;
+        }
+        .dataTables_wrapper .dataTables_paginate a.paginate_button:hover:not(.disabled),
+        .dataTables_wrapper .dataTables_paginate .page-link:hover{
+            background:var(--accent-soft) !important;
+            border-color:var(--faint) !important;
+            color:var(--accent) !important;
+        }
+        .dataTables_wrapper .dataTables_paginate li.paginate_button.disabled a.paginate_button,
+        .dataTables_wrapper .dataTables_paginate .page-item.disabled .page-link{
+            color:var(--faint) !important;
+            border-color:var(--line) !important;
+            background:var(--canvas) !important;
+            cursor:not-allowed;
+            box-shadow:none !important;
+            font-weight:500 !important;
+        }
+        .dataTables_wrapper .dataTables_paginate li.paginate_button.disabled a.paginate_button:hover{
+            background:var(--panel) !important;
+            border-color:var(--line) !important;
+            color:var(--faint) !important;
+        }
+
+        /* ── Modal ───────────────────────────────── */
+        .modal-content{
+            border:none;
+            border-radius:18px;
+            overflow:hidden;
+        }
+        .modal-header{
+            border-bottom:1px solid var(--line);
+            padding:20px 24px;
+        }
+        .modal-title{ font-weight:700; font-size:16px; color:var(--ink); }
+        .modal-body{ padding:22px 24px; }
+        .modal-footer{
+            border-top:1px solid var(--line);
+            padding:16px 24px;
+        }
+        .modal-body label,
+        .modal-body .form-label{
+            font-size:12.5px;
+            font-weight:600;
+            color:var(--muted);
+            margin-bottom:6px;
+            display:block;
+        }
+        .form-control, .form-select{
+            border:1px solid var(--line);
+            border-radius:10px;
+            padding:9px 12px;
+            font-size:13.5px;
+            color:var(--ink);
+        }
+        .form-control:focus, .form-select:focus{
+            border-color:var(--accent);
+            box-shadow:0 0 0 3px var(--accent-soft);
+        }
+        .form-text{ color:var(--muted); font-size:12px; }
+
+        #order-meta p{ font-size:13.5px; color:var(--ink); }
+        #order-meta strong{ color:var(--muted-strong); font-weight:600; }
+        .modal-body table.table-bordered{
+            border:1px solid var(--line);
+        }
+        .modal-body table.table-bordered th,
+        .modal-body table.table-bordered td{
+            border-color:var(--line) !important;
+            font-size:13px;
+        }
+        .modal-body table.table-bordered thead th{
+            background:var(--canvas);
+            color:var(--muted-strong);
+            font-weight:600;
+            font-size:11.5px;
+            text-transform:uppercase;
+            letter-spacing:.03em;
+        }
+        #order-total{ color:var(--accent); font-size:15px; margin-top:10px; }
+
+        .btn-secondary{
+            background:transparent;
+            border:1px solid var(--line);
+            color:var(--ink);
+            border-radius:10px;
+            font-size:13px;
+            font-weight:500;
+            padding:9px 16px;
+        }
+        .btn-secondary:hover{ background:var(--canvas); color:var(--ink); border-color:var(--line); }
+        .btn-primary{
+            background:var(--accent);
+            border:none;
+            border-radius:10px;
+            font-size:13px;
+            font-weight:600;
+            padding:9px 18px;
+        }
+        .btn-primary:hover{ background:var(--accent-dark); }
+        .btn-danger{
+            background:var(--bad);
+            border:none;
+            border-radius:10px;
+            font-size:13px;
+            font-weight:600;
+            padding:9px 18px;
+        }
+        .btn-danger:hover{ background:#B93A32; }
+        .btn-danger:disabled, .btn-primary:disabled{ opacity:.7; }
+
+        @media (max-width:720px){
+            .stats{ grid-template-columns:repeat(2,1fr); }
+            .panel-head{ flex-direction:column; align-items:stretch; }
+            .panel-head-right{ margin-left:0; width:100%; }
+            .search-box{ flex:1; }
+            .search-box input{ width:100%; }
+            .dataTables_wrapper > .d-flex{ flex-direction:column; gap:12px; align-items:flex-start !important; }
+            .od-body-grid{ grid-template-columns:1fr; }
+        }
     </style>
 </head>
 <body>
 
-<nav class="navbar navbar-dark px-4 py-3 mb-4">
-    <span class="navbar-brand fw-bold fs-5">🛒 Admin — Orders</span>
-    <span id="admin-label" class="text-white-50 small"></span>
-</nav>
+<div class="topnav">
+    <div class="topnav-inner">
+        <div class="brand">
+            <span class="brand-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="10"/>
+                    <line x1="14.31" y1="8" x2="20.05" y2="17.94"/>
+                    <line x1="9.69" y1="8" x2="21.17" y2="8"/>
+                    <line x1="7.38" y1="12" x2="13.12" y2="2.06"/>
+                    <line x1="9.69" y1="16" x2="3.95" y2="6.06"/>
+                    <line x1="14.31" y1="16" x2="2.83" y2="16"/>
+                    <line x1="16.62" y1="12" x2="10.88" y2="21.94"/>
+                </svg>
+            </span>
+            Store Admin
+        </div>
+        <div class="topnav-links">
+            <a href="/">Home</a>
+            <a href="/users">Users</a>
+            <a href="/orders" class="active">Orders</a>
+            <a href="/products">Products</a>
+            <a href="#" id="btnLogout">Logout</a>
+        </div>
+    </div>
+</div>
 
-<div class="container-fluid px-4">
-    <div class="d-flex justify-content-between align-items-center mb-3">
-        <h5 class="mb-0">All Orders</h5>
-        <span id="total-badge" class="badge bg-secondary fs-6">Loading...</span>
+<div class="shell">
+
+    <div class="topbar">
+        <div>
+            <h1>Orders</h1>
+            <p><strong id="statTotal">0</strong> total, proceed to manage them</p>
+        </div>
     </div>
 
-    <div class="table-responsive">
-        <table id="ordersTable" class="table table-hover align-middle w-100">
-            <thead class="table-dark">
+    <div class="stats">
+        <div class="stat-card">
+            <div class="stat-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+            </div>
+            <div>
+                <div class="num" id="statCount">—</div>
+                <div class="label">Orders</div>
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+            </div>
+            <div>
+                <div class="num" id="statRevenue">—</div>
+                <div class="label">Total revenue</div>
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+            </div>
+            <div>
+                <div class="num" id="statConfirmed">—</div>
+                <div class="label">Confirmed</div>
+            </div>
+        </div>
+        <div class="stat-card" id="pendingCard">
+            <div class="stat-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            </div>
+            <div>
+                <div class="num" id="statPending">—</div>
+                <div class="label">Pending</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="panel">
+        <div class="panel-head">
+            <h2>All orders</h2>
+            <div class="panel-head-right">
+                <select id="statusFilter" class="filter-select">
+                    <option value="">All statuses</option>
+                    <option value="pending">Pending</option>
+                    <option value="confirmed">Confirmed</option>
+                    <option value="processing">Processing</option>
+                    <option value="shipped">Shipped</option>
+                    <option value="delivered">Delivered</option>
+                    <option value="cancelled">Cancelled</option>
+                    <option value="refunded">Refunded</option>
+                </select>
+                <div class="search-box">
+                    <input type="text" id="customSearch" placeholder="Search orders...">
+                </div>
+            </div>
+        </div>
+
+        <table id="ordersTable" class="table" style="width:100%">
+            <thead>
                 <tr>
                     <th>Order ID</th>
                     <th>User ID</th>
                     <th>Total Amount</th>
                     <th>Status</th>
                     <th>Date</th>
-                    <th>Actions</th>
+                    <th></th>
                 </tr>
             </thead>
             <tbody></tbody>
@@ -53,55 +800,11 @@
                 <h5 class="modal-title">Order Details</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
-            <div class="modal-body">
-                <div id="order-meta" class="mb-3"></div>
-                <table class="table table-bordered table-sm">
-                    <thead class="table-secondary">
-                        <tr>
-                            <th>Product</th>
-                            <th>Price</th>
-                            <th>Qty</th>
-                            <th>Subtotal</th>
-                        </tr>
-                    </thead>
-                    <tbody id="order-items-body"></tbody>
-                </table>
-                <div id="order-total" class="text-end fw-bold"></div>
+            <div class="modal-body" id="order-details-body">
+                <div id="order-meta"></div>
             </div>
             <div class="modal-footer">
                 <button class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Update Status Modal -->
-<div class="modal fade" id="statusModal" tabindex="-1">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Update Order Status</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-                <input type="hidden" id="status-order-id">
-                <div class="mb-3">
-                    <label class="form-label fw-semibold">Select Status</label>
-                    <select id="status-select" class="form-select">
-                        <option value="pending">Pending</option>
-                        <option value="confirmed">Confirmed</option>
-                        <option value="cancelled">Cancelled</option>
-                    </select>
-                </div>
-                <div class="mb-3">
-                    <label class="form-label fw-semibold">Customer Email <span class="text-muted fw-normal">(receipt will be sent here)</span></label>
-                    <input type="email" id="status-email" class="form-control" placeholder="customer@email.com">
-                    <div class="form-text">Leave blank to skip sending email.</div>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                <button class="btn btn-primary" id="btnSaveStatus">Save</button>
             </div>
         </div>
     </div>
@@ -112,7 +815,7 @@
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title text-danger">Delete Order</h5>
+                <h5 class="modal-title" style="color:var(--bad)">Delete Order</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
@@ -126,23 +829,76 @@
     </div>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
 <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
 
 <script>
-    const API = 'http://localhost:5000/api';
+    const API = '/api';
     const token = localStorage.getItem('token');
     let deleteTargetId = null;
     let ordersTable;
+    let currentData = [];
+    const UPLOADS_URL = '/uploads/';
+    let currentViewOrder = null; 
 
-    const statusBadge = (status) => {
-        const cls = { pending: 'badge-pending', confirmed: 'badge-confirmed', cancelled: 'badge-cancelled' };
-        return `<span class="badge ${cls[status] || 'bg-secondary'}">${status}</span>`;
+    // Full order-lifecycle status set, shared by the row dropdown and the filter
+    const ORDER_STATUSES = [
+        { value: 'pending', label: 'Pending' },
+        { value: 'confirmed', label: 'Confirmed' },
+        { value: 'processing', label: 'Processing' },
+        { value: 'shipped', label: 'Shipped' },
+        { value: 'delivered', label: 'Delivered' },
+        { value: 'cancelled', label: 'Cancelled' },
+        { value: 'refunded', label: 'Refunded' }
+    ];
+
+    // Standardized status pill — mirrors the products page's stock pill pattern
+    const statusPill = (status) => {
+        const cls = {
+            pending: 'pill-warn',
+            confirmed: 'pill-good',
+            processing: 'pill-accent',
+            shipped: 'pill-violet',
+            delivered: 'pill-good',
+            cancelled: 'pill-bad',
+            refunded: 'pill-bad'
+        };
+        return `<span class="pill ${cls[status] || 'pill-warn'}"><span class="pill-dot"></span>${status}</span>`;
     };
 
     const formatCurrency = (val) => '₱' + parseFloat(val).toLocaleString('en-PH', { minimumFractionDigits: 2 });
+
+    // ── Logout ───────────────────────────────────────────────────
+    $('#btnLogout').click(function (e) {
+        e.preventDefault();
+        $.ajax({
+            url: '/api/auth/logout',
+            method: 'POST',
+            headers: { 'Authorization': 'Bearer ' + token },
+            complete: function () {
+                localStorage.removeItem('token');
+                localStorage.removeItem('user');
+                window.location.href = '/login';
+            }
+        });
+    });
+
+    function updateStats(data) {
+        const total = data.length;
+        const revenue = data.reduce((sum, o) => sum + (parseFloat(o.total_amount) || 0), 0);
+        const confirmed = data.filter(o => o.status === 'confirmed').length;
+        const pending = data.filter(o => o.status === 'pending').length;
+
+        $('#statTotal').text(total);
+        $('#statCount').text(total);
+        $('#statRevenue').text(formatCurrency(revenue));
+        $('#statConfirmed').text(confirmed);
+        $('#statPending').text(pending);
+
+        $('#pendingCard').toggleClass('is-alert', pending > 0);
+    }
 
     // ── Load all orders ──────────────────────────────────────────
     function loadOrders() {
@@ -151,18 +907,27 @@
             method: 'GET',
             headers: { 'Authorization': 'Bearer ' + token },
             success: function (data) {
-                $('#total-badge').text(`${data.length} Orders`);
+                currentData = data;
+                updateStats(data);
+
                 ordersTable.clear();
                 data.forEach(order => {
                     ordersTable.row.add([
-                        `#${order.id}`,
-                        order.user_id,
-                        formatCurrency(order.total_amount),
-                        statusBadge(order.status),
-                        new Date(order.created_at).toLocaleString(),
-                        `<button class="btn btn-sm btn-info me-1" onclick="viewOrder(${order.id})">View</button>
-                        <button class="btn btn-sm btn-warning me-1" onclick="openStatusModal(${order.id}, '${order.status}')">Status</button>
-                        <button class="btn btn-sm btn-danger" onclick="openDeleteModal(${order.id})">Delete</button>`
+                        `<span class="order-id">#${order.id}</span>`,
+                        `<span class="order-user">${order.user_id}</span>`,
+                        `<span class="order-total">${formatCurrency(order.total_amount)}</span>`,
+                        statusPill(order.status),
+                        `<span class="order-date">${new Date(order.created_at).toLocaleString()}</span>`,
+                        `<div class="row-actions">
+                            <button class="icon-btn" title="View" onclick="viewOrder(${order.id})">👁</button>
+                            <select class="status-select" data-id="${order.id}" title="Update status" onchange="handleStatusChange(this)">
+                                ${ORDER_STATUSES.map(s => `<option value="${s.value}" ${order.status === s.value ? 'selected' : ''}>${s.label}</option>`).join('')}
+                            </select>
+                            ${order.status === 'cancelled'
+                                ? `<button class="icon-btn danger" title="Delete" onclick="openDeleteModal(${order.id})">🗑</button>`
+                                : `<button class="icon-btn danger" title="Only cancelled orders can be deleted" disabled>🗑</button>`
+                            }
+                        </div>`
                     ]);
                 });
                 ordersTable.draw();
@@ -170,78 +935,207 @@
         });
     }
 
-    // ── View order items ─────────────────────────────────────────
+    // ── View order details ─────────────────────────────────────────
     function viewOrder(id) {
-         $.ajax({
+        $('#order-details-body').html(`
+            <div class="od-header">
+                <div>
+                    <div class="od-skel od-skel-line" style="width:100px;height:18px;"></div>
+                    <div class="od-skel od-skel-line" style="width:150px;margin-top:6px;"></div>
+                </div>
+                <div class="od-skel" style="width:70px;height:24px;border-radius:999px;"></div>
+            </div>
+            <div class="od-body-grid">
+                <div class="od-skel" style="height:180px;border-radius:10px;"></div>
+                <div class="od-skel" style="height:180px;border-radius:10px;"></div>
+            </div>
+        `);
+        new bootstrap.Modal(document.getElementById('viewModal')).show();
+
+        $.ajax({
             url: `${API}/orders/${id}`,
             method: 'GET',
             headers: { 'Authorization': 'Bearer ' + token },
             success: function (data) {
-                $('#order-meta').html(`
-                    <p class="mb-1"><strong>Order ID:</strong> #${data.id}</p>
-                    <p class="mb-1"><strong>User ID:</strong> ${data.user_id}</p>
-                    <p class="mb-1"><strong>Status:</strong> ${statusBadge(data.status)}</p>
-                    <p class="mb-1"><strong>Date:</strong> ${new Date(data.created_at).toLocaleString()}</p>
-                `);
+                currentViewOrder = data;
+
+                const c = data.customer;
+                const addressParts = c
+                    ? [c.address_line1, c.address_line2, c.city, c.province, c.zip_code, c.country].filter(Boolean).join(', ')
+                    : '';
+
+                // Payment status is NOT in the database yet — this pill is a visual-only
+                // placeholder, styled neutral/gray so it never competes with the real order-status pill.
+                const paymentPillMap = {
+                    confirmed: { label: 'Paid' },
+                    pending: { label: 'Unpaid' },
+                    cancelled: { label: 'Refunded' }
+                };
+                const pay = paymentPillMap[data.status] || paymentPillMap.pending;
+                const paymentPillHtml = `<span class="pill pill-neutral"><span class="pill-dot"></span>${pay.label}</span>`;
+
+                const customerHtml = c ? `
+                    <div class="od-section">
+                        <div class="od-label">Customer Information</div>
+                        <dl class="od-info-grid">
+                            <div><dt>Name</dt><dd><strong>${c.name || 'Unknown'}</strong></dd></div>
+                            <div><dt>Email</dt><dd>${c.email ? `<a href="mailto:${c.email}">${c.email}</a>` : '—'}</dd></div>
+                            <div><dt>Phone</dt><dd>${c.phone ? `<a href="tel:${c.phone}">${c.phone}</a>` : '—'}</dd></div>
+                            <div><dt>Address</dt><dd>${addressParts || 'No address on file'}</dd></div>
+                        </dl>
+                        ${data.customerOrderCount ? `<div class="od-order-count" style="margin-top:12px;">${data.customerOrderCount} order${data.customerOrderCount === 1 ? '' : 's'} from this customer</div>` : ''}
+                    </div>
+                ` : `
+                    <div class="od-section">
+                        <div class="od-label">Customer Information</div>
+                        <div class="od-empty">This customer's account no longer exists.</div>
+                    </div>
+                `;
+
+                // Payment Information placeholder — a real "coming soon" card (icon + copy)
+                // instead of a single italic line, so the left column doesn't trail off into
+                // empty space. Swap this block for real fields once the DB supports payments.
+                const paymentHtml = `
+                    <div class="od-section od-payment-section">
+                        <div class="od-label">Payment Information</div>
+                        <div class="od-payment-placeholder">
+                            <span class="od-payment-icon">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <rect x="1" y="4" width="22" height="16" rx="2"/>
+                                    <line x1="1" y1="10" x2="23" y2="10"/>
+                                </svg>
+                            </span>
+                            <div class="od-payment-placeholder-text">
+                                <strong>Coming soon</strong>
+                                Payment method and transaction details will appear here once payment tracking is added.
+                            </div>
+                        </div>
+                    </div>
+                `;
 
                 let rows = '';
-                data.items.forEach(item => {
-                    rows += `<tr>
-                        <td>${item.name}</td>
-                        <td>${formatCurrency(item.price)}</td>
-                        <td>${item.quantity}</td>
-                        <td>${formatCurrency(item.subtotal)}</td>
-                    </tr>`;
-                });
+                if (data.items && data.items.length) {
+                    data.items.forEach(item => {
+                        rows += `<tr>
+                            <td><div class="od-product-cell">${item.image ? `<img class="od-thumb" src="${UPLOADS_URL}${item.image}" onerror="this.outerHTML='<div class=&quot;od-thumb-placeholder&quot;>&#128247;</div>'">` : `<div class="od-thumb-placeholder">&#128247;</div>`}<span>${item.name}</span></div></td>
+                            <td class="num">${formatCurrency(item.price)}</td>
+                            <td class="num">${item.quantity}</td>
+                            <td class="num">${formatCurrency(item.subtotal)}</td>
+                        </tr>`;
+                    });
+                }
 
-                $('#order-items-body').html(rows);
-                $('#order-total').text('Total: ' + formatCurrency(data.total_amount));
-                new bootstrap.Modal(document.getElementById('viewModal')).show();
+                const itemsHtml = data.items && data.items.length ? `
+                    <div class="od-section">
+                        <div class="od-label">Product Details</div>
+                        <div class="od-items-block">
+                            <div class="od-items-wrap">
+                                <table class="od-items-table">
+                                    <colgroup>
+                                        <col class="col-product">
+                                        <col class="col-num"><col class="col-num"><col class="col-num">
+                                    </colgroup>
+                                    <thead>
+                                        <tr>
+                                            <th>Product</th>
+                                            <th class="num">Price</th>
+                                            <th class="num">Qty</th>
+                                            <th class="num">Subtotal</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>${rows}</tbody>
+                                </table>
+                            </div>
+                            <div class="od-total-row">
+                                <span class="od-total-label">Total</span>
+                                <span class="od-total-value">${formatCurrency(data.total_amount)}</span>
+                            </div>
+                        </div>
+                    </div>
+                ` : `
+                    <div class="od-section">
+                        <div class="od-label">Product Details</div>
+                        <div class="od-empty">No items found on this order.</div>
+                    </div>
+                `;
+
+                $('#order-details-body').html(`
+                    <div class="od-header">
+                        <div>
+                            <div class="od-id">Order #${data.id}</div>
+                            <div class="od-date">${new Date(data.created_at).toLocaleString()}</div>
+                        </div>
+                        <div class="od-pills">
+                            ${statusPill(data.status)}
+                            ${paymentPillHtml}
+                        </div>
+                    </div>
+                    <div class="od-body-grid">
+                        <div class="od-col-left">
+                            ${customerHtml}
+                            ${paymentHtml}
+                        </div>
+                        <div class="od-col-right">
+                            ${itemsHtml}
+                        </div>
+                    </div>
+                `);
             },
             error: function () {
-                alert('Failed to load order details.');
+                $('#order-details-body').html(`<div class="od-empty">Failed to load order details.</div>`);
             }
         });
     }
 
-    // ── Open status modal ────────────────────────────────────────
-    function openStatusModal(id, currentStatus) {
-        $('#status-order-id').val(id);
-        $('#status-select').val(currentStatus);
-        $('#status-email').val('');
-        new bootstrap.Modal(document.getElementById('statusModal')).show();
-    }
+    // ── Update status directly from the row dropdown ────────────────
+    // No manual email entry — the receipt is automatically sent to whatever
+    // email address the customer registered with, looked up from the order.
+    function handleStatusChange(selectEl) {
+        const $select = $(selectEl);
+        const id = $select.data('id');
+        const status = selectEl.value;
 
-    // ── Save status + send email ─────────────────────────────────
-    $(document).on('click', '#btnSaveStatus', function () {
-        const id    = $('#status-order-id').val();
-        const status = $('#status-select').val();
-        const email  = $('#status-email').val().trim();
+        $select.prop('disabled', true);
 
-        $('#btnSaveStatus').prop('disabled', true).text('Saving...');
-
+        // Look up the order's customer to get their registered email automatically
         $.ajax({
-            url: `${API}/orders/${id}/status`,
-            method: 'PUT',
+            url: `${API}/orders/${id}`,
+            method: 'GET',
             headers: { 'Authorization': 'Bearer ' + token },
-            contentType: 'application/json',
-            data: JSON.stringify({ status, email }),
-            success: function (res) {
-                bootstrap.Modal.getInstance(document.getElementById('statusModal')).hide();
-                alert(res.message);
+            success: function (order) {
+                const email = (order.customer && order.customer.email) ? order.customer.email : '';
+
+                $.ajax({
+                    url: `${API}/orders/${id}/status`,
+                    method: 'PUT',
+                    headers: { 'Authorization': 'Bearer ' + token },
+                    contentType: 'application/json',
+                    data: JSON.stringify({ status, email }),
+                    success: function () {
+                        loadOrders();
+                    },
+                    error: function (xhr) {
+                        alert('Failed: ' + (xhr.responseJSON?.error || xhr.responseJSON?.message || 'Unknown error'));
+                        loadOrders();
+                    }
+                });
+            },
+            error: function () {
+                alert('Could not look up this customer\'s email.');
                 loadOrders();
-            },
-            error: function (xhr) {
-                alert('Failed: ' + (xhr.responseJSON?.error || xhr.responseJSON?.message || 'Unknown error'));
-            },
-            complete: function () {
-                $('#btnSaveStatus').prop('disabled', false).text('Save');
             }
         });
-    });
+    }
 
     // ── Open delete modal ────────────────────────────────────────
     function openDeleteModal(id) {
+        // Backstop in case this is ever triggered outside the disabled button —
+        // only cancelled orders can be deleted.
+        const order = currentData.find(o => o.id === id);
+        if (order && order.status !== 'cancelled') {
+            alert('Only cancelled orders can be deleted. Cancel this order first.');
+            return;
+        }
         deleteTargetId = id;
         $('#delete-order-label').text(`Order #${id}`);
         new bootstrap.Modal(document.getElementById('deleteModal')).show();
@@ -268,19 +1162,39 @@
         });
     });
 
+    // ── Status filter (same pattern as products' category/stock filters) ──
+    $.fn.dataTable.ext.search.push(function (settings, data, dataIndex) {
+        if (settings.nTable.id !== 'ordersTable') return true;
+        const row = currentData[dataIndex];
+        if (!row) return true;
+        const statusVal = $('#statusFilter').val();
+        if (statusVal && row.status !== statusVal) return false;
+        return true;
+    });
+
+    $('#statusFilter').on('change', function () {
+        ordersTable.draw();
+    });
+
     // ── Init DataTable ───────────────────────────────────────────
     $(document).ready(function () {
         ordersTable = $('#ordersTable').DataTable({
+            dom: 'rt<"d-flex justify-content-between align-items-center"lip>',
             columns: [
                 { title: 'Order ID' },
                 { title: 'User ID' },
                 { title: 'Total Amount' },
-                { title: 'Status' },
+                { title: 'Status', orderable: false },
                 { title: 'Date' },
-                { title: 'Actions', orderable: false }
+                { title: '', orderable: false }
             ],
             order: [[0, 'desc']],
             pageLength: 10
+        });
+
+        // Wire up custom search box to DataTables search
+        $('#customSearch').on('keyup', function () {
+            ordersTable.search(this.value).draw();
         });
 
         loadOrders();

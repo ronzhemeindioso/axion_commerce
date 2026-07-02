@@ -1,6 +1,17 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <script>
+        // If a valid session already exists, don't show the login form —
+        // send the user straight to where they belong.
+        (function () {
+            var token = localStorage.getItem('token');
+            var user = JSON.parse(localStorage.getItem('user') || 'null');
+            if (token && user) {
+                window.location.replace(user.role === 'admin' ? '/products' : '/shop');
+            }
+        })();
+    </script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login — Aperture</title>
@@ -412,7 +423,7 @@
         btn.disabled = true;
 
         try {
-            const res = await fetch('http://localhost:5000/api/auth/login', {
+            const res = await fetch('/api/auth/login', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ email, password })
@@ -423,7 +434,7 @@
             if (res.ok) {
                 if (data.token) localStorage.setItem('token', data.token);
                 if (data.user)  localStorage.setItem('user', JSON.stringify(data.user));
-                window.location.href = '/products';
+                window.location.href = (data.user && data.user.role === 'admin') ? '/products' : '/shop';
             } else {
                 errorTxt.textContent = data.message || 'Invalid email or password.';
                 errorMsg.classList.remove('hidden');

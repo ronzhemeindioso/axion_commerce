@@ -1,6 +1,17 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <script>
+        // If a valid session already exists, don't show the register form —
+        // send the user straight to where they belong.
+        (function () {
+            var token = localStorage.getItem('token');
+            var user = JSON.parse(localStorage.getItem('user') || 'null');
+            if (token && user) {
+                window.location.replace(user.role === 'admin' ? '/products' : '/shop');
+            }
+        })();
+    </script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Register — Aperture</title>
@@ -423,7 +434,7 @@
         btn.disabled = true;
 
         try {
-            const res = await fetch('http://localhost:5000/api/auth/register', {
+            const res = await fetch('/api/auth/register', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ firstName, lastName, email, password })

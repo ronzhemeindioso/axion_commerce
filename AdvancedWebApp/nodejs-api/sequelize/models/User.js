@@ -22,7 +22,7 @@ const User = sequelize.define('User', {
     },
     role: {
         type: DataTypes.STRING,
-        defaultValue: 'customer'
+        defaultValue: 'user'
     },
     is_active: {
         type: DataTypes.BOOLEAN,

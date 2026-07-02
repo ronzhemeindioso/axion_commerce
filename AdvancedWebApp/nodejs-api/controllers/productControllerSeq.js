@@ -12,8 +12,32 @@ const storage = multer.diskStorage({
     }
 });
 
-const upload = multer({ storage });
+const MAX_IMAGE_BYTES = 2 * 1024 * 1024; // 2MB
+
+const upload = multer({
+    storage,
+    limits: { fileSize: MAX_IMAGE_BYTES },
+    fileFilter: (req, file, cb) => {
+        if (!file.mimetype.startsWith('image/')) {
+            return cb(new Error('Only image files are allowed'));
+        }
+        cb(null, true);
+    }
+});
 exports.upload = upload;
+
+// Handles multer errors (e.g. file too large) with a friendly message
+exports.handleUploadError = (err, req, res, next) => {
+    if (err instanceof multer.MulterError) {
+        if (err.code === 'LIMIT_FILE_SIZE') {
+            return res.status(413).json({ message: 'Photo must be under 2MB.' });
+        }
+        return res.status(400).json({ message: err.message });
+    } else if (err) {
+        return res.status(400).json({ message: err.message });
+    }
+    next();
+};
 
 // GET all products (supports ?page=&limit= for infinite scroll)
 exports.getAll = async (req, res) => {
@@ -67,13 +91,23 @@ exports.create = async (req, res) => {
 // PUT update product
 exports.update = async (req, res) => {
     try {
-        const { name, description, price, stock, category } = req.body;
+        const { name, description, price, stock, category, keepImages } = req.body;
         const product = await Product.findByPk(req.params.id);
         if (!product) return res.status(404).json({ message: 'Product not found' });
 
-        const images = req.files && req.files.length > 0
-            ? req.files.map(f => f.filename).join(',')
-            : product.images;
+        const newFilenames = req.files ? req.files.map(f => f.filename) : [];
+
+        let images;
+        if (typeof keepImages !== 'undefined') {
+            // Client tells us exactly which existing images survived (it may
+            // have removed some individually), so combine those with any
+            // newly uploaded files instead of an all-or-nothing replace.
+            const kept = keepImages ? keepImages.split(',').filter(Boolean) : [];
+            images = kept.concat(newFilenames).join(',');
+        } else {
+            // Backward-compatible fallback for older clients that don't send keepImages
+            images = newFilenames.length > 0 ? newFilenames.join(',') : product.images;
+        }
 
         await product.update({ name, description, price, stock, category, images });
         res.json({ message: 'Product updated successfully' });
