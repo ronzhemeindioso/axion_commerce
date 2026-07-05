@@ -16,9 +16,13 @@ const Order = sequelize.define('Order', {
         defaultValue: 0
     },
     status: {
-        type: DataTypes.ENUM('pending', 'confirmed', 'cancelled'),
+        type: DataTypes.ENUM('pending', 'confirmed', 'processing', 'shipped', 'delivered', 'cancelled', 'refunded', 'return_refund'),
         defaultValue: 'pending'
-    }
+    },
+    tracking_number: {
+        type: DataTypes.STRING,
+        allowNull: true
+    }   
 }, {
     tableName: 'orders',
     timestamps: true,

@@ -17,17 +17,17 @@
     <title>Register — Aperture</title>
     <style>
         :root {
-            --seashell:        #FFF4EB;
+            --seashell:        #FEFBF9;
             --wheat:           #F6E0B6;
-            --powder-blue:     #A6BCC9;
-            --french-blue:     #3E4B8E;
-            --midnight-violet: #3D1534;
+            --powder-blue:     #948078;
+            --french-blue:     #C1745B;
+            --midnight-violet: #A8654E;
         }
 
         * { box-sizing: border-box; margin: 0; padding: 0; }
 
         body {
-            background: #dde4ec;
+            background: #FEFBF9;
             min-height: 100vh;
             font-family: 'Segoe UI', system-ui, sans-serif;
             display: flex;
@@ -39,16 +39,20 @@
         .register-wrapper {
             display: flex;
             width: 820px;
-            min-height: 500px;
+            height: 600px;
+            max-height: 90vh;
             border-radius: 20px;
             overflow: hidden;
-            box-shadow: 0 24px 64px rgba(62,75,142,0.18);
+            box-shadow: 0 24px 64px rgba(193,116,91,0.20);
         }
 
+        /* ── Left panel — same warm terracotta gradient + photo overlay as login ── */
         .left-panel {
             width: 300px;
             flex-shrink: 0;
-            background: var(--french-blue);
+            background:
+                linear-gradient(160deg, rgba(212,139,112,0.86) 0%, rgba(193,116,91,0.88) 55%, rgba(176,106,80,0.92) 100%),
+                url('https://i.pinimg.com/1200x/ea/99/18/ea99181e51b51d36e6b1f4d049614983.jpg') center/cover no-repeat;
             display: flex;
             flex-direction: column;
             justify-content: space-between;
@@ -57,32 +61,12 @@
             overflow: hidden;
         }
 
-        .left-panel::before {
-            content: '';
-            position: absolute;
-            width: 300px; height: 300px;
-            border-radius: 50%;
-            background: rgba(255,255,255,0.05);
-            top: -100px; right: -120px;
-            pointer-events: none;
-        }
-
-        .left-panel::after {
-            content: '';
-            position: absolute;
-            width: 260px; height: 260px;
-            border-radius: 50%;
-            background: rgba(166,188,201,0.08);
-            bottom: -100px; left: -60px;
-            pointer-events: none;
-        }
-
         .brand { position: relative; z-index: 1; }
 
         .brand-name {
             font-size: .75rem;
             font-weight: 700;
-            color: rgba(255,255,255,0.9);
+            color: rgba(255,255,255,0.92);
             letter-spacing: 3px;
             text-transform: uppercase;
         }
@@ -104,14 +88,14 @@
 
         .left-body p {
             font-size: .8rem;
-            color: rgba(166,188,201,0.75);
+            color: rgba(255,244,235,0.82);
             line-height: 1.75;
         }
 
         .left-footer {
             position: relative; z-index: 1;
             font-size: .66rem;
-            color: rgba(255,255,255,0.2);
+            color: rgba(255,255,255,0.32);
             letter-spacing: .4px;
         }
 
@@ -122,6 +106,7 @@
             flex-direction: column;
             justify-content: center;
             padding: 2.8rem 3rem;
+            overflow: hidden;
         }
 
         .form-header { margin-bottom: 2rem; }
@@ -151,18 +136,18 @@
             text-transform: uppercase;
             letter-spacing: .9px;
             color: var(--midnight-violet);
-            opacity: .45;
+            opacity: .55;
             margin-bottom: .4rem;
         }
 
         .field input {
             width: 100%;
             padding: .65rem 1rem;
-            border: 1.5px solid #eceef4;
+            border: 1.5px solid #F8EFEA;
             border-radius: 10px;
             font-size: .875rem;
             color: var(--midnight-violet);
-            background: #fafbfc;
+            background: #FEFBF9;
             outline: none;
             transition: border-color .15s, box-shadow .15s, background .15s;
             font-family: inherit;
@@ -171,17 +156,17 @@
         .field input:focus {
             border-color: var(--french-blue);
             background: #fff;
-            box-shadow: 0 0 0 3px rgba(62,75,142,0.08);
+            box-shadow: 0 0 0 3px rgba(193,116,91,0.10);
         }
 
         .field input::placeholder {
-            color: #c8ccd8;
+            color: #D8B6AA;
             font-size: .85rem;
         }
 
         .field input.error-field {
-            border-color: #f5c2c2;
-            background: #fdf8f8;
+            border-color: #EFC2BE;
+            background: #FBEBEA;
         }
 
         .pw-wrap { position: relative; }
@@ -192,53 +177,42 @@
             right: .9rem;
             top: 50%; transform: translateY(-50%);
             background: none; border: none; cursor: pointer;
-            opacity: .3; padding: 0; line-height: 1;
+            opacity: .4; padding: 0; line-height: 1;
             transition: opacity .13s;
             color: var(--midnight-violet);
         }
-        .toggle-pw:hover { opacity: .6; }
-
-        .strength-bar {
-            display: flex;
-            gap: 4px;
-            margin-top: .45rem;
-        }
-
-        .strength-bar span {
-            flex: 1;
-            height: 3px;
-            border-radius: 2px;
-            background: #eceef4;
-            transition: background .25s;
-        }
-
-        .strength-label {
-            font-size: .67rem;
-            margin-top: .3rem;
-            color: var(--powder-blue);
-            opacity: .7;
-            min-height: 1em;
-        }
+        .toggle-pw:hover { opacity: .7; }
 
         .error-msg {
-            background: #fdf0f0;
-            border: 1px solid #f5c2c2;
+            background: #FBEBEA;
+            border: 1px solid #EFC2BE;
             border-radius: 8px;
-            padding: .55rem .9rem;
-            font-size: .78rem;
-            color: #b83232;
+            padding: .65rem .9rem;
+            font-size: .8rem;
+            font-weight: 600;
+            color: #D6483F;
             margin-bottom: 1rem;
             display: flex;
             align-items: center;
-            gap: .5rem;
+            gap: .55rem;
+            animation: errorShake .35s ease;
         }
         .error-msg.hidden { display: none; }
+        .error-icon { flex-shrink: 0; opacity: .9; }
+
+        @keyframes errorShake {
+            0%   { transform: translateX(0); opacity: 0; }
+            25%  { transform: translateX(-4px); opacity: 1; }
+            50%  { transform: translateX(3px); }
+            75%  { transform: translateX(-2px); }
+            100% { transform: translateX(0); }
+        }
 
         .btn-register {
             width: 100%;
             margin-top: 1.4rem;
             padding: .75rem;
-            background: var(--french-blue);
+            background: linear-gradient(135deg, #C1745B 0%, #A8654E 100%);
             color: #fff;
             border: none;
             border-radius: 10px;
@@ -247,14 +221,15 @@
             cursor: pointer;
             letter-spacing: .3px;
             display: flex; align-items: center; justify-content: center; gap: .5rem;
-            transition: background .15s, transform .12s;
+            transition: box-shadow .2s, transform .12s;
             font-family: inherit;
+            box-shadow: 0 4px 14px rgba(193,116,91,0.28);
         }
         .btn-register:hover {
-            background: var(--midnight-violet);
+            box-shadow: 0 6px 20px rgba(193,116,91,0.38);
             transform: translateY(-1px);
         }
-        .btn-register:active { transform: translateY(0); }
+        .btn-register:active { transform: translateY(0); box-shadow: 0 3px 10px rgba(193,116,91,0.28); }
         .btn-register .arrow { transition: transform .15s; font-style: normal; }
         .btn-register:hover .arrow { transform: translateX(3px); }
 
@@ -265,13 +240,14 @@
             color: var(--powder-blue);
         }
         .login-row a {
-            color: var(--french-blue);
+            color: var(--midnight-violet);
             font-weight: 700;
             text-decoration: none;
             transition: color .13s;
         }
-        .login-row a:hover { color: var(--midnight-violet); }
+        .login-row a:hover { color: var(--french-blue); }
     </style>
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
 </head>
 <body>
 
@@ -300,7 +276,12 @@
         </div>
 
         <div class="error-msg hidden" id="errorMsg">
-            ⚠️ <span id="errorText">Something went wrong.</span>
+            <svg class="error-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"/>
+                <line x1="12" y1="8" x2="12" y2="12"/>
+                <line x1="12" y1="16" x2="12.01" y2="16"/>
+            </svg>
+            <span id="errorText">Something went wrong.</span>
         </div>
 
         <form id="registerForm" novalidate>
@@ -329,10 +310,6 @@
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
                     </button>
                 </div>
-                <div class="strength-bar">
-                    <span id="s1"></span><span id="s2"></span><span id="s3"></span><span id="s4"></span>
-                </div>
-                <div class="strength-label" id="strengthLabel"></div>
             </div>
 
             <div class="field">
@@ -374,89 +351,68 @@
     makeToggle('togglePw', 'password');
     makeToggle('toggleConfirm', 'confirmPassword');
 
-    const strengthColors = ['#f5c2c2', '#f6c26b', '#7bc47b', '#3E4B8E'];
-    const strengthLabels = ['Weak', 'Fair', 'Good', 'Strong'];
-
-    document.getElementById('password').addEventListener('input', function () {
-        const val = this.value;
-        let score = 0;
-        if (val.length >= 8)          score++;
-        if (/[A-Z]/.test(val))        score++;
-        if (/[0-9]/.test(val))        score++;
-        if (/[^A-Za-z0-9]/.test(val)) score++;
-
-        for (let i = 1; i <= 4; i++) {
-            const bar = document.getElementById('s' + i);
-            bar.style.background = i <= score ? strengthColors[score - 1] : '#eceef4';
-        }
-
-        document.getElementById('strengthLabel').textContent = val.length ? strengthLabels[score - 1] || '' : '';
-    });
-
-    document.getElementById('registerForm').addEventListener('submit', async function (e) {
+    $('#registerForm').on('submit', function (e) {
         e.preventDefault();
 
-        const firstName       = document.getElementById('firstName').value.trim();
-        const lastName        = document.getElementById('lastName').value.trim();
-        const email           = document.getElementById('email').value.trim();
-        const password        = document.getElementById('password').value;
-        const confirmPassword = document.getElementById('confirmPassword').value;
-        const errorMsg        = document.getElementById('errorMsg');
-        const errorTxt        = document.getElementById('errorText');
-        const btn             = document.querySelector('.btn-register');
+        const firstName       = $('#firstName').val().trim();
+        const lastName        = $('#lastName').val().trim();
+        const email           = $('#email').val().trim();
+        const password        = $('#password').val();
+        const confirmPassword = $('#confirmPassword').val();
+        const $errorMsg       = $('#errorMsg');
+        const $errorTxt       = $('#errorText');
+        const $btn            = $('.btn-register');
 
         if (!firstName || !lastName || !email || !password || !confirmPassword) {
-            errorTxt.textContent = 'Please fill in all fields.';
-            errorMsg.classList.remove('hidden');
+            $errorTxt.text('Please fill in all fields.');
+            $errorMsg.removeClass('hidden');
             return;
         }
 
         if (!/^[^\s@]+@gmail\.com$/i.test(email)) {
-            errorTxt.textContent = 'Please use a valid Gmail address (e.g. you@gmail.com).';
-            errorMsg.classList.remove('hidden');
+            $errorTxt.text('Please use a valid Gmail address (e.g. you@gmail.com).');
+            $errorMsg.removeClass('hidden');
             return;
         }
 
         if (password !== confirmPassword) {
-            errorTxt.textContent = 'Passwords do not match.';
-            errorMsg.classList.remove('hidden');
+            $errorTxt.text('Passwords do not match.');
+            $errorMsg.removeClass('hidden');
             return;
         }
 
         if (password.length < 8) {
-            errorTxt.textContent = 'Password must be at least 8 characters.';
-            errorMsg.classList.remove('hidden');
+            $errorTxt.text('Password must be at least 8 characters.');
+            $errorMsg.removeClass('hidden');
             return;
         }
 
-        errorMsg.classList.add('hidden');
-        btn.innerHTML = 'Creating account… <em class="arrow">→</em>';
-        btn.disabled = true;
+        $errorMsg.addClass('hidden');
+        $btn.html('Creating account… <em class="arrow">→</em>');
+        $btn.prop('disabled', true);
 
-        try {
-            const res = await fetch('/api/auth/register', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ firstName, lastName, email, password })
-            });
-
-            const data = await res.json();
-
-            if (res.ok) {
-                if (data.token) localStorage.setItem('token', data.token);
-                if (data.user)  localStorage.setItem('user', JSON.stringify(data.user));
-                window.location.href = '/setup-profile';
-            } else {
-                errorTxt.textContent = data.message || 'Registration failed.';
-                errorMsg.classList.remove('hidden');
-            }
-        } catch (err) {
-            errorTxt.textContent = 'Could not connect to server.';
-            errorMsg.classList.remove('hidden');
-        } finally {
-            btn.innerHTML = 'Create Account <em class="arrow">→</em>';
-            btn.disabled = false;
-        }
+        $.ajax({
+            url: '/api/auth/register',
+            method: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify({ firstName, lastName, email, password }),
+            dataType: 'json'
+        })
+        .done(function (data) {
+            if (data.token) localStorage.setItem('token', data.token);
+            if (data.user)  localStorage.setItem('user', JSON.stringify(data.user));
+            sessionStorage.setItem('canAccessSetupProfile', '1');
+            window.location.href = '/setup-profile';
+        })
+        .fail(function (jqXHR) {
+            const data = jqXHR.responseJSON || {};
+            $errorTxt.text(data.message || 'Registration failed.');
+            $errorMsg.removeClass('hidden');
+        })
+        .always(function () {
+            $btn.html('Create Account <em class="arrow">→</em>');
+            $btn.prop('disabled', false);
+        });
     });
 </script>
 

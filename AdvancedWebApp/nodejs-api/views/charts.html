@@ -12,129 +12,664 @@
         })();
     </script>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard Charts</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script>
+    <style>
+        :root{
+            --ink:#2B2220; --muted:#948078; --muted-strong:#6B5850;
+            --faint:#F0DDD5; --line:#F8EFEA; --panel:#FFFFFF; --canvas:#FEFBF9;
+            --accent:#C1745B; --accent-dark:#9C5844; --accent-soft:#FAEFEA;
+            --good:#1EA672; --good-soft:#E7F8F1; --warn:#C97A1E; --warn-soft:#FBF0E1;
+            --bad:#D6483F; --violet:#3D1534; --radius:14px;
+            --accent2:#3D6B5C; --accent2-soft:#E7EFEC;
+        }
+        *{box-sizing:border-box;}
+        body{
+            background:var(--canvas); color:var(--ink);
+            font-family:'Inter',system-ui,-apple-system,sans-serif;
+            font-size:14px; -webkit-font-smoothing:antialiased; margin:0;
+        }
+
+        /* ── Top menu bar ── */
+        .topnav{ background:var(--panel); border-bottom:1px solid var(--line); padding:0 24px; }
+        .topnav-inner{ max-width:1180px; margin:0 auto; display:flex; align-items:center; justify-content:space-between; height:60px; }
+        .brand{ display:flex; align-items:center; gap:8px; font-weight:800; font-size:15px; letter-spacing:-0.01em; color:var(--ink); }
+        .brand-icon{ width:22px; height:22px; border-radius:50%; background:var(--accent-soft); color:var(--accent); display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+        .brand-icon svg{ width:13px; height:13px; }
+        .topnav-links{ display:flex; gap:4px; }
+        .topnav-links a{ display:inline-flex; align-items:center; gap:6px; text-decoration:none; color:var(--muted); padding:8px 14px; border-radius:9px; font-size:13.5px; font-weight:500; position:relative; transition:color .15s ease; }
+        .topnav-links a:hover{ color:var(--accent); }
+        .topnav-links a.active{ color:var(--accent); font-weight:600; }
+        .topnav-links a.active::after{ content:""; position:absolute; left:14px; right:14px; bottom:2px; height:2px; border-radius:2px; background:var(--accent); }
+        #btnLogout{ color:var(--bad); }
+        #btnLogout:hover{ color:#B93A32; }
+
+        .shell{ max-width:1180px; margin:0 auto; padding:28px 24px 60px; }
+
+        .topbar{ margin-bottom:24px; display:flex; align-items:center; justify-content:space-between; gap:16px; flex-wrap:wrap; }
+        .topbar h1{ font-size:28px; font-weight:800; letter-spacing:-0.02em; margin:0 0 4px; color:var(--ink); }
+        .topbar p{ color:var(--muted); margin:0; font-size:13.5px; }
+        .topbar-actions{ display:flex; gap:10px; }
+
+        .btn-export-csv{
+            display:inline-flex;
+            align-items:center;
+            gap:6px;
+            border:1px solid var(--line);
+            border-radius:9px;
+            padding:8px 14px;
+            font-size:12.5px;
+            font-weight:600;
+            color:var(--ink);
+            background:var(--canvas);
+            cursor:pointer;
+            white-space:nowrap;
+            transition:background .15s ease, border-color .15s ease;
+        }
+        .btn-export-csv svg{ width:14px; height:14px; flex-shrink:0; color:var(--muted); }
+        .btn-export-csv:hover{ background:var(--panel); border-color:var(--accent); }
+        .btn-export-csv:active{ background:var(--accent-soft); }
+
+        /* ── Top row: stat cards on the left, revenue chart on the right ── */
+        .top-row{
+            display:grid;
+            grid-template-columns:1fr 240px;
+            gap:16px;
+            margin-bottom:28px;
+            align-items:stretch;
+        }
+
+        /* ── Summary card — combined stats as a single list ── */
+        .summary-card{
+            background:var(--panel);
+            border:1px solid var(--line);
+            border-radius:var(--radius);
+            padding:16px 18px;
+            display:flex;
+            flex-direction:column;
+            height:100%;
+        }
+        .summary-card-title{
+            font-size:12.5px;
+            font-weight:700;
+            color:var(--muted);
+            text-transform:uppercase;
+            letter-spacing:.04em;
+            margin-bottom:12px;
+        }
+        .summary-row{
+            display:flex;
+            align-items:center;
+            gap:10px;
+            padding:10px 0;
+            border-top:1px solid var(--line);
+        }
+        .summary-row:first-of-type{ border-top:none; padding-top:0; }
+        .summary-icon{
+            width:28px; height:28px;
+            border-radius:8px;
+            background:var(--accent-soft);
+            color:var(--accent);
+            display:flex; align-items:center; justify-content:center;
+            flex-shrink:0;
+        }
+        .summary-icon svg{ width:14px; height:14px; }
+        .summary-label{ flex:1; font-size:12.5px; color:var(--muted-strong); font-weight:500; }
+        .summary-value{ font-size:14px; font-weight:800; color:var(--accent); text-transform:capitalize; text-align:right; }
+
+        .chart-grid{ display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+
+        .chart-card{
+            background:var(--panel); border:1px solid var(--line); border-radius:var(--radius);
+            padding:20px 22px;
+            transition:border-color .15s ease;
+        }
+        .chart-card:hover{ border-color:var(--faint); }
+
+        .chart-card-head{
+            display:flex;
+            align-items:flex-start;
+            justify-content:space-between;
+            gap:12px;
+            margin-bottom:18px;
+        }
+        .chart-card-head-left{
+            display:flex;
+            align-items:flex-start;
+            gap:12px;
+        }
+        .chart-icon{
+            width:38px; height:38px;
+            border-radius:10px;
+            background:var(--accent);
+            color:#fff;
+            display:flex; align-items:center; justify-content:center;
+            flex-shrink:0;
+            box-shadow:0 3px 8px rgba(156,88,68,0.28);
+        }
+        .chart-icon svg{ width:19px; height:19px; }
+        .chart-icon-alt{ background:var(--accent); box-shadow:0 3px 8px rgba(156,88,68,0.28); }
+        .chart-card-head h2{ font-size:15px; font-weight:700; margin:0 0 3px; color:var(--ink); }
+        .chart-card-head p{ font-size:12.5px; color:var(--muted); margin:0; }
+        .chart-peak{
+            font-size:11.5px;
+            font-weight:600;
+            color:var(--accent-dark);
+            background:var(--accent-soft);
+            display:inline-flex;
+            align-items:center;
+            gap:4px;
+            padding:4px 10px;
+            border-radius:999px;
+            white-space:nowrap;
+            flex-shrink:0;
+        }
+
+        .chart-canvas-wrap{ position:relative; height:160px; }
+
+        .chart-skel{ background:var(--faint); border-radius:10px; height:160px; animation:cs-pulse 1.2s ease-in-out infinite; }
+        @keyframes cs-pulse{ 0%,100%{ opacity:1; } 50%{ opacity:.4; } }
+
+        .chart-empty{ display:flex; align-items:center; justify-content:center; height:160px; color:var(--muted); font-size:13px; font-style:italic; }
+
+        /* ── Pie chart + custom legend layout ── */
+        .pie-layout{ display:flex; align-items:center; gap:20px; flex-wrap:wrap; }
+        .pie-canvas-col{ flex:0 0 200px; height:200px; position:relative; }
+        .pie-legend{ flex:1; min-width:180px; display:flex; flex-direction:column; gap:12px; }
+        .pie-legend-row{
+            display:flex; align-items:center; gap:10px;
+            padding:0;
+        }
+        .pie-dot{ width:10px; height:10px; border-radius:50%; flex-shrink:0; }
+        .pie-legend-label{ flex:1; font-size:13px; font-weight:600; color:var(--ink); text-transform:capitalize; }
+        .pie-legend-value{ font-size:12.5px; font-weight:700; color:var(--accent-dark); }
+        .pie-legend-pct{ font-size:11.5px; color:var(--muted); min-width:38px; text-align:right; }
+
+        @media (max-width:820px){
+            .top-row{ grid-template-columns:1fr; }
+            .chart-grid{ grid-template-columns:1fr; }
+            .summary-row{ padding:8px 0; }
+            .pie-layout{ flex-direction:column; }
+            .pie-canvas-col{ flex:0 0 auto; width:200px; height:200px; margin:0 auto; }
+        }
+    </style>
 </head>
 <body>
-<div class="container mt-5">
-    <h2 class="mb-4">📊 Sales Dashboard</h2>
-    <div class="row g-4">
-        <div class="col-md-6">
-            <div class="card p-3 shadow-sm">
-                <h5>Sales per Month (Bar)</h5>
-                <canvas id="barChart"></canvas>
+
+<div class="topnav">
+    <div class="topnav-inner">
+        <div class="brand">
+            <span class="brand-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="10"/>
+                    <line x1="14.31" y1="8" x2="20.05" y2="17.94"/>
+                    <line x1="9.69" y1="8" x2="21.17" y2="8"/>
+                    <line x1="7.38" y1="12" x2="13.12" y2="2.06"/>
+                    <line x1="9.69" y1="16" x2="3.95" y2="6.06"/>
+                    <line x1="14.31" y1="16" x2="2.83" y2="16"/>
+                    <line x1="16.62" y1="12" x2="10.88" y2="21.94"/>
+                </svg>
+            </span>
+            Store Admin
+        </div>
+        <div class="topnav-links">
+            <a href="/charts" class="active">Home</a>
+            <a href="/users">Users</a>
+            <a href="/orders">Orders</a>
+            <a href="/products">Products</a>
+            <a href="#" id="btnLogout">Logout</a>
+        </div>
+    </div>
+</div>
+
+<div class="shell">
+    <div class="topbar">
+        <div>
+            <h1>Sales Dashboard</h1>
+            <p>Live sales volume, revenue, and category breakdown</p>
+        </div>
+        <div class="topbar-actions">
+            <button class="btn-export-csv" id="btnExportCsv" title="Export the dashboard data as CSV">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>Export CSV
+            </button>
+            <button class="btn-export-csv" id="btnExportExcel" title="Export the dashboard data as Excel">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>Export Excel
+            </button>
+        </div>
+    </div>
+
+    <!-- Top row: revenue chart on the left, summary stats stacked on the right for balance -->
+    <div class="top-row">
+        <div class="chart-card">
+            <div class="chart-card-head">
+                <div class="chart-card-head-left">
+                    <span class="chart-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg>
+                    </span>
+                    <div>
+                        <h2>Revenue Trend</h2>
+                        <p>Total revenue per month</p>
+                    </div>
+                </div>
+                <div class="chart-peak" id="linePeak" style="display:none;"></div>
+            </div>
+            <div class="chart-canvas-wrap" id="lineWrap">
+                <div class="chart-skel"></div>
             </div>
         </div>
-        <div class="col-md-6">
-            <div class="card p-3 shadow-sm">
-                <h5>Orders Over Time (Line)</h5>
-                <canvas id="lineChart"></canvas>
+
+        <div class="summary-card">
+            <div class="summary-card-title">Summary</div>
+            <div class="summary-row">
+                <span class="summary-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+                </span>
+                <span class="summary-label">Total orders</span>
+                <span class="summary-value" id="statOrders">—</span>
+            </div>
+            <div class="summary-row">
+                <span class="summary-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+                </span>
+                <span class="summary-label">Total revenue</span>
+                <span class="summary-value" id="statRevenue">—</span>
+            </div>
+            <div class="summary-row">
+                <span class="summary-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-3 3"/></svg>
+                </span>
+                <span class="summary-label">Avg. order value</span>
+                <span class="summary-value" id="statAvg">—</span>
+            </div>
+            <div class="summary-row">
+                <span class="summary-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 2 7l10 5 10-5-10-5Z"/><path d="m2 17 10 5 10-5"/><path d="m2 12 10 5 10-5"/></svg>
+                </span>
+                <span class="summary-label">Top category</span>
+                <span class="summary-value" id="statTopCategory">—</span>
             </div>
         </div>
-        <div class="col-md-6">
-            <div class="card p-3 shadow-sm">
-                <h5>Order Status Distribution (Pie)</h5>
-                <canvas id="pieChart"></canvas>
+    </div>
+
+    <div class="chart-grid">
+        <div class="chart-card">
+            <div class="chart-card-head">
+                <div class="chart-card-head-left">
+                    <span class="chart-icon chart-icon-alt">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="20" x2="12" y2="10"/><line x1="18" y1="20" x2="18" y2="4"/><line x1="6" y1="20" x2="6" y2="16"/></svg>
+                    </span>
+                    <div>
+                        <h2>Monthly Sales Volume</h2>
+                        <p>Number of orders placed per month</p>
+                    </div>
+                </div>
+                <div class="chart-peak" id="barPeak" style="display:none;"></div>
+            </div>
+            <div class="chart-canvas-wrap" id="barWrap">
+                <div class="chart-skel"></div>
+            </div>
+        </div>
+
+        <div class="chart-card">
+            <div class="chart-card-head">
+                <div class="chart-card-head-left">
+                    <span class="chart-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.21 15.89A10 10 0 1 1 8 2.83"/><path d="M22 12A10 10 0 0 0 12 2v10z"/></svg>
+                    </span>
+                    <div>
+                        <h2>Sales by Category</h2>
+                        <p>Revenue share across product categories</p>
+                    </div>
+                </div>
+            </div>
+            <div id="pieWrap">
+                <div class="chart-skel"></div>
             </div>
         </div>
     </div>
 </div>
 
-<script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
 <script>
-const API = '/api';
+    const API = '/api';
+    const token = localStorage.getItem('token');
 
-async function loadCharts() {
-    const [products, orders] = await Promise.all([
-        $.get(`${API}/products`),
-        $.get(`${API}/orders`)
-    ]);
-
-    // --- BAR CHART: sales per month ---
-    const monthNames = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-    const monthMap = {};
-    monthNames.forEach(m => monthMap[m] = 0);
-
-    orders.forEach(o => {
-        const month = monthNames[new Date(o.created_at).getMonth()];
-        monthMap[month] = (monthMap[month] || 0) + parseFloat(o.total_amount);
+    document.getElementById('btnLogout').addEventListener('click', function (e) {
+        e.preventDefault();
+        fetch('/api/auth/logout', {
+            method: 'POST',
+            headers: { 'Authorization': 'Bearer ' + token }
+        }).finally(() => {
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+            window.location.href = '/login';
+        });
     });
 
-    new Chart(document.getElementById('barChart'), {
-        type: 'bar',
-        data: {
-            labels: monthNames,
-            datasets: [{
-                label: 'Sales (₱)',
-                data: monthNames.map(m => monthMap[m]),
-                backgroundColor: 'rgba(54, 162, 235, 0.7)',
-                borderColor: 'rgba(54, 162, 235, 1)',
-                borderWidth: 1
-            }]
-        },
-        options: {
-            responsive: true,
-            plugins: {
-                legend: { display: false },
-                tooltip: {
-                    callbacks: {
-                        label: (ctx) => '₱' + ctx.parsed.y.toLocaleString('en-PH', { minimumFractionDigits: 2 })
-                    }
-                }
-            },
-            scales: {
-                y: {
-                    beginAtZero: true,
-                    ticks: {
-                        callback: (val) => '₱' + val.toLocaleString('en-PH')
-                    }
-                }
-            }
+    const formatCurrency = (val) => '₱' + parseFloat(val).toLocaleString('en-PH', { minimumFractionDigits: 2 });
+
+    const palette = ['#C1745B', '#9C5844', '#C97A1E', '#1EA672', '#3D1534', '#6B7280', '#D6483F', '#F6E0B6'];
+
+    let lastData = null;
+
+    function renderCanvas(wrapId, canvasId) {
+        document.getElementById(wrapId).innerHTML = `<canvas id="${canvasId}"></canvas>`;
+    }
+
+    function showEmpty(wrapId, message) {
+        document.getElementById(wrapId).innerHTML = `<div class="chart-empty">${message}</div>`;
+    }
+
+    function updateStats(data) {
+        const totalOrders = data.monthlyVolume.reduce((sum, m) => sum + m.count, 0);
+        const totalRevenue = data.revenueTrend.reduce((sum, m) => sum + m.revenue, 0);
+        const avgOrder = totalOrders > 0 ? totalRevenue / totalOrders : 0;
+        const topCategory = data.categorySales.length
+            ? [...data.categorySales].sort((a, b) => b.revenue - a.revenue)[0].category
+            : '—';
+
+        document.getElementById('statOrders').textContent = totalOrders;
+        document.getElementById('statRevenue').textContent = formatCurrency(totalRevenue);
+        document.getElementById('statAvg').textContent = totalOrders > 0 ? formatCurrency(avgOrder) : '—';
+        document.getElementById('statTopCategory').textContent = topCategory;
+    }
+
+    async function loadCharts() {
+        let data;
+        try {
+            const res = await fetch(`${API}/orders/analytics/summary`, {
+                headers: { 'Authorization': 'Bearer ' + token }
+            });
+            if (!res.ok) throw new Error('Request failed');
+            data = await res.json();
+        } catch (err) {
+            showEmpty('barWrap', 'Failed to load chart data.');
+            showEmpty('lineWrap', 'Failed to load chart data.');
+            showEmpty('pieWrap', 'Failed to load chart data.');
+            return;
         }
+
+        updateStats(data);
+        lastData = data;
+
+        // ── Bar: monthly sales volume ──────────────────────────
+        if (data.monthlyVolume.some(m => m.count > 0)) {
+            renderCanvas('barWrap', 'barChart');
+
+            const peak = data.monthlyVolume.reduce((a, b) => (b.count > a.count ? b : a));
+            const peakEl = document.getElementById('barPeak');
+            peakEl.textContent = `Peak: ${peak.month} · ${peak.count} order${peak.count === 1 ? '' : 's'}`;
+            peakEl.style.display = 'inline-flex';
+            peakEl.style.color = '#9C5844';
+            peakEl.style.background = '#FAEFEA';
+
+            new Chart(document.getElementById('barChart'), {
+                type: 'bar',
+                data: {
+                    labels: data.monthlyVolume.map(m => m.month),
+                    datasets: [{
+                        label: 'Orders',
+                        data: data.monthlyVolume.map(m => m.count),
+                        backgroundColor: '#C1745B',
+                        hoverBackgroundColor: '#9C5844',
+                        borderRadius: 6,
+                        maxBarThickness: 34
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        y: { beginAtZero: true, ticks: { precision: 0 }, grid: { color: '#F8EFEA' } },
+                        x: { grid: { display: false } }
+                    }
+                }
+            });
+        } else {
+            showEmpty('barWrap', 'No order data yet.');
+        }
+
+        // ── Line: revenue trend ─────────────────────────────────
+        if (data.revenueTrend.some(m => m.revenue > 0)) {
+            renderCanvas('lineWrap', 'lineChart');
+
+            const peak = data.revenueTrend.reduce((a, b) => (b.revenue > a.revenue ? b : a));
+            const peakEl = document.getElementById('linePeak');
+            peakEl.textContent = `Peak: ${peak.month} · ${formatCurrency(peak.revenue)}`;
+            peakEl.style.display = 'inline-flex';
+
+            new Chart(document.getElementById('lineChart'), {
+                type: 'line',
+                data: {
+                    labels: data.revenueTrend.map(m => m.month),
+                    datasets: [{
+                        label: 'Revenue',
+                        data: data.revenueTrend.map(m => m.revenue),
+                        borderColor: '#9C5844',
+                        backgroundColor: 'rgba(193,116,91,0.12)',
+                        tension: 0.35,
+                        fill: true,
+                        pointBackgroundColor: '#9C5844',
+                        pointRadius: 3
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: { callbacks: { label: (ctx) => formatCurrency(ctx.parsed.y) } }
+                    },
+                    scales: {
+                        y: { beginAtZero: true, ticks: { callback: (val) => '₱' + val.toLocaleString('en-PH') }, grid: { color: '#F8EFEA' } },
+                        x: { grid: { display: false } }
+                    }
+                }
+            });
+        } else {
+            showEmpty('lineWrap', 'No revenue data yet.');
+        }
+
+        // ── Pie: sales by category, with a custom percentage-aware legend ──
+        if (data.categorySales.length) {
+            const total = data.categorySales.reduce((sum, c) => sum + c.revenue, 0);
+            const sorted = [...data.categorySales].sort((a, b) => b.revenue - a.revenue);
+
+            const legendHtml = sorted.map((c, i) => {
+                return `
+                    <div class="pie-legend-row">
+                        <span class="pie-dot" style="background:${palette[i % palette.length]}"></span>
+                        <span class="pie-legend-label">${c.category}</span>
+                    </div>
+                `;
+            }).join('');
+
+            document.getElementById('pieWrap').innerHTML = `
+                <div class="pie-layout">
+                    <div class="pie-canvas-col"><canvas id="pieChart"></canvas></div>
+                    <div class="pie-legend">${legendHtml}</div>
+                </div>
+            `;
+
+            new Chart(document.getElementById('pieChart'), {
+                type: 'pie',
+                data: {
+                    labels: sorted.map(c => c.category),
+                    datasets: [{
+                        data: sorted.map(c => c.revenue),
+                        backgroundColor: sorted.map((_, i) => palette[i % palette.length]),
+                        borderColor: '#FFFFFF',
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: { callbacks: { label: (ctx) => `${ctx.label}: ${formatCurrency(ctx.parsed)}` } }
+                    }
+                }
+            });
+        } else {
+            showEmpty('pieWrap', 'No category sales yet.');
+        }
+    }
+
+    // ── Export CSV ────────────────────────────────────────────────
+    // Combines all three dashboard datasets into one CSV, as separate
+    // sections, since they don't share a common row shape.
+    function csvEscape(val) {
+        const str = String(val ?? '');
+        if (/[",\n]/.test(str)) {
+            return '"' + str.replace(/"/g, '""') + '"';
+        }
+        return str;
+    }
+
+    function csvRow(cells) {
+        return cells.map(csvEscape).join(',');
+    }
+
+    document.getElementById('btnExportCsv').addEventListener('click', function () {
+        if (!lastData) {
+            alert('No dashboard data to export yet.');
+            return;
+        }
+
+        const now = new Date();
+        const lines = [];
+
+        lines.push(csvRow([`Sales Dashboard Report — ${now.toLocaleDateString()}`]));
+        lines.push('');
+
+        // Monthly Sales Volume
+        const totalOrders = lastData.monthlyVolume.reduce((sum, m) => sum + m.count, 0);
+        lines.push(csvRow(['Monthly Sales Volume']));
+        lines.push(csvRow(['Month', 'Orders']));
+        lastData.monthlyVolume.forEach(m => {
+            lines.push(csvRow([m.month, m.count]));
+        });
+        lines.push(csvRow(['Total', totalOrders]));
+        lines.push('');
+
+        // Revenue Trend
+        const totalRevenue = lastData.revenueTrend.reduce((sum, m) => sum + (parseFloat(m.revenue) || 0), 0);
+        lines.push(csvRow(['Revenue Trend']));
+        lines.push(csvRow(['Month', 'Revenue (PHP)']));
+        lastData.revenueTrend.forEach(m => {
+            lines.push(csvRow([m.month, (parseFloat(m.revenue) || 0).toFixed(2)]));
+        });
+        lines.push(csvRow(['Total', totalRevenue.toFixed(2)]));
+        lines.push('');
+
+        // Sales by Category
+        const sortedCategories = [...lastData.categorySales].sort((a, b) => b.revenue - a.revenue);
+        const categoryTotal = sortedCategories.reduce((sum, c) => sum + (parseFloat(c.revenue) || 0), 0);
+        lines.push(csvRow(['Sales by Category']));
+        lines.push(csvRow(['Category', 'Revenue (PHP)']));
+        sortedCategories.forEach(c => {
+            lines.push(csvRow([c.category, (parseFloat(c.revenue) || 0).toFixed(2)]));
+        });
+        lines.push(csvRow(['Total', categoryTotal.toFixed(2)]));
+
+        // Prefix a UTF-8 BOM so currency figures and special characters
+        // open correctly in Excel instead of showing as garbled text.
+        const csvContent = '\uFEFF' + lines.join('\n');
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        const timestamp = now.toISOString().slice(0, 19).replace(/[:T]/g, '-');
+        a.href = url;
+        a.download = `dashboard-${timestamp}.csv`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
     });
 
-    // --- LINE CHART: orders per day ---
-    const dateMap = {};
-    orders.forEach(o => {
-        const date = new Date(o.created_at).toLocaleDateString();
-        dateMap[date] = (dateMap[date] || 0) + 1;
+    // ── Export Excel ─────────────────────────────────────────────
+    // Same three sections as the CSV, but as a real .xlsx with a
+    // merged title, bold headers, and wide-enough columns.
+    document.getElementById('btnExportExcel').addEventListener('click', async function () {
+        if (!lastData) {
+            alert('No dashboard data to export yet.');
+            return;
+        }
+
+        const now = new Date();
+        const wb = new ExcelJS.Workbook();
+        const sheet = wb.addWorksheet('Dashboard');
+
+        sheet.columns = [{ width: 22 }, { width: 18 }];
+
+        sheet.mergeCells('A1:B1');
+        sheet.getCell('A1').value = `Sales Dashboard Report — ${now.toLocaleDateString()}`;
+        sheet.getCell('A1').font = { name: 'Calibri', size: 14, bold: true, color: { argb: 'FF9C5844' } };
+        sheet.addRow([]);
+
+        function addSection(title, headers, rows, totalLabel, totalValue) {
+            const titleRow = sheet.addRow([title]);
+            sheet.mergeCells(`A${titleRow.number}:B${titleRow.number}`);
+            titleRow.getCell(1).font = { name: 'Calibri', bold: true, color: { argb: 'FFFFFFFF' } };
+            titleRow.getCell(1).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFC1745B' } };
+
+            const headerRow = sheet.addRow(headers);
+            headerRow.eachCell(cell => {
+                cell.font = { name: 'Calibri', bold: true };
+                cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFAEFEA' } };
+            });
+
+            rows.forEach(r => sheet.addRow(r));
+
+            const totalRow = sheet.addRow([totalLabel, totalValue]);
+            totalRow.font = { name: 'Calibri', bold: true };
+
+            sheet.addRow([]);
+        }
+
+        addSection(
+            'Monthly Sales Volume',
+            ['Month', 'Orders'],
+            lastData.monthlyVolume.map(m => [m.month, m.count]),
+            'Total',
+            lastData.monthlyVolume.reduce((sum, m) => sum + m.count, 0)
+        );
+
+        addSection(
+            'Revenue Trend',
+            ['Month', 'Revenue (PHP)'],
+            lastData.revenueTrend.map(m => [m.month, parseFloat(m.revenue) || 0]),
+            'Total',
+            lastData.revenueTrend.reduce((sum, m) => sum + (parseFloat(m.revenue) || 0), 0)
+        );
+
+        const sortedCategories = [...lastData.categorySales].sort((a, b) => b.revenue - a.revenue);
+        addSection(
+            'Sales by Category',
+            ['Category', 'Revenue (PHP)'],
+            sortedCategories.map(c => [c.category, parseFloat(c.revenue) || 0]),
+            'Total',
+            sortedCategories.reduce((sum, c) => sum + (parseFloat(c.revenue) || 0), 0)
+        );
+
+        const buffer = await wb.xlsx.writeBuffer();
+        const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        const timestamp = now.toISOString().slice(0, 19).replace(/[:T]/g, '-');
+        a.href = url;
+        a.download = `dashboard-${timestamp}.xlsx`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
     });
 
-    new Chart(document.getElementById('lineChart'), {
-        type: 'line',
-        data: {
-            labels: Object.keys(dateMap),
-            datasets: [{
-                label: 'Orders',
-                data: Object.values(dateMap),
-                borderColor: 'rgba(75, 192, 192, 1)',
-                backgroundColor: 'rgba(75, 192, 192, 0.2)',
-                tension: 0.4,
-                fill: true
-            }]
-        },
-        options: { responsive: true }
-    });
-
-    // --- PIE CHART: order status ---
-    const statusMap = { pending: 0, confirmed: 0, cancelled: 0 };
-    orders.forEach(o => { if (statusMap[o.status] !== undefined) statusMap[o.status]++; });
-
-    new Chart(document.getElementById('pieChart'), {
-        type: 'pie',
-        data: {
-            labels: ['Pending', 'Confirmed', 'Cancelled'],
-            datasets: [{
-                data: Object.values(statusMap),
-                backgroundColor: ['#ffc107', '#198754', '#dc3545']
-            }]
-        },
-        options: { responsive: true }
-    });
-}
-
-loadCharts();
+    loadCharts();
 </script>
 </body>
 </html>

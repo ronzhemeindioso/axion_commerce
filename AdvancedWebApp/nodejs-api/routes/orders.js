@@ -4,6 +4,7 @@ const orderController = require('../controllers/orderController');
 const { verifyToken, isAdmin } = require('../middleware/auth');
 
 router.get('/', verifyToken, isAdmin, orderController.getAll);
+router.get('/analytics/summary', verifyToken, isAdmin, orderController.getAnalytics);
 router.get('/user/:user_id', verifyToken, orderController.getByUser);
 router.get('/:id', verifyToken, orderController.getOne);
 router.put('/:id/status', verifyToken, isAdmin, orderController.updateStatus);

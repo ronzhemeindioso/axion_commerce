@@ -3,22 +3,938 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Axion Commerce</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <title>Axion — Premium Camera & Gear Store</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:wght@500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root{
+            --ink:#2B2220;
+            --muted:#948078;
+            --muted-strong:#6B5850;
+            --faint:#F0DDD5;
+            --line:#F8EFEA;
+            --panel:#FFFFFF;
+            --canvas:#FEFBF9;
+            --accent:#C1745B;
+            --accent-dark:#9C5844;
+            --accent-soft:#FAEFEA;
+            --neutral:#6B7280;
+            --neutral-soft:#F1F2F4;
+            --violet:#3D1534;
+            --cream:#FFF4EB;
+            --wheat:#F6E0B6;
+            --good:#1EA672;
+            --good-soft:#E7F8F1;
+            --warn:#C97A1E;
+            --warn-soft:#FBF0E1;
+            --bad:#D6483F;
+            --bad-soft:#FBEBEA;
+            --radius:14px;
+            --font-serif: 'Playfair Display', Georgia, serif;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Inter', system-ui, sans-serif;
+            color: var(--ink);
+            background: var(--canvas);
+            line-height: 1.6;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* ── Navigation ── */
+        .navbar {
+            background: var(--panel);
+            border-bottom: 1px solid var(--line);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .nav-content {
+            max-width: 1180px;
+            margin: 0 auto;
+            padding: 0 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            height: 60px;
+        }
+
+        .brand {
+            font-family: var(--font-serif);
+            font-weight: 700;
+            font-size: 15px;
+            color: var(--ink);
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .brand-icon{
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            background: var(--accent-soft);
+            color: var(--accent);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+        .brand-icon svg{ width: 13px; height: 13px; }
+
+        .nav-menu {
+            display: flex;
+            gap: 4px;
+            list-style: none;
+        }
+
+        .nav-menu a {
+            display: inline-flex;
+            align-items: center;
+            text-decoration: none;
+            color: var(--muted-strong);
+            font-weight: 500;
+            font-size: 13.5px;
+            padding: 8px 16px;
+            border-radius: 9px;
+            position: relative;
+            transition: color 0.15s;
+        }
+
+        .nav-menu a:hover { color: var(--accent); }
+
+        .nav-menu a.active{
+            color: var(--accent);
+            font-weight: 600;
+        }
+        .nav-menu a.active::after{
+            content: "";
+            position: absolute;
+            left: 16px;
+            right: 16px;
+            bottom: 2px;
+            height: 2px;
+            border-radius: 2px;
+            background: var(--accent);
+        }
+
+        .nav-actions {
+            display: flex;
+            gap: 14px;
+            align-items: center;
+        }
+
+        .btn-icon {
+            width: 34px;
+            height: 34px;
+            border: 1px solid var(--line);
+            background: var(--panel);
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 13px;
+            transition: all 0.15s;
+            text-decoration: none;
+            color: var(--ink);
+        }
+
+        .btn-icon:hover { background: var(--accent-soft); border-color: var(--faint); }
+
+        .cart-badge {
+            position: absolute;
+            top: -6px;
+            right: -6px;
+            background: var(--accent);
+            color: white;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            font-weight: 700;
+        }
+
+        .btn-primary {
+            background: var(--ink);
+            color: white;
+            border: 1px solid var(--ink);
+            padding: 13px 28px;
+            border-radius: var(--radius);
+            font-weight: 600;
+            font-size: 13px;
+            letter-spacing: 0.02em;
+            cursor: pointer;
+            transition: all 0.15s;
+            text-decoration: none;
+            display: inline-block;
+        }
+        .btn-primary:hover { background: var(--accent-dark); border-color: var(--accent-dark); }
+
+        .btn-outline {
+            background: transparent;
+            color: var(--ink);
+            border: 1px solid var(--ink);
+            padding: 13px 28px;
+            border-radius: var(--radius);
+            font-weight: 600;
+            font-size: 13px;
+            letter-spacing: 0.02em;
+            cursor: pointer;
+            transition: all 0.15s;
+            text-decoration: none;
+            display: inline-block;
+        }
+        .btn-outline:hover { background: var(--ink); color: #fff; }
+
+        /* ── Hero (clean split layout, product bleeding off the right edge) ── */
+        .hero {
+            position: relative;
+            background:
+                radial-gradient(55% 75% at 88% 20%, rgba(246,224,182,0.85) 0%, rgba(246,224,182,0) 70%),
+                radial-gradient(65% 85% at 8% 100%, rgba(193,116,91,0.22) 0%, rgba(193,116,91,0) 65%),
+                linear-gradient(180deg, var(--cream) 0%, var(--canvas) 55%, var(--panel) 100%);
+            overflow: hidden;
+        }
+        .hero-fade{
+            position: absolute;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            height: 140px;
+            background: linear-gradient(180deg, rgba(255,255,255,0) 0%, var(--canvas) 100%);
+            pointer-events: none;
+            z-index: 2;
+        }
+        .hero::before{
+            content: "";
+            position: absolute;
+            inset: 0;
+            background-image:
+                radial-gradient(circle, rgba(43,34,32,0.05) 1px, transparent 1px);
+            background-size: 26px 26px;
+            opacity: 0.5;
+            pointer-events: none;
+        }
+
+        .hero-grid{
+            max-width: 1400px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: minmax(320px, 560px) minmax(0, 820px);
+            align-items: center;
+            min-height: 600px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .hero-copy{
+            padding: 0 0 0 max(72px, calc((100vw - 1400px) / 2 + 72px));
+            position: relative;
+            z-index: 2;
+        }
+
+        .hero h1 {
+            font-family: 'Inter', sans-serif;
+            font-size: 44px;
+            font-weight: 800;
+            color: var(--ink);
+            margin-bottom: 24px;
+            line-height: 1.15;
+            letter-spacing: -0.01em;
+        }
+
+        .hero p {
+            font-size: 14.5px;
+            color: var(--muted-strong);
+            margin: 6px 0 32px;
+            max-width: 360px;
+        }
+
+        .hero-actions { display: flex; gap: 14px; flex-wrap: wrap; align-items: center; }
+
+        .hero-rule{
+            width: 48px;
+            height: 3px;
+            background: var(--accent);
+            border-radius: 2px;
+            margin-bottom: 20px;
+        }
+
+        .hero-stats{
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-top: 28px;
+            font-size: 12.5px;
+            color: var(--muted-strong);
+            flex-wrap: wrap;
+        }
+        .hero-stats strong{ color: var(--ink); }
+        .dot-sep{ color: var(--faint); }
+
+        .hero-chips{
+            display: flex;
+            gap: 10px;
+            margin-top: 24px;
+            flex-wrap: wrap;
+        }
+        .hero-chip{
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--muted-strong);
+            border: 1px solid var(--faint);
+            border-radius: 20px;
+            padding: 7px 16px;
+            text-decoration: none;
+            transition: all 0.15s;
+        }
+        .hero-chip:hover{
+            background: var(--accent-soft);
+            border-color: var(--faint);
+            color: var(--accent-dark);
+        }
+
+        .btn-shop-now{
+            background: var(--ink);
+            color: #fff;
+            border: 1px solid var(--ink);
+            padding: 14px 32px;
+            border-radius: 4px;
+            font-weight: 600;
+            font-size: 12px;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: all 0.15s;
+            text-decoration: none;
+            display: inline-block;
+        }
+        .btn-shop-now:hover{ background: var(--accent-dark); border-color: var(--accent-dark); }
+
+        .btn-shop-now{
+            padding: 15px 36px;
+        }
+        .btn-learn-more{
+            background: transparent;
+            color: var(--muted-strong);
+            border: none;
+            padding: 15px 12px;
+            border-radius: 4px;
+            font-weight: 600;
+            font-size: 12px;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: all 0.15s;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .btn-learn-more svg{ transition: transform 0.15s; }
+        .btn-learn-more:hover{ color: var(--accent-dark); }
+        .btn-learn-more:hover svg{ transform: translateX(3px); }
+
+        .hero-image-wrap{
+            position: relative;
+            height: 600px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            background:
+                radial-gradient(65% 65% at 55% 52%, rgba(250,239,234,0.9) 0%, rgba(250,239,234,0) 72%);
+        }
+
+        .hero-image-wrap img{
+            max-height: 100%;
+            max-width: 55%;
+            width: 130%;
+            height: auto;
+            object-fit: contain;
+            display: block;
+            filter: drop-shadow(18px 34px 28px rgba(43,34,32,0.22));
+            position: relative;
+            z-index: 1;
+                }
+
+        @media (max-width: 900px) {
+            .hero-grid{ grid-template-columns: 1fr; min-height: 0; }
+            .hero-copy{ padding: 56px 24px 32px; }
+            .hero-image-wrap{ height: 340px; order: -1; }
+            .hero-image-wrap img{ width: 100%; max-width: 100%; max-height: 95%; }
+            .hero h1{ font-size: 36px; }
+        }
+        /* ── Sections ── */
+        .section {
+            max-width: 1220px;
+            margin: 0 auto;
+            padding: 72px 24px;
+        }
+
+        .section-title{
+            font-family: var(--font-serif);
+            font-size: 34px;
+            font-weight: 600;
+            color: var(--ink);
+            text-align: center;
+            margin-bottom: 44px;
+        }
+
+        /* ── Hottest Picks grid ── */
+        .products-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+            gap: 24px;
+        }
+
+        .product-card {
+            background: var(--panel);
+            border-radius: var(--radius);
+            overflow: hidden;
+            transition: all 0.2s;
+            cursor: pointer;
+        }
+
+        .product-card:hover .product-image img{ transform: scale(1.05); }
+
+        .product-image {
+            width: 100%;
+            height: 220px;
+            background: var(--neutral-soft);
+            border-radius: var(--radius);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 50px;
+            color: var(--muted);
+            overflow: hidden;
+            margin-bottom: 16px;
+        }
+        .product-image img{ width: 100%; height: 100%; object-fit: cover; transition: transform .3s ease; display:block; }
+
+        .product-info { padding: 0 2px; }
+
+        .product-category {
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            color: var(--accent);
+            letter-spacing: 0.06em;
+            margin-bottom: 6px;
+        }
+
+        .product-name {
+            font-family: var(--font-serif);
+            font-size: 17px;
+            font-weight: 600;
+            color: var(--ink);
+            margin-bottom: 6px;
+            line-height: 1.35;
+        }
+
+        .product-desc{
+            font-size: 12.5px;
+            color: var(--muted);
+            margin-bottom: 10px;
+        }
+
+        .product-price {
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--ink);
+            margin-bottom: 14px;
+        }
+
+        .btn-add-cart {
+            width: 100%;
+            background: var(--accent-soft);
+            color: var(--accent-dark);
+            border: none;
+            padding: 11px;
+            border-radius: 9px;
+            font-weight: 600;
+            font-size: 12.5px;
+            letter-spacing: 0.02em;
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+        .btn-add-cart:hover { background: var(--accent); color: white; }
+
+        /* Skeleton */
+        .product-skel{ background: var(--panel); }
+        .product-skel .skel-img{ height: 220px; border-radius: var(--radius); background: var(--faint); animation: skel-pulse 1.2s ease-in-out infinite; margin-bottom: 16px; }
+        .product-skel .skel-line{ height: 10px; border-radius: 5px; background: var(--faint); animation: skel-pulse 1.2s ease-in-out infinite; margin-bottom: 8px; }
+        @keyframes skel-pulse{ 0%,100%{ opacity:1; } 50%{ opacity:.45; } }
+
+        .products-empty{
+            grid-column: 1 / -1;
+            text-align: center;
+            padding: 48px 24px;
+            color: var(--muted);
+            font-size: 14px;
+            border: 1px dashed var(--faint);
+            border-radius: var(--radius);
+        }
+
+        /* ── About / Embracing style section ── */
+        .about-section{
+            background: var(--canvas);
+            padding: 100px 24px 90px;
+        }
+        .about-grid{
+            max-width: 1220px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 1fr 0.9fr;
+            gap: 64px;
+            align-items: center;
+        }
+        .about-text h2{
+            font-family: var(--font-serif);
+            font-size: 34px;
+            font-weight: 600;
+            margin-bottom: 20px;
+            color: var(--ink);
+        }
+        .about-text p{
+            font-size: 14.5px;
+            color: var(--muted-strong);
+            margin-bottom: 16px;
+            max-width: 420px;
+        }
+        .about-actions{
+            display: flex;
+            align-items: center;
+            gap: 24px;
+            margin-top: 28px;
+            flex-wrap: wrap;
+        }
+        .about-link{
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--ink);
+            text-decoration: none;
+            border-bottom: 1px solid var(--ink);
+            padding-bottom: 2px;
+        }
+        .about-image{
+            height: 440px;
+            border-radius: 50% 50% 46% 54% / 55% 45% 55% 45%;
+            overflow: hidden;
+            background: var(--wheat);
+            justify-self: center;
+            width: 88%;
+        }
+        .about-image img{ width: 100%; height: 100%; object-fit: cover; display: block; }
+        /* ── Contact section ── */
+
+        .contact-section{
+            max-width: 1220px;
+            margin: 0 auto;
+            padding: 90px 24px;
+            text-align: center;
+        }
+        .contact-lead{
+            color: var(--muted-strong);
+            font-size: 15px;
+            line-height: 1.6;
+            max-width: 560px;
+            margin: 0 auto 48px;
+        }
+        .contact-grid{
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 20px;
+        }
+        .contact-card{
+            background: var(--panel);
+            border: 1px solid var(--line);
+            border-radius: var(--radius);
+            padding: 28px 22px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            gap: 8px;
+            transition: border-color .2s ease, transform .2s ease, box-shadow .2s ease;
+        }
+        .contact-card:hover{
+            border-color: var(--faint);
+            transform: translateY(-3px);
+            box-shadow: 0 12px 28px rgba(43,34,32,0.08);
+        }
+        .contact-icon{
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            background: var(--accent-soft);
+            color: var(--accent);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 6px;
+        }
+        .contact-icon svg{ width: 21px; height: 21px; }
+        .contact-card .contact-label{
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: .06em;
+            color: var(--muted);
+        }
+        .contact-card a, .contact-card span:not(.contact-label){
+            font-size: 14.5px;
+            font-weight: 500;
+            color: var(--ink);
+            text-decoration: none;
+        }
+        .contact-card a:hover{ color: var(--accent); }
+
+        /* Toast */
+        .toast{
+            position: fixed;
+            bottom: 24px;
+            left: 50%;
+            transform: translateX(-50%) translateY(12px);
+            background: var(--ink);
+            color: #fff;
+            padding: 12px 20px;
+            border-radius: 10px;
+            font-size: 13.5px;
+            font-weight: 600;
+            box-shadow: 0 12px 28px rgba(43,34,32,0.25);
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity .2s ease, transform .2s ease;
+            z-index: 200;
+        }
+        .toast.show{ opacity: 1; transform: translateX(-50%) translateY(0); }
+
+        /* ── Footer ── */
+        .footer {
+            background: var(--ink);
+            color: white;
+            padding: 56px 24px 28px;
+        }
+        .footer-content {
+            max-width: 1220px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 32px;
+            margin-bottom: 32px;
+        }
+        .footer-col h3 {
+            font-size: 13px;
+            font-weight: 700;
+            margin-bottom: 16px;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: var(--wheat);
+        }
+        .footer-col a {
+            display: block;
+            color: rgba(255, 255, 255, 0.7);
+            text-decoration: none;
+            font-size: 13px;
+            margin-bottom: 10px;
+            transition: color 0.15s;
+        }
+        .footer-col a:hover { color: var(--accent); }
+        .footer-bottom {
+            text-align: center;
+            border-top: 1px solid rgba(255, 255, 255, 0.12);
+            padding-top: 22px;
+            color: rgba(255, 255, 255, 0.5);
+            font-size: 12px;
+        }
+
+        @media (max-width: 900px) {
+            .about-grid{ grid-template-columns: 1fr; }
+            .about-image{ order: -1; width: 100%; height: 320px; }
+            .swatch-grid{ grid-template-columns: repeat(3, 1fr); }
+        }
+        @media (max-width: 768px) {
+            .nav-menu { display: none; }
+            .section-title{ font-size: 26px; }
+            .products-grid { grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); }
+        }
+    </style>
 </head>
 <body>
 
-<div class="container mt-5 text-center">
-    <h1>Welcome to Axion Commerce</h1>
-    <p class="lead">Manage your store or browse products.</p>
-
-    <div class="mt-4">
-        <a href="/shop" class="btn btn-primary me-2">Shop</a>
-        <a href="/products" class="btn btn-success me-2">Manage Products</a>
-        <a href="/login" class="btn btn-outline-secondary">Login</a>
+<!-- Navigation -->
+<nav class="navbar">
+    <div class="nav-content">
+        <a href="/" class="brand">
+            <span class="brand-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"/>
+                <line x1="14.31" y1="8" x2="20.05" y2="17.94"/>
+                <line x1="9.69" y1="8" x2="21.17" y2="8"/>
+                <line x1="7.38" y1="12" x2="13.12" y2="2.06"/>
+                <line x1="9.69" y1="16" x2="3.95" y2="6.06"/>
+                <line x1="14.31" y1="16" x2="2.83" y2="16"/>
+                <line x1="16.62" y1="12" x2="10.88" y2="21.94"/>
+            </svg>
+            </span>
+            Axion
+        </a>
+        <ul class="nav-menu">
+            <li><a href="/" class="active">Home</a></li>
+            <li><a href="#about">About</a></li>
+            <li><a href="/shop">Shop</a></li>
+            <li><a href="#contact">Contact</a></li>
+        </ul>
+        <div class="nav-actions">
+            <a href="/cart" class="btn-icon" style="position: relative;">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16">
+                    <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/>
+                    <path d="M3 6h18"/>
+                    <path d="M16 10a4 4 0 0 1-8 0"/>
+                </svg>
+                <span class="cart-badge" id="cartCount" style="display: none;">0</span>
+            </a>
+            <a href="/setup-profile" class="btn-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16">
+                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                    <circle cx="12" cy="7" r="4"/>
+                </svg>
+            </a>
+        </div>
     </div>
-</div>
+</nav>
 
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<!-- Hero -->
+<section class="hero">
+    <div class="hero-grid">
+        <div class="hero-copy">
+            <div class="hero-rule"></div>
+            <h1>Built to capture<br>every shot</h1>
+            <p>Precision optics. Weather-sealed build. Every camera in our collection is made to keep up with wherever your work takes you.</p>
+            <div class="hero-actions">
+                <a href="/shop" class="btn-shop-now">Shop Now</a>
+                <a href="#about" class="btn-learn-more">
+                    Learn More
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="14" height="14">
+                        <line x1="5" y1="12" x2="19" y2="12"/>
+                        <polyline points="12 5 19 12 12 19"/>
+                    </svg>
+                </a>
+            </div>
+        <div class="hero-stats">
+                <span><strong>15+</strong> years crafting gear</span>
+                <span class="dot-sep">&middot;</span>
+                <span><strong class="hero-stars">★★★★★</strong> from 2,300+ photographers</span>
+            </div>
+            <div class="hero-chips">
+                <a href="/shop?cat=cameras" class="hero-chip">Cameras</a>
+                <a href="/shop?cat=lenses" class="hero-chip">Lenses</a>
+                <a href="/shop?cat=bags" class="hero-chip">Bags</a>
+                <a href="/shop?cat=accessories" class="hero-chip">Accessories</a>
+            </div>
+        </div>
+        <div class="hero-image-wrap">
+            <img src="camera-hero.png" alt="Vintage rangefinder camera on a leather strap">
+        </div>
+    </div>
+    <div class="hero-fade"></div>
+</section>
+
+<!-- Hottest Picks -->
+<section class="section">
+    <h2 class="section-title">Featured Products</h2>
+    <div class="products-grid" id="featuredProducts">
+        <!-- Products loaded by JavaScript -->
+    </div>
+</section>
+
+<!-- Embracing style and utility -->
+<section class="about-section" id="about">
+    <div class="about-grid">
+        <div class="about-text">
+            <h2>Precision meets creativity</h2>
+            <p>Welcome to Axion, where craftsmanship and technology intertwine to create equipment that elevates your work and enhances every shoot.</p>
+            <p>Founded from a shared love of photography, Axion emerged with a vision to offer gear that doesn't just perform — it inspires.</p>
+            <div class="about-actions">
+                <a href="/shop" class="btn-outline">Shop The Collection</a>
+                <a href="#team" class="about-link">Meet the Team</a>
+            </div>
+        </div>
+        <div class="about-image">
+            <img src="https://i.pinimg.com/736x/03/09/19/030919c9f2e5c94b052e7d9a2f434334.jpg" alt="Photographers at work">
+        </div>
+    </div>
+</section>
+
+<!-- Contact -->
+<section class="contact-section" id="contact">
+    <h2 class="section-title">Get in touch</h2>
+    <p class="contact-lead">Questions about an order, a product, or just want to say hello? We'd love to hear from you.</p>
+
+    <div class="contact-grid">
+        <div class="contact-card">
+        <div class="contact-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 6-10 7L2 6"/></svg>
+        </div>
+        <span class="contact-label">Email</span>
+        <a href="mailto:hello@aperture-store.com">hello@aperture-store.com</a>
+    </div>
+    <div class="contact-card">
+        <div class="contact-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.362 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.338 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+        </div>
+        <span class="contact-label">Phone</span>
+        <a href="tel:+10000000000">+1 (000) 000-0000</a>
+    </div>
+    <div class="contact-card">
+        <div class="contact-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        </div>
+        <span class="contact-label">Hours</span>
+        <span>Mon–Fri, 9am–6pm</span>
+    </div>
+    <div class="contact-card">
+        <div class="contact-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0Z"/><circle cx="12" cy="10" r="3"/></svg>
+        </div>
+        <span class="contact-label">Address</span>
+        <span>123 Lens Street, Camera City</span>
+    </div>
+    </div>
+</section>
+
+<!-- Footer -->
+<footer class="footer">
+    <div class="footer-content">
+        <div class="footer-col">
+            <h3>Shop</h3>
+            <a href="/shop">All Products</a>
+            <a href="/shop">New Arrivals</a>
+        </div>
+        <div class="footer-col">
+            <h3>Support</h3>
+            <a href="#support">Contact Us</a>
+            <a href="#support">Shipping Info</a>
+        </div>
+        <div class="footer-col">
+            <h3>Company</h3>
+            <a href="#about">About Us</a>
+        </div>
+        <div class="footer-col">
+            <h3>Follow</h3>
+            <a href="#social">Instagram</a>
+            <a href="#social">Twitter</a>
+        </div>
+    </div>
+    <div class="footer-bottom">
+        <p>&copy; 2025 Axion Store. All rights reserved.</p>
+    </div>
+</footer>
+
+<script>
+    function updateCartCount() {
+        const cart = JSON.parse(localStorage.getItem('cart') || '[]');
+        const count = cart.length;
+        const badge = document.getElementById('cartCount');
+        if (count > 0) {
+            badge.textContent = count;
+            badge.style.display = 'flex';
+        } else {
+            badge.style.display = 'none';
+        }
+    }
+
+    function renderProductSkeletons(count = 4) {
+        const grid = document.getElementById('featuredProducts');
+        grid.innerHTML = Array.from({ length: count }).map(() => `
+            <div class="product-skel">
+                <div class="skel-img"></div>
+                <div class="skel-line" style="width:40%;"></div>
+                <div class="skel-line" style="width:85%;"></div>
+                <div class="skel-line" style="width:30%;"></div>
+            </div>
+        `).join('');
+    }
+
+    let cachedProducts = [];
+
+    async function loadFeaturedProducts() {
+        renderProductSkeletons();
+        const grid = document.getElementById('featuredProducts');
+
+        try {
+            const response = await fetch('/api/products?page=1&limit=8');
+            const data = await response.json();
+
+            if (!data.data || !data.data.length) {
+                grid.innerHTML = `<div class="products-empty">No featured products yet — check back soon.</div>`;
+                return;
+            }
+
+            cachedProducts = data.data;
+
+            // Hottest picks — first 4
+            grid.innerHTML = cachedProducts.slice(0, 4).map(product => `
+                <div class="product-card" onclick="window.location.href='/product/${product.id}'">
+                    <div class="product-image">
+                        ${product.images ? `<img src="/uploads/${product.images.split(',')[0]}" alt="${product.name}">` : '📷'}
+                    </div>
+                    <div class="product-info">
+                        <div class="product-category">${product.category}</div>
+                        <div class="product-name">${product.name}</div>
+                        <div class="product-desc">Elevate your craft with premium build quality.</div>
+                        <div class="product-price">₱${parseFloat(product.price).toFixed(2)} PHP</div>
+                        <button class="btn-add-cart" onclick="addToCart(event, ${product.id})">Add to Cart</button>
+                    </div>
+                </div>
+            `).join('');
+
+        } catch (err) {
+            console.error('Error loading products:', err);
+            grid.innerHTML = `<div class="products-empty">Couldn't load products right now. Please try again.</div>`;
+        }
+    }
+
+    function showToast(message) {
+        let toast = document.getElementById('toast');
+        if (!toast) {
+            toast = document.createElement('div');
+            toast.id = 'toast';
+            toast.className = 'toast';
+            document.body.appendChild(toast);
+        }
+        toast.textContent = message;
+        toast.classList.add('show');
+        clearTimeout(toast._hideTimer);
+        toast._hideTimer = setTimeout(() => toast.classList.remove('show'), 2200);
+    }
+
+    function addToCart(event, productId) {
+        event.stopPropagation();
+        const cart = JSON.parse(localStorage.getItem('cart') || '[]');
+        const exists = cart.find(item => item.id === productId);
+
+        if (!exists) {
+            cart.push({ id: productId, quantity: 1 });
+            localStorage.setItem('cart', JSON.stringify(cart));
+            updateCartCount();
+            showToast('Added to cart');
+        } else {
+            showToast('Already in your cart');
+        }
+    }
+
+    updateCartCount();
+    loadFeaturedProducts();
+</script>
+
 </body>
 </html>

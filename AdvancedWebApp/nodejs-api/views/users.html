@@ -13,162 +13,923 @@
     </script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Users Management</title>
+    <title>Users</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css">
+    <style>
+        :root{
+            --ink:#2B2220;
+            --muted:#948078;
+            --muted-strong:#6B5850;
+            --faint:#F0DDD5;
+            --line:#F8EFEA;
+            --panel:#FFFFFF;
+            --canvas:#FEFBF9;
+            --accent:#C1745B;
+            --accent-dark:#9C5844;
+            --accent-soft:#FAEFEA;
+            --neutral:#6B7280;
+            --neutral-soft:#F1F2F4;
+            --violet:#3D1534;
+            --cream:#FFF4EB;
+            --wheat:#F6E0B6;
+            --good:#1EA672;
+            --good-soft:#E7F8F1;
+            --warn:#C97A1E;
+            --warn-soft:#FBF0E1;
+            --bad:#D6483F;
+            --bad-soft:#FBEBEA;
+            --radius:14px;
+        }
+        *{box-sizing:border-box;}
+        body{
+            background:var(--canvas);
+            color:var(--ink);
+            font-family:'Inter',system-ui,-apple-system,sans-serif;
+            font-size:14px;
+            -webkit-font-smoothing:antialiased;
+            margin:0;
+        }
+
+        /* ── Top menu bar ────────────────────────── */
+        .topnav{
+            background:var(--panel);
+            border-bottom:1px solid var(--line);
+            padding:0 24px;
+        }
+        .topnav-inner{
+            max-width:1180px;
+            margin:0 auto;
+            display:flex;
+            align-items:center;
+            justify-content:space-between;
+            height:60px;
+        }
+        .brand{
+            display:flex;
+            align-items:center;
+            gap:8px;
+            font-weight:800;
+            font-size:15px;
+            letter-spacing:-0.01em;
+            color:var(--ink);
+        }
+        .brand-icon{
+            width:22px; height:22px;
+            border-radius:50%;
+            background:var(--accent-soft);
+            color:var(--accent);
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            flex-shrink:0;
+        }
+        .brand-icon svg{ width:13px; height:13px; }
+        .topnav-links{ display:flex; gap:4px; }
+        .topnav-links a{
+            display:inline-flex;
+            align-items:center;
+            gap:6px;
+            text-decoration:none;
+            color:var(--muted);
+            padding:8px 14px;
+            border-radius:9px;
+            font-size:13.5px;
+            font-weight:500;
+            position:relative;
+            transition:color .15s ease;
+        }
+        .topnav-links a:hover{ color:var(--accent); }
+        .topnav-links a.active{
+            color:var(--accent);
+            font-weight:600;
+        }
+        .topnav-links a.active::after{
+            content:"";
+            position:absolute;
+            left:14px;
+            right:14px;
+            bottom:2px;
+            height:2px;
+            border-radius:2px;
+            background:var(--accent);
+        }
+        #btnLogout{ color:var(--bad); }
+        #btnLogout:hover{ color:#B93A32; }
+
+        .shell{
+            max-width:1180px;
+            margin:0 auto;
+            padding:28px 24px 60px;
+        }
+
+        /* ── Page header ─────────────────────────── */
+        .topbar{ margin-bottom:24px; display:flex; align-items:center; justify-content:space-between; gap:16px; flex-wrap:wrap; }
+        .topbar h1{
+            font-size:28px;
+            font-weight:800;
+            letter-spacing:-0.02em;
+            margin:0 0 4px;
+            color:var(--ink);
+        }
+        .topbar p{
+            color:var(--muted);
+            margin:0;
+            font-size:13.5px;
+        }
+        .topbar p strong{ color:var(--accent); font-weight:600; }
+
+        /* ── Stat cards ──────────────────────────── */
+        .stats{
+            display:grid;
+            grid-template-columns:repeat(4,1fr);
+            gap:14px;
+            margin-bottom:20px;
+        }
+        .stat-card{
+            background:var(--panel);
+            border:1px solid var(--line);
+            border-radius:var(--radius);
+            padding:16px 18px;
+            display:flex;
+            align-items:center;
+            gap:14px;
+            transition:border-color .15s ease, background .15s ease;
+        }
+        .stat-icon{
+            width:40px; height:40px;
+            border-radius:10px;
+            background:var(--accent-soft);
+            color:var(--accent);
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            flex-shrink:0;
+        }
+        .stat-icon svg{ width:20px; height:20px; }
+        .stat-card .num{
+            font-size:24px;
+            font-weight:800;
+            letter-spacing:-0.02em;
+            line-height:1;
+            color:var(--accent);
+        }
+        .stat-card .label{
+            color:var(--muted);
+            font-size:12.5px;
+            margin-top:6px;
+            font-weight:500;
+        }
+        .stat-card.is-alert{
+            border-color:#F0CBA8;
+            background:var(--warn-soft);
+        }
+        .stat-card.is-alert .stat-icon{
+            background:#F6DDBC;
+            color:var(--warn);
+        }
+        .stat-card.is-alert .num{ color:var(--warn); }
+
+        /* ── Panel / table card ──────────────────── */
+        .panel{
+            background:var(--panel);
+            border:1px solid var(--line);
+            border-radius:var(--radius);
+            padding:8px 8px 0;
+            overflow:hidden;
+        }
+        .panel-head{
+            display:flex;
+            align-items:center;
+            justify-content:space-between;
+            gap:16px;
+            padding:16px 16px 12px;
+            flex-wrap:wrap;
+        }
+        .panel-head h2{
+            font-size:15px;
+            font-weight:700;
+            margin:0;
+            white-space:nowrap;
+            color:var(--ink);
+        }
+        .panel-head-right{
+            display:flex;
+            align-items:center;
+            gap:10px;
+            margin-left:auto;
+            flex-wrap:wrap;
+        }
+        .filter-select{
+            border:1px solid var(--line);
+            border-radius:9px;
+            padding:8px 28px 8px 12px;
+            font-size:12.5px;
+            color:var(--ink);
+            background:var(--canvas) url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='6'><path d='M0 0l5 6 5-6z' fill='%237480A0'/></svg>") no-repeat right 10px center;
+            background-size:9px 5px;
+            -webkit-appearance:none;
+            -moz-appearance:none;
+            appearance:none;
+            outline:none;
+            cursor:pointer;
+        }
+        .filter-select:focus{ border-color:var(--accent); background-color:var(--panel); }
+        .search-box{
+            position:relative;
+        }
+        .search-box input{
+            border:1px solid var(--line);
+            border-radius:9px;
+            padding:8px 12px 8px 32px;
+            font-size:13px;
+            outline:none;
+            width:200px;
+            background:var(--canvas);
+            color:var(--ink);
+        }
+        .search-box input:focus{ border-color:var(--accent); background:var(--panel); }
+        .search-box::before{
+            content:"⌕";
+            position:absolute;
+            left:11px;
+            top:50%;
+            transform:translateY(-50%);
+            color:var(--muted);
+            font-size:14px;
+        }
+
+        /* ── Table ───────────────────────────────── */
+        table.dataTable{ border-collapse:separate !important; border-spacing:0; width:100% !important; }
+        table.dataTable thead th{
+            border:none !important;
+            border-bottom:1px solid var(--line) !important;
+            color:var(--muted);
+            font-weight:600;
+            font-size:11.5px;
+            text-transform:uppercase;
+            letter-spacing:.04em;
+            padding:12px 14px !important;
+            background:transparent;
+        }
+        table.dataTable tbody td{
+            border:none !important;
+            border-bottom:1px solid var(--line) !important;
+            padding:14px !important;
+            vertical-align:middle;
+            color:var(--ink);
+        }
+        table.dataTable tbody tr:last-child td{ border-bottom:none !important; }
+        table.dataTable tbody tr:hover{ background:var(--accent-soft); }
+
+        .user-id{ font-weight:700; color:var(--ink); }
+        .user-name{ font-weight:600; color:var(--ink); }
+        .user-email{ color:var(--muted-strong); }
+
+        .avatar-cell{ display:flex; align-items:center; gap:10px; }
+        .avatar-circle{
+            width:32px; height:32px;
+            border-radius:50%;
+            background:var(--accent-soft);
+            color:var(--accent);
+            display:flex; align-items:center; justify-content:center;
+            font-size:12px; font-weight:700;
+            flex-shrink:0;
+            text-transform:uppercase;
+        }
+
+        .pill{
+            display:inline-flex;
+            align-items:center;
+            gap:6px;
+            padding:4px 11px;
+            border-radius:999px;
+            font-size:12px;
+            font-weight:600;
+            text-transform:capitalize;
+        }
+        .pill-dot{ width:6px; height:6px; border-radius:50%; }
+        .pill-good{ background:var(--good-soft); color:var(--good); }
+        .pill-good .pill-dot{ background:var(--good); }
+        .pill-warn{ background:var(--warn-soft); color:var(--warn); }
+        .pill-warn .pill-dot{ background:var(--warn); }
+        .pill-bad{ background:var(--bad-soft); color:var(--bad); }
+        .pill-bad .pill-dot{ background:var(--bad); }
+        .pill-accent{ background:var(--accent-soft); color:var(--accent-dark); }
+        .pill-accent .pill-dot{ background:var(--accent); }
+
+        /* Role dropdown — same visual language as the orders status dropdown */
+        .role-select{
+            height:32px;
+            border:1px solid var(--line);
+            border-radius:8px;
+            background:var(--panel) url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='6'><path d='M0 0l5 6 5-6z' fill='%23948078'/></svg>") no-repeat right 10px center;
+            background-size:9px 5px;
+            -webkit-appearance:none;
+            -moz-appearance:none;
+            appearance:none;
+            padding:0 26px 0 10px;
+            font-size:12.5px;
+            font-weight:600;
+            color:var(--ink);
+            cursor:pointer;
+            outline:none;
+            transition:border-color .15s ease, opacity .15s ease;
+        }
+        .role-select:hover{ border-color:var(--accent); }
+        .role-select:focus{ border-color:var(--accent); box-shadow:0 0 0 3px var(--accent-soft); }
+        .role-select:disabled{ opacity:.6; cursor:not-allowed; }
+
+        .row-actions{ display:flex; gap:6px; align-items:center; }
+        .icon-btn{
+            width:32px; height:32px;
+            border-radius:8px;
+            border:1px solid var(--line);
+            background:var(--panel);
+            display:inline-flex;
+            align-items:center;
+            justify-content:center;
+            cursor:pointer;
+            font-size:13px;
+            color:var(--ink);
+            transition:background .15s ease, border-color .15s ease;
+        }
+        .icon-btn:hover{ background:var(--accent-soft); border-color:var(--faint); }
+        .icon-btn.danger:hover{ background:var(--bad-soft); border-color:#F0B8B4; }
+        .icon-btn.good:hover{ background:var(--good-soft); border-color:#A9E1C6; }
+        .icon-btn:disabled{
+            opacity:.4;
+            cursor:not-allowed;
+            background:var(--panel) !important;
+            border-color:var(--line) !important;
+        }
+
+        /* ── DataTables footer (length / info / pagination) ── */
+        .dataTables_wrapper > .d-flex{
+            border-top:1px solid var(--line);
+            margin:10px -8px -8px -8px !important;
+            padding:16px 16px 14px !important;
+            background:var(--canvas);
+            border-radius:0 0 var(--radius) var(--radius);
+        }
+        .dataTables_wrapper .dataTables_length{
+            display:flex;
+            align-items:center;
+            gap:6px;
+            color:var(--muted);
+            font-size:12.5px;
+            padding:0 !important;
+            margin:0;
+        }
+        .dataTables_wrapper .dataTables_length select{
+            -webkit-appearance:none;
+            -moz-appearance:none;
+            appearance:none;
+            border:1px solid var(--line);
+            border-radius:7px;
+            padding:5px 24px 5px 9px;
+            font-size:12.5px;
+            color:var(--ink);
+            background:var(--panel) url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='6'><path d='M0 0l5 6 5-6z' fill='%237480A0'/></svg>") no-repeat right 9px center;
+            background-size:9px 5px;
+            cursor:pointer;
+            outline:none;
+        }
+        .dataTables_wrapper .dataTables_length select:focus{ border-color:var(--accent); }
+        .dataTables_wrapper .dataTables_info{
+            color:var(--muted);
+            font-size:12.5px;
+            padding:0 !important;
+            margin:0;
+            white-space:nowrap;
+        }
+        .dataTables_wrapper .dataTables_paginate{
+            padding:0 !important;
+            margin:0;
+            display:flex !important;
+            gap:6px;
+            flex-wrap:wrap;
+        }
+        .dataTables_wrapper .dataTables_paginate .pagination{
+            display:flex;
+            gap:6px;
+            margin:0;
+            padding:0;
+            list-style:none;
+        }
+        .dataTables_wrapper .dataTables_paginate li.paginate_button,
+        .dataTables_wrapper .dataTables_paginate .page-item{
+            margin:0;
+            padding:0;
+            border:none !important;
+            background:transparent;
+        }
+        .dataTables_wrapper .dataTables_paginate a.paginate_button,
+        .dataTables_wrapper .dataTables_paginate .page-link{
+            min-width:32px;
+            height:32px;
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            border-radius:8px !important;
+            border:1px solid var(--line) !important;
+            color:var(--ink) !important;
+            font-size:12.5px;
+            font-weight:500;
+            padding:0 8px !important;
+            background:var(--panel);
+        }
+        .dataTables_wrapper .dataTables_paginate a.paginate_button:focus,
+        .dataTables_wrapper .dataTables_paginate a.paginate_button:active{
+            outline:none !important;
+            box-shadow:0 0 0 3px var(--accent-soft) !important;
+            background:var(--panel) !important;
+            color:var(--ink) !important;
+        }
+        .dataTables_wrapper .dataTables_paginate li.paginate_button.current a.paginate_button,
+        .dataTables_wrapper .dataTables_paginate .page-item.active .page-link{
+            background:var(--accent) !important;
+            color:#fff !important;
+            border-color:var(--accent) !important;
+            font-weight:600 !important;
+        }
+        .dataTables_wrapper .dataTables_paginate a.paginate_button:hover:not(.disabled),
+        .dataTables_wrapper .dataTables_paginate .page-link:hover{
+            background:var(--accent-soft) !important;
+            border-color:var(--faint) !important;
+            color:var(--accent) !important;
+        }
+        .dataTables_wrapper .dataTables_paginate li.paginate_button.disabled a.paginate_button,
+        .dataTables_wrapper .dataTables_paginate .page-item.disabled .page-link{
+            color:var(--faint) !important;
+            border-color:var(--line) !important;
+            background:var(--canvas) !important;
+            cursor:not-allowed;
+            box-shadow:none !important;
+            font-weight:500 !important;
+        }
+        .dataTables_wrapper .dataTables_paginate li.paginate_button.disabled a.paginate_button:hover{
+            background:var(--panel) !important;
+            border-color:var(--line) !important;
+            color:var(--faint) !important;
+        }
+
+        /* ── Modal ───────────────────────────────── */
+        .modal-content{
+            border:none;
+            border-radius:18px;
+            overflow:hidden;
+        }
+        .modal-header{
+            border-bottom:1px solid var(--line);
+            padding:20px 24px;
+        }
+        .modal-title{ font-weight:700; font-size:16px; color:var(--ink); }
+        .modal-body{ padding:22px 24px; }
+        .modal-footer{
+            border-top:1px solid var(--line);
+            padding:16px 24px;
+        }
+        .btn-secondary{
+            background:transparent;
+            border:1px solid var(--line);
+            color:var(--ink);
+            border-radius:10px;
+            font-size:13px;
+            font-weight:500;
+            padding:9px 16px;
+        }
+        .btn-secondary:hover{ background:var(--canvas); color:var(--ink); border-color:var(--line); }
+        .btn-primary{
+            background:var(--accent);
+            border:none;
+            border-radius:10px;
+            font-size:13px;
+            font-weight:600;
+            padding:9px 18px;
+        }
+        .btn-primary:hover{ background:var(--accent-dark); }
+        .btn-danger{
+            background:var(--bad);
+            border:none;
+            border-radius:10px;
+            font-size:13px;
+            font-weight:600;
+            padding:9px 18px;
+        }
+        .btn-danger:hover{ background:#B93A32; }
+        .btn-danger:disabled, .btn-primary:disabled{ opacity:.7; }
+
+        @media (max-width:720px){
+            .stats{ grid-template-columns:repeat(2,1fr); }
+            .panel-head{ flex-direction:column; align-items:stretch; }
+            .panel-head-right{ margin-left:0; width:100%; }
+            .search-box{ flex:1; }
+            .search-box input{ width:100%; }
+            .dataTables_wrapper > .d-flex{ flex-direction:column; gap:12px; align-items:flex-start !important; }
+        }
+    </style>
 </head>
 <body>
 
-<div class="container mt-5">
-    <div class="d-flex justify-content-between align-items-center mb-3">
-        <h2>Users Management</h2>
-        <button class="btn btn-danger" id="btnLogout">Logout</button>
+<div class="topnav">
+    <div class="topnav-inner">
+        <div class="brand">
+            <span class="brand-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="10"/>
+                    <line x1="14.31" y1="8" x2="20.05" y2="17.94"/>
+                    <line x1="9.69" y1="8" x2="21.17" y2="8"/>
+                    <line x1="7.38" y1="12" x2="13.12" y2="2.06"/>
+                    <line x1="9.69" y1="16" x2="3.95" y2="6.06"/>
+                    <line x1="14.31" y1="16" x2="2.83" y2="16"/>
+                    <line x1="16.62" y1="12" x2="10.88" y2="21.94"/>
+                </svg>
+            </span>
+            Store Admin
+        </div>
+        <div class="topnav-links">
+            <a href="/charts">Home</a>
+            <a href="/users" class="active">Users</a>
+            <a href="/orders">Orders</a>
+            <a href="/products">Products</a>
+            <a href="#" id="btnLogout">Logout</a>
+        </div>
+    </div>
+</div>
+
+<div class="shell">
+
+    <div class="topbar">
+        <div>
+            <h1>Users</h1>
+            <p><strong id="statTotal">0</strong> total, proceed to manage them</p>
+        </div>
     </div>
 
-    <a href="/products" class="btn btn-success mb-3">Go to Products →</a>
+    <div class="stats">
+        <div class="stat-card">
+            <div class="stat-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+            </div>
+            <div>
+                <div class="num" id="statCount">—</div>
+                <div class="label">Users</div>
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+            </div>
+            <div>
+                <div class="num" id="statActive">—</div>
+                <div class="label">Active</div>
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 2 7l10 5 10-5-10-5Z"/><path d="m2 17 10 5 10-5"/><path d="m2 12 10 5 10-5"/></svg>
+            </div>
+            <div>
+                <div class="num" id="statAdmins">—</div>
+                <div class="label">Admins</div>
+            </div>
+        </div>
+        <div class="stat-card" id="inactiveCard">
+            <div class="stat-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+            </div>
+            <div>
+                <div class="num" id="statInactive">—</div>
+                <div class="label">Inactive</div>
+            </div>
+        </div>
+    </div>
 
-    <table id="usersTable" class="table table-bordered">
-        <thead>
-            <tr>
-                <th>ID</th>
-                <th>Name</th>
-                <th>Email</th>
-                <th>Role</th>
-                <th>Status</th>
-                <th>Actions</th>
-            </tr>
-        </thead>
-        <tbody></tbody>
-    </table>
+    <div class="panel">
+        <div class="panel-head">
+            <h2>All users</h2>
+            <div class="panel-head-right">
+                <select id="roleFilter" class="filter-select">
+                    <option value="">All roles</option>
+                    <option value="user">User</option>
+                    <option value="admin">Admin</option>
+                </select>
+                <select id="statusFilter" class="filter-select">
+                    <option value="">All statuses</option>
+                    <option value="active">Active</option>
+                    <option value="inactive">Inactive</option>
+                </select>
+                <div class="search-box">
+                    <input type="text" id="customSearch" placeholder="Search users...">
+                </div>
+            </div>
+        </div>
+
+        <table id="usersTable" class="table" style="width:100%">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Name</th>
+                    <th>Email</th>
+                    <th>Role</th>
+                    <th>Status</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </div>
+</div>
+
+<!-- ── Confirm update modal ─────────────────────────────── -->
+<div class="modal fade" id="confirmUpdateModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Confirm update</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p id="confirmUpdateBody" style="margin:0;color:var(--muted-strong);"></p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="btnConfirmUpdate">Confirm</button>
+            </div>
+        </div>
+    </div>
 </div>
 
 <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
 <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
 
 <script>
-const API_URL = 'http://localhost:5000/api/auth';
-const token = localStorage.getItem('token');
+    const API_URL = '/api/auth';
+    const token = localStorage.getItem('token');
+    let usersTable;
+    let currentData = [];
 
-function loadUsers() {
-    $.ajax({
-        url: API_URL + '/users',
-        method: 'GET',
-        headers: { 'Authorization': 'Bearer ' + token },
-        success: function(data) {
-            if ($.fn.DataTable.isDataTable('#usersTable')) {
-                $('#usersTable').DataTable().destroy();
+    function initials(name) {
+        if (!name) return '?';
+        const parts = name.trim().split(/\s+/);
+        return parts.length > 1
+            ? (parts[0][0] + parts[parts.length - 1][0]).toUpperCase()
+            : parts[0].slice(0, 2).toUpperCase();
+    }
+
+    function statusPill(isActive) {
+        return isActive
+            ? `<span class="pill pill-good"><span class="pill-dot"></span>Active</span>`
+            : `<span class="pill pill-bad"><span class="pill-dot"></span>Inactive</span>`;
+    }
+
+    function updateStats(data) {
+        const total = data.length;
+        const active = data.filter(u => u.is_active).length;
+        const inactive = total - active;
+        const admins = data.filter(u => u.role === 'admin').length;
+
+        $('#statTotal').text(total);
+        $('#statCount').text(total);
+        $('#statActive').text(active);
+        $('#statAdmins').text(admins);
+        $('#statInactive').text(inactive);
+
+        $('#inactiveCard').toggleClass('is-alert', inactive > 0);
+    }
+
+    // ── Logout ───────────────────────────────────────────────────
+    $('#btnLogout').click(function (e) {
+        e.preventDefault();
+        $.ajax({
+            url: API_URL + '/logout',
+            method: 'POST',
+            headers: { 'Authorization': 'Bearer ' + token },
+            complete: function () {
+                localStorage.removeItem('token');
+                localStorage.removeItem('user');
+                window.location.href = '/login';
             }
-            $('#usersTable tbody').empty();
-            $('#usersTable').DataTable({
-                data: data,
-                columns: [
-                    { data: 'id' },
-                    { data: 'name' },
-                    { data: 'email' },
-                    {
-                        data: 'role',
-                        render: function(role, type, row) {
-                            return `
-                                <select class="form-select form-select-sm roleSelect" data-id="${row.id}">
-                                    <option value="user" ${role === 'user' ? 'selected' : ''}>User</option>
-                                    <option value="admin" ${role === 'admin' ? 'selected' : ''}>Admin</option>
-                                </select>
-                            `;
+        });
+    });
+
+    // ── Load users ───────────────────────────────────────────────
+    function loadUsers() {
+        $.ajax({
+            url: API_URL + '/users',
+            method: 'GET',
+            headers: { 'Authorization': 'Bearer ' + token },
+            success: function (data) {
+                currentData = data;
+                updateStats(data);
+
+                if ($.fn.DataTable.isDataTable('#usersTable')) {
+                    $('#usersTable').DataTable().destroy();
+                }
+                $('#usersTable tbody').empty();
+
+                usersTable = $('#usersTable').DataTable({
+                    data: data,
+                    dom: 'rt<"d-flex justify-content-between align-items-center"lip>',
+                    order: [[0, 'asc']],
+                    columnDefs: [
+                        { orderable: false, targets: [3, 4, 5] }
+                    ],
+                    columns: [
+                        {
+                            data: 'id',
+                            render: function (id) {
+                                return `<span class="user-id">#${id}</span>`;
+                            }
+                        },
+                        {
+                            data: 'name',
+                            render: function (name) {
+                                return `
+                                    <div class="avatar-cell">
+                                        <span class="avatar-circle">${initials(name)}</span>
+                                        <span class="user-name">${name || '—'}</span>
+                                    </div>
+                                `;
+                            }
+                        },
+                        {
+                            data: 'email',
+                            render: function (email) {
+                                return `<span class="user-email">${email}</span>`;
+                            }
+                        },
+                        {
+                            data: 'role',
+                            render: function (role, type, row) {
+                                return `
+                                    <select class="role-select roleSelect" data-id="${row.id}">
+                                        <option value="user" ${role === 'user' ? 'selected' : ''}>User</option>
+                                        <option value="admin" ${role === 'admin' ? 'selected' : ''}>Admin</option>
+                                    </select>
+                                `;
+                            }
+                        },
+                        {
+                            data: 'is_active',
+                            render: function (isActive) {
+                                return statusPill(isActive);
+                            }
+                        },
+                        {
+                            data: null,
+                            orderable: false,
+                            render: function (row) {
+                                const isActive = row.is_active;
+                                return `
+                                    <select class="role-select statusSelect" data-id="${row.id}">
+                                        <option value="1" ${isActive ? 'selected' : ''}>Active</option>
+                                        <option value="0" ${!isActive ? 'selected' : ''}>Inactive</option>
+                                    </select>
+                                `;
+                            }
                         }
-                    },
-                    {
-                        data: 'is_active',
-                        render: function(is_active) {
-                            return is_active
-                                ? '<span class="badge bg-success">Active</span>'
-                                : '<span class="badge bg-danger">Inactive</span>';
-                        }
-                    },
-                    {
-                        data: null,
-                        render: function(data, type, row) {
-                            const btnText = row.is_active ? 'Deactivate' : 'Activate';
-                            const btnClass = row.is_active ? 'btn-danger' : 'btn-success';
-                            return `
-                                <button class="btn btn-sm ${btnClass} btnToggle"
-                                    data-id="${row.id}"
-                                    data-active="${row.is_active}">
-                                    ${btnText}
-                                </button>
-                            `;
-                        }
-                    }
-                ]
-            });
-        },
-        error: function(xhr) {
-            console.log('Error loading users:', xhr.responseText);
-        }
+                    ]
+                });
+
+                $('#customSearch').off('keyup').on('keyup', function () {
+                    usersTable.search(this.value).draw();
+                });
+            },
+            error: function (xhr) {
+                console.log('Error loading users:', xhr.responseText);
+            }
+        });
+    }
+
+    // ── Role / status filters ───────────────────────────────────
+    $.fn.dataTable.ext.search.push(function (settings, data, dataIndex) {
+        if (settings.nTable.id !== 'usersTable') return true;
+        const row = currentData[dataIndex];
+        if (!row) return true;
+
+        const roleVal = $('#roleFilter').val();
+        const statusVal = $('#statusFilter').val();
+
+        if (roleVal && row.role !== roleVal) return false;
+        if (statusVal === 'active' && !row.is_active) return false;
+        if (statusVal === 'inactive' && row.is_active) return false;
+
+        return true;
     });
-}
 
-// Update Role
-$(document).on('change', '.roleSelect', function() {
-    const id = $(this).data('id');
-    const role = $(this).val();
-
-    $.ajax({
-        url: API_URL + '/users/' + id + '/role',
-        method: 'PUT',
-        contentType: 'application/json',
-        headers: { 'Authorization': 'Bearer ' + token },
-        data: JSON.stringify({ role }),
-        success: function() {
-            alert('Role updated successfully!');
-            loadUsers();
-        },
-        error: function(xhr) {
-            alert('Error updating role');
-        }
+    $('#roleFilter, #statusFilter').on('change', function () {
+        usersTable.draw();
     });
-});
 
-// Toggle Active/Inactive
-$(document).on('click', '.btnToggle', function() {
-    const id = $(this).data('id');
-    const currentActive = $(this).data('active');
-    const newActive = currentActive ? 0 : 1;
+    // ── Confirm update modal state ────────────────────────────────
+    let pendingChange = null;
+    let changeConfirmed = false;
 
-    $.ajax({
-        url: API_URL + '/users/' + id + '/toggle',
-        method: 'PUT',
-        contentType: 'application/json',
-        headers: { 'Authorization': 'Bearer ' + token },
-        data: JSON.stringify({ is_active: newActive }),
-        success: function() {
-            loadUsers();
-        },
-        error: function(xhr) {
-            alert('Error updating user status');
-        }
+    // Remember the value a select had before the user opens/changes it,
+    // so we can revert it if the update is cancelled.
+    $(document).on('mousedown focus', '.roleSelect, .statusSelect', function () {
+        $(this).data('prevValue', $(this).val());
     });
-});
 
-// Logout
-$('#btnLogout').click(function() {
-    $.ajax({
-        url: API_URL + '/logout',
-        method: 'POST',
-        contentType: 'application/json',
-        data: JSON.stringify({ id: user.id }),
-        success: function() {
-            localStorage.removeItem('token');
-            localStorage.removeItem('user');
-            window.location.href = '/login';
+    function openConfirmModal(change, message) {
+        pendingChange = change;
+        changeConfirmed = false;
+        $('#confirmUpdateBody').html(message);
+        $('#confirmUpdateModal').modal('show');
+    }
+
+    // Revert the select back to its previous value if the modal is
+    // dismissed (Cancel, backdrop click, Esc) without confirming.
+    $('#confirmUpdateModal').on('hidden.bs.modal', function () {
+        if (pendingChange && !changeConfirmed) {
+            pendingChange.$select.val(pendingChange.prevValue);
         }
+        pendingChange = null;
     });
-});
 
-$(document).ready(function() {
-    loadUsers();
-});
+    // ── Update role ──────────────────────────────────────────────
+    $(document).on('change', '.roleSelect', function () {
+        const $select = $(this);
+        const id = $select.data('id');
+        const role = $select.val();
+        const prevValue = $select.data('prevValue');
+        const row = currentData.find(u => String(u.id) === String(id));
+        const name = row ? (row.name || row.email || ('#' + id)) : ('#' + id);
+
+        if (role === prevValue) return;
+
+        openConfirmModal(
+            { type: 'role', id, value: role, prevValue, $select },
+            `Change <strong>${name}</strong>'s role from <strong>${prevValue}</strong> to <strong>${role}</strong>?`
+        );
+    });
+
+    // ── Toggle active/inactive ───────────────────────────────────
+    $(document).on('change', '.statusSelect', function () {
+        const $select = $(this);
+        const id = $select.data('id');
+        const newActive = $select.val();
+        const prevValue = $select.data('prevValue');
+        const row = currentData.find(u => String(u.id) === String(id));
+        const name = row ? (row.name || row.email || ('#' + id)) : ('#' + id);
+
+        if (newActive === prevValue) return;
+
+        const label = newActive === '1' ? 'Active' : 'Inactive';
+        openConfirmModal(
+            { type: 'status', id, value: newActive, prevValue, $select },
+            `Set <strong>${name}</strong>'s status to <strong>${label}</strong>?`
+        );
+    });
+
+    // ── Confirm button: actually perform the update ──────────────
+    $('#btnConfirmUpdate').click(function () {
+        if (!pendingChange) return;
+        const { type, id, value, $select } = pendingChange;
+        const $btn = $(this);
+
+        $select.prop('disabled', true);
+        $btn.prop('disabled', true);
+
+        const url = type === 'role'
+            ? API_URL + '/users/' + id + '/role'
+            : API_URL + '/users/' + id + '/toggle';
+
+        const payload = type === 'role'
+            ? { role: value }
+            : { is_active: parseInt(value, 10) };
+
+        $.ajax({
+            url: url,
+            method: 'PUT',
+            contentType: 'application/json',
+            headers: { 'Authorization': 'Bearer ' + token },
+            data: JSON.stringify(payload),
+            success: function () {
+                changeConfirmed = true;
+                $btn.prop('disabled', false);
+                $('#confirmUpdateModal').modal('hide');
+                loadUsers();
+            },
+            error: function () {
+                changeConfirmed = true; // avoid reverting; loadUsers() will refresh with real state
+                $btn.prop('disabled', false);
+                $('#confirmUpdateModal').modal('hide');
+                alert(type === 'role' ? 'Error updating role' : 'Error updating user status');
+                loadUsers();
+            }
+        });
+    });
+
+    $(document).ready(function () {
+        loadUsers();
+    });
 </script>
 
 </body>

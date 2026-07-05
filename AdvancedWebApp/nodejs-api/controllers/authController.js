@@ -109,10 +109,15 @@ exports.setupProfile = async (req, res) => {
         );
 
         res.json({ message: 'Profile updated successfully' });
-    } catch (err) {
-        res.status(500).json({ error: err.message });
-    }
-};
+        } catch (err) {
+                console.error('setupProfile error:', err.name, '-', err.message);
+                const isPacketTooBig = err.message && err.message.toLowerCase().includes('max_allowed_packet');
+                const friendlyMessage = isPacketTooBig
+                    ? 'Your photo is too large for the server to accept right now. Please choose a smaller image.'
+                    : (err.message || 'Something went wrong while saving your profile.');
+                res.status(500).json({ message: friendlyMessage });
+            }
+        };
 
 // LOGIN
 exports.login = async (req, res) => {

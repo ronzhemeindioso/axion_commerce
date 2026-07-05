@@ -1,22 +1,31 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <script>
+        (function () {
+            var token = localStorage.getItem('token');
+            var justRegistered = sessionStorage.getItem('canAccessSetupProfile');
+            if (!token || justRegistered !== '1') {
+                window.location.replace('/login');
+            }
+        })();
+    </script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Set Up Profile — Aperture</title>
     <style>
         :root {
-            --seashell:        #FFF4EB;
+            --seashell:        #FEFBF9;
             --wheat:           #F6E0B6;
-            --powder-blue:     #A6BCC9;
-            --french-blue:     #3E4B8E;
-            --midnight-violet: #3D1534;
+            --powder-blue:     #948078;
+            --french-blue:     #C1745B;
+            --midnight-violet: #A8654E;
         }
 
         * { box-sizing: border-box; margin: 0; padding: 0; }
 
         body {
-            background: #dde4ec;
+            background: #FEFBF9;
             min-height: 100vh;
             font-family: 'Segoe UI', system-ui, sans-serif;
             display: flex;
@@ -28,16 +37,20 @@
         .setup-wrapper {
             display: flex;
             width: 820px;
-            min-height: 580px;
+            height: 600px;
+            max-height: 90vh;
             border-radius: 20px;
             overflow: hidden;
-            box-shadow: 0 24px 64px rgba(62,75,142,0.18);
+            box-shadow: 0 24px 64px rgba(193,116,91,0.20);
         }
 
+        /* ── Left panel — same warm terracotta gradient + photo overlay as login ── */
         .left-panel {
             width: 300px;
             flex-shrink: 0;
-            background: var(--french-blue);
+            background:
+                linear-gradient(160deg, rgba(212,139,112,0.86) 0%, rgba(193,116,91,0.88) 55%, rgba(176,106,80,0.92) 100%),
+                url('https://i.pinimg.com/1200x/ea/99/18/ea99181e51b51d36e6b1f4d049614983.jpg') center/cover no-repeat;
             display: flex;
             flex-direction: column;
             justify-content: space-between;
@@ -46,32 +59,12 @@
             overflow: hidden;
         }
 
-        .left-panel::before {
-            content: '';
-            position: absolute;
-            width: 300px; height: 300px;
-            border-radius: 50%;
-            background: rgba(255,255,255,0.05);
-            top: -100px; right: -120px;
-            pointer-events: none;
-        }
-
-        .left-panel::after {
-            content: '';
-            position: absolute;
-            width: 260px; height: 260px;
-            border-radius: 50%;
-            background: rgba(166,188,201,0.08);
-            bottom: -100px; left: -60px;
-            pointer-events: none;
-        }
-
         .brand { position: relative; z-index: 1; }
 
         .brand-name {
             font-size: .75rem;
             font-weight: 700;
-            color: rgba(255,255,255,0.9);
+            color: rgba(255,255,255,0.92);
             letter-spacing: 3px;
             text-transform: uppercase;
         }
@@ -93,7 +86,7 @@
 
         .left-body p {
             font-size: .8rem;
-            color: rgba(166,188,201,0.75);
+            color: rgba(255,244,235,0.82);
             line-height: 1.75;
         }
 
@@ -116,14 +109,14 @@
             width: 22px;
             height: 22px;
             border-radius: 50%;
-            border: 2px solid rgba(255,255,255,0.25);
+            border: 2px solid rgba(255,255,255,0.35);
             display: flex;
             align-items: center;
             justify-content: center;
             flex-shrink: 0;
             font-size: .6rem;
             font-weight: 700;
-            color: rgba(255,255,255,0.4);
+            color: rgba(255,255,255,0.5);
             transition: all .2s;
         }
 
@@ -134,25 +127,25 @@
         }
 
         .step-dot.done {
-            background: rgba(255,255,255,0.15);
-            border-color: rgba(255,255,255,0.3);
-            color: rgba(255,255,255,0.6);
+            background: rgba(255,255,255,0.22);
+            border-color: rgba(255,255,255,0.4);
+            color: rgba(255,255,255,0.75);
         }
 
         .step-label {
             font-size: .72rem;
-            color: rgba(255,255,255,0.35);
+            color: rgba(255,255,255,0.45);
             font-weight: 600;
             letter-spacing: .3px;
         }
 
-        .step.active .step-label { color: rgba(255,255,255,0.9); }
-        .step.done .step-label { color: rgba(255,255,255,0.45); }
+        .step.active .step-label { color: rgba(255,255,255,0.95); }
+        .step.done .step-label { color: rgba(255,255,255,0.6); }
 
         .left-footer {
             position: relative; z-index: 1;
             font-size: .66rem;
-            color: rgba(255,255,255,0.2);
+            color: rgba(255,255,255,0.32);
             letter-spacing: .4px;
         }
 
@@ -161,9 +154,9 @@
             background: #fff;
             display: flex;
             flex-direction: column;
-            justify-content: center;
+            justify-content: flex-start;
             padding: 2.8rem 3rem;
-            overflow: hidden;
+            overflow-y: auto;
         }
 
         .form-header { margin-bottom: 1.8rem; }
@@ -202,7 +195,7 @@
             height: 64px;
             border-radius: 50%;
             background: var(--seashell);
-            border: 2px dashed #d4d8e8;
+            border: 2px dashed #F0DDD5;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -218,7 +211,7 @@
             display: none;
         }
 
-        .avatar-preview svg { opacity: .3; }
+        .avatar-preview svg { opacity: .4; }
 
         .avatar-preview.has-image svg { display: none; }
         .avatar-preview.has-image img { display: block; }
@@ -227,7 +220,7 @@
 
         .btn-upload {
             padding: .4rem .85rem;
-            border: 1.5px solid #eceef4;
+            border: 1.5px solid #F8EFEA;
             border-radius: 8px;
             font-size: .75rem;
             font-weight: 600;
@@ -240,12 +233,12 @@
 
         .btn-upload:hover {
             border-color: var(--french-blue);
-            background: #f5f6fc;
+            background: #FAEFEA;
         }
 
         .avatar-hint {
             font-size: .68rem;
-            color: #c8ccd8;
+            color: #D8B6AA;
         }
 
         .field { margin-bottom: 1rem; }
@@ -257,7 +250,7 @@
             text-transform: uppercase;
             letter-spacing: .9px;
             color: var(--midnight-violet);
-            opacity: .45;
+            opacity: .55;
             margin-bottom: .4rem;
         }
 
@@ -266,11 +259,11 @@
         .field textarea {
             width: 100%;
             padding: .65rem 1rem;
-            border: 1.5px solid #eceef4;
+            border: 1.5px solid #F8EFEA;
             border-radius: 10px;
             font-size: .875rem;
             color: var(--midnight-violet);
-            background: #fafbfc;
+            background: #FEFBF9;
             outline: none;
             transition: border-color .15s, box-shadow .15s, background .15s;
             font-family: inherit;
@@ -281,45 +274,56 @@
         .field textarea:focus {
             border-color: var(--french-blue);
             background: #fff;
-            box-shadow: 0 0 0 3px rgba(62,75,142,0.08);
+            box-shadow: 0 0 0 3px rgba(193,116,91,0.10);
         }
 
         .field input::placeholder,
-        .field textarea::placeholder { color: #c8ccd8; font-size: .85rem; }
+        .field textarea::placeholder { color: #D8B6AA; font-size: .85rem; }
 
         .field select {
             appearance: none;
-            background-image: url("data:image/svg+xml,%3Csvg width='10' height='6' viewBox='0 0 10 6' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%23A6BCC9' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+            background-image: url("data:image/svg+xml,%3Csvg width='10' height='6' viewBox='0 0 10 6' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%23948078' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
             background-repeat: no-repeat;
             background-position: right 1rem center;
             padding-right: 2.5rem;
             cursor: pointer;
         }
 
-        .field select option[value=""] { color: #c8ccd8; }
+        .field select option[value=""] { color: #D8B6AA; }
 
         .field-row { display: flex; gap: 1rem; }
         .field-row .field { flex: 1; }
 
         .error-msg {
-            background: #fdf0f0;
-            border: 1px solid #f5c2c2;
+            background: #FBEBEA;
+            border: 1px solid #EFC2BE;
             border-radius: 8px;
-            padding: .55rem .9rem;
-            font-size: .78rem;
-            color: #b83232;
+            padding: .65rem .9rem;
+            font-size: .8rem;
+            font-weight: 600;
+            color: #D6483F;
             margin-bottom: 1rem;
             display: flex;
             align-items: center;
-            gap: .5rem;
+            gap: .55rem;
+            animation: errorShake .35s ease;
         }
         .error-msg.hidden { display: none; }
+        .error-icon { flex-shrink: 0; opacity: .9; }
+
+        @keyframes errorShake {
+            0%   { transform: translateX(0); opacity: 0; }
+            25%  { transform: translateX(-4px); opacity: 1; }
+            50%  { transform: translateX(3px); }
+            75%  { transform: translateX(-2px); }
+            100% { transform: translateX(0); }
+        }
 
         .btn-save {
             width: 100%;
             margin-top: 1.4rem;
             padding: .75rem;
-            background: var(--french-blue);
+            background: linear-gradient(135deg, #C1745B 0%, #A8654E 100%);
             color: #fff;
             border: none;
             border-radius: 10px;
@@ -328,16 +332,17 @@
             cursor: pointer;
             letter-spacing: .3px;
             display: flex; align-items: center; justify-content: center; gap: .5rem;
-            transition: background .15s, transform .12s;
+            transition: box-shadow .2s, transform .12s;
             font-family: inherit;
+            box-shadow: 0 4px 14px rgba(193,116,91,0.28);
         }
 
         .btn-save:hover {
-            background: var(--midnight-violet);
+            box-shadow: 0 6px 20px rgba(193,116,91,0.38);
             transform: translateY(-1px);
         }
 
-        .btn-save:active { transform: translateY(0); }
+        .btn-save:active { transform: translateY(0); box-shadow: 0 3px 10px rgba(193,116,91,0.28); }
         .btn-save .arrow { transition: transform .15s; font-style: normal; }
         .btn-save:hover .arrow { transform: translateX(3px); }
 
@@ -397,13 +402,18 @@
         </div>
 
         <div class="error-msg hidden" id="errorMsg">
-            ⚠️ <span id="errorText">Something went wrong.</span>
+            <svg class="error-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"/>
+                <line x1="12" y1="8" x2="12" y2="12"/>
+                <line x1="12" y1="16" x2="12.01" y2="16"/>
+            </svg>
+            <span id="errorText">Something went wrong.</span>
         </div>
 
         <!-- Avatar -->
         <div class="avatar-row">
             <div class="avatar-preview" id="avatarPreview">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#3E4B8E" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#C1745B" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
                     <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
                     <circle cx="12" cy="7" r="4"/>
                 </svg>
@@ -425,7 +435,7 @@
                 </div>
                 <div class="field">
                     <label for="phone">Phone</label>
-                    <input type="text" id="phone" placeholder="+63 900 000 0000" autocomplete="tel">
+                    <input type="text" id="phone" placeholder="09123456789" autocomplete="tel" maxlength="11" inputmode="numeric">
                 </div>
             </div>
 
@@ -453,7 +463,7 @@
             <div class="field-row">
                 <div class="field">
                     <label for="zipCode">ZIP / Postal code</label>
-                        <input type="text" id="zipCode" placeholder="e.g. 1900" autocomplete="postal-code">
+                        <input type="text" id="zipCode" placeholder="e.g. 1900" autocomplete="postal-code" maxlength="4" inputmode="numeric">
                 </div>
                 <div class="field">
                     <label for="country">Country</label>
@@ -476,7 +486,7 @@
         </form>
 
         <div class="skip-row">
-            <a href="/products" id="skipLink">Skip for now — I'll fill this in later</a>
+            <a href="/products" id="skipLink" onclick="sessionStorage.removeItem('canAccessSetupProfile')">Skip for now — I'll fill this in later</a>
         </div>
 
     </div>
@@ -524,18 +534,17 @@
         document.getElementById('errorMsg').classList.add('hidden');
     }
 
-    // ZIP code: digits only
-    // ZIP code: digits only
+    // ZIP code: digits only, capped at 4
     const zipInput = document.getElementById('zipCode');
     zipInput.addEventListener('input', function () {
-        const cleaned = this.value.replace(/[^0-9]/g, '');
+        const cleaned = this.value.replace(/[^0-9]/g, '').slice(0, 4);
         if (cleaned !== this.value) this.value = cleaned;
     });
 
-    // Phone: digits, spaces, dashes, and a leading + only
+    // Phone: digits only, capped at 11 (e.g. 09123456789)
     const phoneInput = document.getElementById('phone');
     phoneInput.addEventListener('input', function () {
-        const cleaned = this.value.replace(/[^0-9+\-\s]/g, '');
+        const cleaned = this.value.replace(/[^0-9]/g, '').slice(0, 11);
         if (cleaned !== this.value) this.value = cleaned;
     });
 
@@ -565,13 +574,13 @@
             return;
         }
 
-        if (!/^[0-9]{3,10}$/.test(zipCode)) {
-            showError('ZIP / postal code must contain numbers only.');
+        if (!/^[0-9]{4}$/.test(zipCode)) {
+            showError('ZIP / postal code must be exactly 4 numbers.');
             return;
         }
 
-        if (!phone || !/^\+?[0-9\-\s]{7,15}$/.test(phone)) {
-            showError('Please enter a valid phone number (numbers only).');
+        if (!/^[0-9]{11}$/.test(phone)) {
+            showError('Phone number must be exactly 11 numbers.');
             return;
         }
 
@@ -609,6 +618,7 @@
             }
 
             if (res.ok) {
+                sessionStorage.removeItem('canAccessSetupProfile');
                 window.location.href = (user && user.role === 'admin') ? '/products' : '/shop';
             } else {
                 showError(data.message || 'Could not save profile.');
