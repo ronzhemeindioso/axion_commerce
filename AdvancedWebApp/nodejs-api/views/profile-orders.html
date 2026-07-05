@@ -1,0 +1,715 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Orders — Aperture</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root{
+            --ink:#2B2220;
+            --muted:#948078;
+            --muted-strong:#6B5850;
+            --faint:#F0DDD5;
+            --line:#F8EFEA;
+            --panel:#FFFFFF;
+            --canvas:#FEFBF9;
+            --accent:#C1745B;
+            --accent-dark:#9C5844;
+            --accent-soft:#FAEFEA;
+            --neutral:#6B7280;
+            --neutral-soft:#F1F2F4;
+            --violet:#3D1534;
+            --cream:#FFF4EB;
+            --wheat:#F6E0B6;
+            --good:#1EA672;
+            --good-soft:#E7F8F1;
+            --warn:#C97A1E;
+            --warn-soft:#FBF0E1;
+            --bad:#D6483F;
+            --bad-soft:#FBEBEA;
+            --radius:14px;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Inter', system-ui, sans-serif;
+            color: var(--ink);
+            background: var(--canvas);
+        }
+
+        .navbar {
+            background: var(--panel);
+            border-bottom: 1px solid var(--line);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .nav-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            height: 70px;
+        }
+
+        .brand {
+            font-weight: 800;
+            font-size: 18px;
+            color: var(--accent);
+            text-decoration: none;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 40px 24px;
+        }
+
+        .page-title {
+            font-size: 32px;
+            font-weight: 800;
+            color: var(--ink);
+            margin-bottom: 32px;
+        }
+
+        .orders-list {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .order-card {
+            background: var(--panel);
+            border: 1px solid var(--line);
+            border-radius: var(--radius);
+            overflow: hidden;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .order-card:hover {
+            border-color: var(--faint);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+        }
+
+        .order-header {
+            padding: 20px;
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr 1fr;
+            gap: 20px;
+            border-bottom: 1px solid var(--line);
+        }
+
+        .order-info {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .order-label {
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            color: var(--muted);
+            margin-bottom: 4px;
+            letter-spacing: 0.5px;
+        }
+
+        .order-value {
+            font-weight: 700;
+            color: var(--ink);
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 600;
+            width: fit-content;
+        }
+
+        .status-badge.pending {
+            background: var(--warn-soft);
+            color: var(--warn);
+        }
+
+        .status-badge.processing {
+            background: var(--faint);
+            color: var(--accent);
+        }
+
+        .status-badge.shipped {
+            background: var(--good-soft);
+            color: var(--good);
+        }
+
+        .status-badge.delivered {
+            background: var(--good-soft);
+            color: var(--good);
+        }
+
+        .order-items {
+            padding: 16px 20px;
+            background: var(--canvas);
+        }
+
+        .order-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            padding: 8px 0;
+            font-size: 13px;
+        }
+
+        .order-item .item-name {
+            flex: 1;
+        }
+
+        .item-name {
+            color: var(--ink);
+            font-weight: 500;
+        }
+
+        .item-qty {
+            color: var(--muted);
+        }
+
+        .item-price {
+            font-weight: 700;
+            color: var(--accent);
+        }
+
+        .btn-write-review {
+            background: var(--accent-soft);
+            color: var(--accent);
+            border: none;
+            padding: 6px 14px;
+            border-radius: 6px;
+            font-weight: 600;
+            font-size: 12px;
+            cursor: pointer;
+            margin-left: 12px;
+            white-space: nowrap;
+        }
+
+        .btn-write-review:hover {
+            background: var(--accent);
+            color: white;
+        }
+
+        .btn-delete-review-item {
+            background: var(--bad-soft);
+            color: var(--bad);
+        }
+
+        .btn-delete-review-item:hover {
+            background: var(--bad);
+            color: white;
+        }
+
+        /* ── Review modal ────────────────────────── */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(43, 34, 32, 0.5);
+            align-items: center;
+            justify-content: center;
+            z-index: 200;
+            padding: 20px;
+        }
+
+        .modal-overlay.open {
+            display: flex;
+        }
+
+        .modal-box {
+            background: var(--panel);
+            border-radius: var(--radius);
+            padding: 32px;
+            width: 100%;
+            max-width: 460px;
+            position: relative;
+        }
+
+        .modal-close {
+            position: absolute;
+            top: 16px;
+            right: 16px;
+            background: none;
+            border: none;
+            font-size: 18px;
+            color: var(--muted);
+            cursor: pointer;
+        }
+
+        .modal-title {
+            font-size: 20px;
+            font-weight: 800;
+            margin-bottom: 4px;
+        }
+
+        .modal-subtitle {
+            font-size: 13px;
+            color: var(--muted);
+            margin-bottom: 24px;
+        }
+
+        .modal-group {
+            margin-bottom: 20px;
+        }
+
+        .modal-group label {
+            display: block;
+            font-size: 12px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--muted);
+            margin-bottom: 10px;
+        }
+
+        .modal-stars {
+            display: flex;
+            gap: 6px;
+        }
+
+        .modal-stars button {
+            background: none;
+            border: none;
+            font-size: 28px;
+            cursor: pointer;
+            color: var(--line);
+            padding: 0;
+            line-height: 1;
+        }
+
+        .modal-stars button.filled {
+            color: var(--warn);
+        }
+
+        .modal-group textarea {
+            width: 100%;
+            min-height: 100px;
+            padding: 10px 12px;
+            border: 1px solid var(--line);
+            border-radius: 8px;
+            font-family: inherit;
+            font-size: 13px;
+            resize: vertical;
+            outline: none;
+        }
+
+        .modal-group textarea:focus {
+            border-color: var(--accent);
+        }
+
+        .modal-error {
+            display: none;
+            background: var(--bad-soft);
+            color: var(--bad);
+            padding: 10px 14px;
+            border-radius: 8px;
+            font-size: 13px;
+            margin-bottom: 16px;
+        }
+
+        .modal-submit {
+            width: 100%;
+            background: var(--accent);
+            color: white;
+            border: none;
+            padding: 12px;
+            border-radius: 8px;
+            font-weight: 700;
+            font-size: 14px;
+            cursor: pointer;
+        }
+
+        .modal-submit:hover { background: var(--accent-dark); }
+        .modal-submit:disabled { background: var(--line); color: var(--muted); cursor: not-allowed; }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 40px;
+            background: var(--panel);
+            border: 1px solid var(--line);
+            border-radius: var(--radius);
+        }
+
+        .empty-icon {
+            font-size: 60px;
+            margin-bottom: 16px;
+        }
+
+        .empty-text {
+            color: var(--muted);
+            margin-bottom: 20px;
+        }
+
+        .btn-continue {
+            background: var(--accent);
+            color: white;
+            border: none;
+            padding: 10px 24px;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .btn-continue:hover {
+            background: var(--accent-dark);
+        }
+    </style>
+</head>
+<body>
+
+<nav class="navbar">
+    <div class="nav-content">
+        <a href="/" class="brand">📷 Aperture</a>
+    </div>
+</nav>
+
+<div class="container">
+    <h1 class="page-title">My Orders</h1>
+
+    <div class="orders-list" id="ordersList">
+        <!-- Orders loaded by JavaScript -->
+    </div>
+</div>
+
+<script>
+    let myReviews = {}; // key: `${order_id}_${product_id}` -> review
+
+    async function loadMyReviews(token) {
+        try {
+            const response = await fetch('/api/reviews/mine', {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            if (!response.ok) return;
+
+            const reviews = await response.json();
+            myReviews = {};
+            reviews.forEach(r => {
+                myReviews[`${r.order_id}_${r.product_id}`] = r;
+            });
+        } catch (err) {
+            console.error('Error loading my reviews:', err);
+        }
+    }
+
+    async function loadOrders() {
+        const token = localStorage.getItem('token');
+        const user = JSON.parse(localStorage.getItem('user') || '{}');
+
+        if (!token || !user.id) {
+            window.location.href = '/login';
+            return;
+        }
+
+        try {
+            await loadMyReviews(token);
+
+            const response = await fetch(`/api/orders/user/${user.id}`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+
+            if (!response.ok) throw new Error('Failed to load orders');
+
+            const orders = await response.json();
+
+            if (orders.length === 0) {
+                document.getElementById('ordersList').innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-icon">🛒</div>
+                        <p class="empty-text">You haven't placed any orders yet</p>
+                        <a href="/shop" class="btn-continue">Start Shopping</a>
+                    </div>
+                `;
+                return;
+            }
+
+            const html = orders.map(order => {
+                const status = order.status || 'pending';
+                return `
+                <div class="order-card" onclick="viewOrderDetails(${order.id})">
+                    <div class="order-header">
+                        <div class="order-info">
+                            <span class="order-label">Order ID</span>
+                            <span class="order-value">#${order.id}</span>
+                        </div>
+                        <div class="order-info">
+                            <span class="order-label">Date</span>
+                            <span class="order-value">${new Date(order.created_at).toLocaleDateString()}</span>
+                        </div>
+                        <div class="order-info">
+                            <span class="order-label">Total</span>
+                            <span class="order-value">₱${parseFloat(order.total_amount).toFixed(2)}</span>
+                        </div>
+                        <div class="order-info">
+                            <span class="order-label">Status</span>
+                            <span class="status-badge ${status.toLowerCase()}">${status.toUpperCase()}</span>
+                        </div>
+                    </div>
+                    <div class="order-items" id="items-${order.id}">
+                        Loading items...
+                    </div>
+                </div>
+            `;
+            }).join('');
+
+            document.getElementById('ordersList').innerHTML = html;
+
+            // Load order items
+            orders.forEach(order => loadOrderItems(order.id, order.status || 'pending', token));
+
+        } catch (err) {
+            console.error('Error:', err);
+            document.getElementById('ordersList').innerHTML = '<p style="color: var(--bad);">Error loading orders</p>';
+        }
+    }
+
+    async function loadOrderItems(orderId, status, token) {
+        try {
+            const response = await fetch(`/api/orders/${orderId}`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+
+            if (!response.ok) throw new Error('Failed to load order details');
+
+            const order = await response.json();
+            const isDelivered = (status || '').toLowerCase() === 'delivered';
+
+            const itemsHtml = order.items.map(item => {
+                const existingReview = myReviews[`${orderId}_${item.product_id}`];
+
+                let actionHtml = '';
+                if (isDelivered && existingReview) {
+                    actionHtml = `
+                        <button class="btn-write-review" onclick="writeReview(${item.product_id}, ${orderId})">
+                            ✏️ Edit Review
+                        </button>
+                        <button class="btn-write-review btn-delete-review-item" onclick="deleteMyReview(${existingReview.id})">
+                            🗑️ Delete
+                        </button>
+                    `;
+                } else if (isDelivered) {
+                    actionHtml = `
+                        <button class="btn-write-review" onclick="writeReview(${item.product_id}, ${orderId})">
+                            ⭐ Write a Review
+                        </button>
+                    `;
+                }
+
+                return `
+                <div class="order-item">
+                    <span class="item-name">${item.name}</span>
+                    <span class="item-qty">x${item.quantity}</span>
+                    <span class="item-price">₱${parseFloat(item.price).toFixed(2)}</span>
+                    ${actionHtml}
+                </div>
+            `;
+            }).join('');
+
+            document.getElementById(`items-${orderId}`).innerHTML = itemsHtml;
+
+        } catch (err) {
+            console.error('Error loading order items:', err);
+        }
+    }
+</script>
+
+<div class="modal-overlay" id="reviewModal">
+    <div class="modal-box">
+        <button class="modal-close" id="closeReviewModal">✕</button>
+        <div class="modal-title">Write a Review</div>
+        <div class="modal-subtitle">Share what you thought about this product.</div>
+
+        <div class="modal-error" id="modalError"></div>
+
+        <div class="modal-group">
+            <label>Your Rating</label>
+            <div class="modal-stars" id="modalStars">
+                <button type="button" data-value="1">★</button>
+                <button type="button" data-value="2">★</button>
+                <button type="button" data-value="3">★</button>
+                <button type="button" data-value="4">★</button>
+                <button type="button" data-value="5">★</button>
+            </div>
+        </div>
+
+        <div class="modal-group">
+            <label>Your Review</label>
+            <textarea id="modalComment" placeholder="What did you like or dislike about this product?"></textarea>
+        </div>
+
+        <button class="modal-submit" id="modalSubmit">Submit Review</button>
+    </div>
+</div>
+
+<script>
+    let reviewProductId = null;
+    let reviewOrderId = null;
+    let reviewRating = 0;
+    let editingReviewId = null;
+
+    function writeReview(productId, orderId) {
+        const existing = myReviews[`${orderId}_${productId}`];
+
+        reviewProductId = productId;
+        reviewOrderId = orderId;
+        editingReviewId = existing ? existing.id : null;
+        reviewRating = existing ? existing.rating : 0;
+
+        document.querySelector('.modal-title').textContent = editingReviewId ? 'Edit Your Review' : 'Write a Review';
+        document.getElementById('modalSubmit').textContent = editingReviewId ? 'Save Changes' : 'Submit Review';
+        document.getElementById('modalComment').value = existing ? (existing.comment || '') : '';
+        document.getElementById('modalError').style.display = 'none';
+
+        document.querySelectorAll('#modalStars button').forEach(b => {
+            b.classList.toggle('filled', parseInt(b.dataset.value) <= reviewRating);
+        });
+
+        document.getElementById('reviewModal').classList.add('open');
+    }
+
+    async function deleteMyReview(reviewId) {
+        if (!confirm('Delete this review?')) return;
+
+        const token = localStorage.getItem('token');
+        try {
+            const response = await fetch(`/api/reviews/${reviewId}`, {
+                method: 'DELETE',
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+
+            const data = await response.json().catch(() => ({}));
+
+            if (!response.ok) {
+                showToast(data.message || 'Could not delete review.', 'danger');
+                return;
+            }
+
+            showToast('Review deleted.', 'success');
+            loadOrders();
+        } catch (err) {
+            console.error(err);
+            showToast('Something went wrong deleting the review.', 'danger');
+        }
+    }
+
+    function closeReviewModal() {
+        document.getElementById('reviewModal').classList.remove('open');
+    }
+
+    document.getElementById('closeReviewModal').addEventListener('click', closeReviewModal);
+    document.getElementById('reviewModal').addEventListener('click', (e) => {
+        if (e.target.id === 'reviewModal') closeReviewModal();
+    });
+
+    document.querySelectorAll('#modalStars button').forEach(btn => {
+        btn.addEventListener('click', () => {
+            reviewRating = parseInt(btn.dataset.value);
+            document.querySelectorAll('#modalStars button').forEach(b => {
+                b.classList.toggle('filled', parseInt(b.dataset.value) <= reviewRating);
+            });
+        });
+    });
+
+    document.getElementById('modalSubmit').addEventListener('click', async () => {
+        const token = localStorage.getItem('token');
+        const errorEl = document.getElementById('modalError');
+        errorEl.style.display = 'none';
+
+        if (!token) {
+            window.location.href = '/login';
+            return;
+        }
+
+        if (!reviewRating) {
+            errorEl.textContent = 'Please select a star rating.';
+            errorEl.style.display = 'block';
+            return;
+        }
+
+        const btn = document.getElementById('modalSubmit');
+        const isEditing = !!editingReviewId;
+        btn.disabled = true;
+        btn.textContent = isEditing ? 'Saving…' : 'Submitting…';
+
+        try {
+            const url = isEditing ? `/api/reviews/${editingReviewId}` : '/api/reviews';
+            const method = isEditing ? 'PUT' : 'POST';
+            const body = isEditing
+                ? { rating: reviewRating, comment: document.getElementById('modalComment').value.trim() }
+                : {
+                    product_id: reviewProductId,
+                    order_id: reviewOrderId,
+                    rating: reviewRating,
+                    comment: document.getElementById('modalComment').value.trim()
+                };
+
+            const response = await fetch(url, {
+                method,
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify(body)
+            });
+
+            const data = await response.json().catch(() => ({}));
+
+            if (!response.ok) {
+                errorEl.textContent = data.message || 'Could not save review.';
+                errorEl.style.display = 'block';
+                btn.disabled = false;
+                btn.textContent = isEditing ? 'Save Changes' : 'Submit Review';
+                return;
+            }
+
+            closeReviewModal();
+            showToast(isEditing ? 'Review updated.' : 'Thanks! Your review has been posted.', 'success');
+            loadOrders();
+        } catch (err) {
+            console.error(err);
+            errorEl.textContent = 'Something went wrong. Please try again.';
+            errorEl.style.display = 'block';
+        } finally {
+            btn.disabled = false;
+            btn.textContent = editingReviewId ? 'Save Changes' : 'Submit Review';
+        }
+    });
+
+    function viewOrderDetails(orderId) {
+        // Navigate to order detail page (optional)
+        console.log('View order:', orderId);
+    }
+
+    // Lightweight toast so the success message doesn't need another dependency.
+    function showToast(message, variant) {
+        const el = document.createElement('div');
+        el.textContent = message;
+        el.style.cssText = `
+            position: fixed; bottom: 24px; right: 24px; z-index: 300;
+            background: ${variant === 'success' ? 'var(--good)' : 'var(--bad)'};
+            color: white; padding: 12px 20px; border-radius: 8px;
+            font-size: 13px; font-weight: 600; box-shadow: 0 8px 24px rgba(0,0,0,.15);
+        `;
+        document.body.appendChild(el);
+        setTimeout(() => el.remove(), 2500);
+    }
+
+    loadOrders();
+</script>
+
+</body>
+</html>

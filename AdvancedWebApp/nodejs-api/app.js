@@ -23,6 +23,7 @@ const productRoutes = require('./routes/products');
 const authRoutes = require('./routes/auth');
 const cartRoutes = require('./routes/cart');
 const orderRoutes = require('./routes/orders');
+const reviewRoutes = require('./routes/reviews');
 
 const indexController = require('./controllers/indexController');
 
@@ -32,6 +33,10 @@ app.get('/login', indexController.showLogin);
 app.get('/register', indexController.showRegister);
 app.get('/shop', indexController.showShop);
 app.get('/cart', indexController.showCart);
+app.get('/checkout', indexController.showCheckout);
+app.get('/product-detail', indexController.showProductDetail);
+app.get('/profile-orders', indexController.showProfileOrders);
+app.get('/review', indexController.showReview);
 app.get('/products', indexController.showProducts);
 app.get('/products/deleted', indexController.showDeletedProducts);
 app.get('/orders', indexController.showOrders);
@@ -44,6 +49,7 @@ app.use('/api/products', productRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/cart', cartRoutes);
 app.use('/api/orders', orderRoutes);
+app.use('/api/reviews', reviewRoutes);
 
 sequelize.sync()
     .then(() => console.log('Database synced!'))

@@ -22,6 +22,22 @@ function showCart(req, res) {
     res.sendFile(path.join(viewsPath, 'cart.html'));
 }
 
+function showCheckout(req, res) {
+    res.sendFile(path.join(viewsPath, 'checkout.html'));
+}
+
+function showProductDetail(req, res) {
+    res.sendFile(path.join(viewsPath, 'product-detail.html'));
+}
+
+function showProfileOrders(req, res) {
+    res.sendFile(path.join(viewsPath, 'profile-orders.html'));
+}
+
+function showReview(req, res) {
+    res.sendFile(path.join(viewsPath, 'review.html'));
+}
+
 function showProducts(req, res) {
     res.sendFile(path.join(viewsPath, 'products.html'));
 }
@@ -52,6 +68,10 @@ module.exports = {
     showRegister,
     showShop,
     showCart,
+    showCheckout,
+    showProductDetail,
+    showProfileOrders,
+    showReview,
     showProducts,
     showOrders,
     showUsers,

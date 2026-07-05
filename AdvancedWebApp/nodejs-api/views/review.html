@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Write a Review — Aperture</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root{
+            --ink:#2B2220;
+            --muted:#948078;
+            --line:#F8EFEA;
+            --panel:#FFFFFF;
+            --canvas:#FEFBF9;
+            --accent:#C1745B;
+            --accent-dark:#9C5844;
+            --accent-soft:#FAEFEA;
+            --good:#1EA672;
+            --good-soft:#E7F8F1;
+            --bad:#D6483F;
+            --bad-soft:#FBEBEA;
+            --radius:14px;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Inter', system-ui, sans-serif;
+            color: var(--ink);
+            background: var(--canvas);
+        }
+
+        .navbar {
+            background: var(--panel);
+            border-bottom: 1px solid var(--line);
+        }
+
+        .nav-content {
+            max-width: 700px;
+            margin: 0 auto;
+            padding: 0 24px;
+            display: flex;
+            align-items: center;
+            height: 70px;
+        }
+
+        .brand {
+            font-weight: 800;
+            font-size: 18px;
+            color: var(--accent);
+            text-decoration: none;
+        }
+
+        .container {
+            max-width: 700px;
+            margin: 0 auto;
+            padding: 40px 24px;
+        }
+
+        .page-title {
+            font-size: 28px;
+            font-weight: 800;
+            margin-bottom: 8px;
+        }
+
+        .page-subtitle {
+            color: var(--muted);
+            margin-bottom: 32px;
+            font-size: 14px;
+        }
+
+        .review-form {
+            background: var(--panel);
+            border: 1px solid var(--line);
+            border-radius: var(--radius);
+            padding: 32px;
+        }
+
+        .form-group {
+            margin-bottom: 24px;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 12px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--muted);
+            margin-bottom: 10px;
+        }
+
+        .star-rating {
+            display: flex;
+            gap: 6px;
+        }
+
+        .star-rating button {
+            background: none;
+            border: none;
+            font-size: 32px;
+            cursor: pointer;
+            color: var(--line);
+            transition: color 0.15s;
+            padding: 0;
+            line-height: 1;
+        }
+
+        .star-rating button.filled {
+            color: #C97A1E;
+        }
+
+        textarea {
+            width: 100%;
+            min-height: 120px;
+            padding: 12px 14px;
+            border: 1px solid var(--line);
+            border-radius: 8px;
+            font-family: inherit;
+            font-size: 14px;
+            resize: vertical;
+            outline: none;
+        }
+
+        textarea:focus {
+            border-color: var(--accent);
+        }
+
+        .btn-submit {
+            width: 100%;
+            background: var(--accent);
+            color: white;
+            border: none;
+            padding: 13px;
+            border-radius: 8px;
+            font-weight: 700;
+            font-size: 15px;
+            cursor: pointer;
+        }
+
+        .btn-submit:hover {
+            background: var(--accent-dark);
+        }
+
+        .btn-submit:disabled {
+            background: var(--line);
+            color: var(--muted);
+            cursor: not-allowed;
+        }
+
+        .success-message, .error-message {
+            display: none;
+            padding: 12px 16px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-size: 14px;
+        }
+
+        .success-message {
+            background: var(--good-soft);
+            border: 1px solid var(--good);
+            color: var(--good);
+        }
+
+        .error-message {
+            background: var(--bad-soft);
+            border: 1px solid var(--bad);
+            color: var(--bad);
+        }
+    </style>
+</head>
+<body>
+
+<nav class="navbar">
+    <div class="nav-content">
+        <a href="/" class="brand">📷 Aperture</a>
+    </div>
+</nav>
+
+<div class="container">
+    <h1 class="page-title">Write a Review</h1>
+    <p class="page-subtitle">Share what you thought about this product.</p>
+
+    <div class="review-form">
+        <div class="success-message" id="successMsg">Thanks! Your review has been posted.</div>
+        <div class="error-message" id="errorMsg"></div>
+
+        <div class="form-group">
+            <label>Your Rating</label>
+            <div class="star-rating" id="starRating">
+                <button type="button" data-value="1">★</button>
+                <button type="button" data-value="2">★</button>
+                <button type="button" data-value="3">★</button>
+                <button type="button" data-value="4">★</button>
+                <button type="button" data-value="5">★</button>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label>Your Review</label>
+            <textarea id="comment" placeholder="What did you like or dislike about this product?"></textarea>
+        </div>
+
+        <button class="btn-submit" id="btnSubmit">Submit Review</button>
+    </div>
+</div>
+
+<script>
+    const params = new URLSearchParams(window.location.search);
+    const productId = params.get('productId');
+    const orderId = params.get('orderId');
+    let rating = 0;
+
+    if (!productId || !orderId) {
+        document.querySelector('.review-form').innerHTML =
+            '<p style="color: var(--bad);">Missing product or order information.</p>';
+    }
+
+    document.querySelectorAll('#starRating button').forEach(btn => {
+        btn.addEventListener('click', () => {
+            rating = parseInt(btn.dataset.value);
+            document.querySelectorAll('#starRating button').forEach(b => {
+                b.classList.toggle('filled', parseInt(b.dataset.value) <= rating);
+            });
+        });
+    });
+
+    document.getElementById('btnSubmit').addEventListener('click', async () => {
+        const token = localStorage.getItem('token');
+        const successMsg = document.getElementById('successMsg');
+        const errorMsg = document.getElementById('errorMsg');
+
+        successMsg.style.display = 'none';
+        errorMsg.style.display = 'none';
+
+        if (!token) {
+            window.location.href = '/login';
+            return;
+        }
+
+        if (!rating) {
+            errorMsg.textContent = 'Please select a star rating.';
+            errorMsg.style.display = 'block';
+            return;
+        }
+
+        const btn = document.getElementById('btnSubmit');
+        btn.disabled = true;
+        btn.textContent = 'Submitting…';
+
+        try {
+            const response = await fetch('/api/reviews', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({
+                    product_id: parseInt(productId),
+                    order_id: parseInt(orderId),
+                    rating,
+                    comment: document.getElementById('comment').value.trim()
+                })
+            });
+
+            const data = await response.json().catch(() => ({}));
+
+            if (!response.ok) {
+                errorMsg.textContent = data.message || 'Could not submit review.';
+                errorMsg.style.display = 'block';
+                btn.disabled = false;
+                btn.textContent = 'Submit Review';
+                return;
+            }
+
+            successMsg.style.display = 'block';
+            setTimeout(() => {
+                window.location.href = `/product-detail.html?id=${productId}`;
+            }, 1500);
+        } catch (err) {
+            console.error(err);
+            errorMsg.textContent = 'Something went wrong. Please try again.';
+            errorMsg.style.display = 'block';
+            btn.disabled = false;
+            btn.textContent = 'Submit Review';
+        }
+    });
+</script>
+
+</body>
+</html>
