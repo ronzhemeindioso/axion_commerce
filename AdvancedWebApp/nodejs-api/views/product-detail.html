@@ -1,0 +1,814 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Product Details — Aperture</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root{
+            --ink:#2B2220;
+            --muted:#948078;
+            --muted-strong:#6B5850;
+            --faint:#F0DDD5;
+            --line:#F8EFEA;
+            --panel:#FFFFFF;
+            --canvas:#FEFBF9;
+            --accent:#C1745B;
+            --accent-dark:#9C5844;
+            --accent-soft:#FAEFEA;
+            --neutral:#6B7280;
+            --neutral-soft:#F1F2F4;
+            --violet:#3D1534;
+            --cream:#FFF4EB;
+            --wheat:#F6E0B6;
+            --good:#1EA672;
+            --good-soft:#E7F8F1;
+            --warn:#C97A1E;
+            --warn-soft:#FBF0E1;
+            --bad:#D6483F;
+            --bad-soft:#FBEBEA;
+            --radius:14px;
+        }
+        
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        
+        body {
+            font-family: 'Inter', system-ui, sans-serif;
+            color: var(--ink);
+            background: var(--canvas);
+        }
+
+        .navbar {
+            background: var(--panel);
+            border-bottom: 1px solid var(--line);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .nav-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            height: 70px;
+        }
+
+        .brand {
+            font-weight: 800;
+            font-size: 18px;
+            color: var(--accent);
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .brand-icon {
+            width: 28px;
+            height: 28px;
+            background: var(--accent-soft);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--accent);
+            font-weight: 700;
+        }
+
+        .nav-menu {
+            display: flex;
+            gap: 32px;
+            list-style: none;
+        }
+
+        .nav-menu a {
+            text-decoration: none;
+            color: var(--muted);
+            font-weight: 500;
+            font-size: 14px;
+            transition: color 0.15s;
+        }
+
+        .nav-menu a:hover {
+            color: var(--accent);
+        }
+
+        .nav-actions {
+            display: flex;
+            gap: 16px;
+            align-items: center;
+        }
+
+        .btn-icon {
+            width: 36px;
+            height: 36px;
+            border: 1px solid var(--line);
+            background: var(--panel);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            transition: all 0.15s;
+            text-decoration: none;
+            color: var(--ink);
+        }
+
+        .btn-icon:hover {
+            background: var(--accent-soft);
+            border-color: var(--faint);
+        }
+
+        .cart-badge {
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            background: var(--bad);
+            color: white;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+            font-weight: 700;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 40px 24px;
+        }
+
+        .product-detail {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 40px;
+            background: var(--panel);
+            border: 1px solid var(--line);
+            border-radius: var(--radius);
+            padding: 40px;
+            margin-bottom: 40px;
+        }
+
+        .product-gallery {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .main-image {
+            width: 100%;
+            height: 400px;
+            background: var(--neutral-soft);
+            border-radius: var(--radius);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 100px;
+            overflow: hidden;
+        }
+
+        .main-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .thumbnail-list {
+            display: flex;
+            gap: 8px;
+            overflow-x: auto;
+        }
+
+        .thumbnail {
+            width: 70px;
+            height: 70px;
+            border: 2px solid var(--line);
+            border-radius: 8px;
+            cursor: pointer;
+            overflow: hidden;
+            flex-shrink: 0;
+            transition: border-color 0.15s;
+        }
+
+        .thumbnail img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .thumbnail.active {
+            border-color: var(--accent);
+        }
+
+        .product-info h1 {
+            font-size: 32px;
+            font-weight: 800;
+            color: var(--ink);
+            margin-bottom: 12px;
+        }
+
+        .product-rating {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 20px;
+            font-size: 14px;
+        }
+
+        .stars {
+            color: var(--warn);
+            font-size: 16px;
+        }
+
+        .rating-text {
+            color: var(--muted);
+        }
+
+        .product-price {
+            font-size: 28px;
+            font-weight: 800;
+            color: var(--accent);
+            margin-bottom: 24px;
+        }
+
+        .product-stock {
+            display: inline-block;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 600;
+            margin-bottom: 24px;
+        }
+
+        .product-stock.in-stock {
+            background: var(--good-soft);
+            color: var(--good);
+        }
+
+        .product-stock.low-stock {
+            background: var(--warn-soft);
+            color: var(--warn);
+        }
+
+        .product-stock.out-of-stock {
+            background: var(--bad-soft);
+            color: var(--bad);
+        }
+
+        .product-description {
+            color: var(--muted);
+            line-height: 1.8;
+            margin-bottom: 24px;
+        }
+
+        .quantity-selector {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 24px;
+        }
+
+        .quantity-btn {
+            width: 36px;
+            height: 36px;
+            border: 1px solid var(--line);
+            background: var(--panel);
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.15s;
+        }
+
+        .quantity-btn:hover {
+            border-color: var(--accent);
+            color: var(--accent);
+        }
+
+        .quantity-input {
+            width: 60px;
+            text-align: center;
+            padding: 8px;
+            border: 1px solid var(--line);
+            border-radius: 6px;
+            font-weight: 600;
+        }
+
+        .actions {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 32px;
+        }
+
+        .btn-add-cart {
+            flex: 1;
+            background: var(--accent);
+            color: white;
+            border: none;
+            padding: 14px 24px;
+            border-radius: 8px;
+            font-weight: 700;
+            font-size: 15px;
+            cursor: pointer;
+            transition: background 0.15s;
+        }
+
+        .btn-add-cart:hover {
+            background: var(--accent-dark);
+        }
+
+        .btn-wishlist {
+            width: 50px;
+            height: 50px;
+            border: 1px solid var(--line);
+            background: var(--panel);
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 20px;
+            transition: all 0.15s;
+        }
+
+        .btn-wishlist:hover {
+            border-color: var(--accent);
+            color: var(--accent);
+        }
+
+        .product-details-table {
+            border-top: 1px solid var(--line);
+            padding-top: 24px;
+        }
+
+        .detail-row {
+            display: grid;
+            grid-template-columns: 120px 1fr;
+            padding: 12px 0;
+            border-bottom: 1px solid var(--line);
+        }
+
+        .detail-label {
+            font-weight: 600;
+            color: var(--muted);
+            font-size: 13px;
+        }
+
+        .detail-value {
+            color: var(--ink);
+        }
+
+        .reviews-section {
+            margin-top: 60px;
+        }
+
+        .reviews-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 32px;
+        }
+
+        .reviews-header h2 {
+            font-size: 24px;
+            font-weight: 800;
+            color: var(--ink);
+        }
+
+        .btn-write-review {
+            background: var(--accent);
+            color: white;
+            border: none;
+            padding: 10px 18px;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 14px;
+            cursor: pointer;
+        }
+
+        .btn-write-review:hover {
+            background: var(--accent-dark);
+        }
+
+        .review-card {
+            background: var(--panel);
+            border: 1px solid var(--line);
+            border-radius: var(--radius);
+            padding: 20px;
+            margin-bottom: 16px;
+        }
+
+        .review-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            margin-bottom: 12px;
+        }
+
+        .reviewer-name {
+            font-weight: 700;
+            color: var(--ink);
+        }
+
+        .review-date {
+            font-size: 12px;
+            color: var(--muted);
+        }
+
+        .review-rating {
+            color: var(--warn);
+            font-size: 14px;
+            margin-bottom: 8px;
+        }
+
+        .review-text {
+            color: var(--muted);
+            line-height: 1.6;
+        }
+
+        .btn-admin-remove-review {
+            display: inline-block;
+            margin-top: 10px;
+            background: var(--bad-soft);
+            color: var(--bad);
+            border: none;
+            padding: 6px 14px;
+            border-radius: 6px;
+            font-weight: 600;
+            font-size: 12px;
+            cursor: pointer;
+        }
+
+        .btn-admin-remove-review:hover {
+            background: var(--bad);
+            color: white;
+        }
+
+        .reviews-pagination {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            margin-top: 24px;
+        }
+
+        .reviews-pagination button {
+            padding: 8px 12px;
+            border: 1px solid var(--line);
+            background: var(--panel);
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 500;
+            font-size: 13px;
+            color: var(--muted);
+        }
+
+        .reviews-pagination button.active {
+            background: var(--accent);
+            color: white;
+            border-color: var(--accent);
+        }
+
+        .reviews-empty {
+            text-align: center;
+            padding: 48px 20px;
+            color: var(--muted);
+            font-size: 14px;
+            background: var(--panel);
+            border: 1px solid var(--line);
+            border-radius: var(--radius);
+        }
+
+        @media (max-width: 768px) {
+            .product-detail {
+                grid-template-columns: 1fr;
+                padding: 24px;
+            }
+
+            .product-info h1 {
+                font-size: 24px;
+            }
+
+            .product-price {
+                font-size: 22px;
+            }
+
+            .actions {
+                flex-direction: column;
+            }
+
+            .btn-wishlist {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<nav class="navbar">
+    <div class="nav-content">
+        <a href="/" class="brand">
+            <div class="brand-icon">📷</div>
+            Aperture
+        </a>
+        <ul class="nav-menu">
+            <li><a href="/">Home</a></li>
+            <li><a href="/shop">Shop</a></li>
+        </ul>
+        <div class="nav-actions">
+            <a href="/profile-orders" class="btn-icon" title="My Orders">📦</a>
+            <a href="/cart" class="btn-icon" style="position: relative;">
+                🛒
+                <span class="cart-badge" id="cartCount" style="display: none;">0</span>
+            </a>
+            <a href="/setup-profile" class="btn-icon">👤</a>
+        </div>
+    </div>
+</nav>
+
+<div class="container">
+    <div class="product-detail" id="productDetail">
+        <!-- Product loaded by JavaScript -->
+    </div>
+
+    <div class="reviews-section">
+        <div class="reviews-header">
+            <h2>Customer Reviews</h2>
+        </div>
+        <div id="reviewsList">
+            <!-- Reviews loaded by JavaScript -->
+        </div>
+        <div class="reviews-pagination" id="reviewsPagination"></div>
+    </div>
+</div>
+
+<script>
+    const productId = new URLSearchParams(window.location.search).get('id') || 
+                      window.location.pathname.split('/').pop();
+    let product = {};
+
+    // Update cart count
+    function updateCartCount() {
+        const cart = JSON.parse(localStorage.getItem('cart') || '[]');
+        const badge = document.getElementById('cartCount');
+        if (cart.length > 0) {
+            badge.textContent = cart.length;
+            badge.style.display = 'flex';
+        }
+    }
+
+    // Load product details
+    async function loadProductDetails() {
+        try {
+            const response = await fetch(`/api/products/${productId}`);
+            if (!response.ok) throw new Error('Product not found');
+            
+            product = await response.json();
+            displayProductDetail();
+            loadReviews();
+        } catch (err) {
+            console.error('Error loading product:', err);
+            document.getElementById('productDetail').innerHTML = '<p style="color: var(--bad);">Product not found</p>';
+        }
+    }
+
+    function displayProductDetail() {
+        const images = product.images ? product.images.split(',') : [];
+        const stockStatus = product.stock === 0 ? 'out-of-stock' : product.stock <= 10 ? 'low-stock' : 'in-stock';
+        const stockText = product.stock === 0 ? 'Out of Stock' : product.stock <= 10 ? 'Low Stock' : 'In Stock';
+
+        const html = `
+            <div class="product-gallery">
+                <div class="main-image" id="mainImage">
+                    ${images.length > 0 ? `<img src="/uploads/${images[0]}" alt="${product.name}">` : '📷'}
+                </div>
+                <div class="thumbnail-list">
+                    ${images.map((img, idx) => `
+                        <div class="thumbnail ${idx === 0 ? 'active' : ''}" onclick="switchImage('${img}', this)">
+                            <img src="/uploads/${img}" alt="">
+                        </div>
+                    `).join('')}
+                </div>
+            </div>
+
+            <div class="product-info">
+                <h1>${product.name}</h1>
+                
+                <div class="product-rating">
+                    <span class="stars">★★★★★</span>
+                    <span class="rating-text">(48 reviews)</span>
+                </div>
+
+                <div class="product-price">₱${parseFloat(product.price).toFixed(2)}</div>
+
+                <span class="product-stock ${stockStatus}">${stockText}</span>
+
+                <p class="product-description">${product.description}</p>
+
+                <div class="quantity-selector">
+                    <button class="quantity-btn" onclick="decreaseQty()">−</button>
+                    <input type="number" id="quantity" class="quantity-input" value="1" min="1" max="${product.stock}">
+                    <button class="quantity-btn" onclick="increaseQty()">+</button>
+                </div>
+
+                <div class="actions">
+                    <button class="btn-add-cart" onclick="addToCart()" ${product.stock === 0 ? 'disabled' : ''}>
+                        Add to Cart
+                    </button>
+                    <button class="btn-wishlist" title="Add to wishlist">❤️</button>
+                </div>
+
+                <div class="product-details-table">
+                    <div class="detail-row">
+                        <div class="detail-label">Category</div>
+                        <div class="detail-value">${product.category}</div>
+                    </div>
+                    <div class="detail-row">
+                        <div class="detail-label">Stock</div>
+                        <div class="detail-value">${product.stock} units</div>
+                    </div>
+                    <div class="detail-row">
+                        <div class="detail-label">SKU</div>
+                        <div class="detail-value">#${product.id}</div>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        document.getElementById('productDetail').innerHTML = html;
+    }
+
+    function switchImage(src, element) {
+        document.querySelectorAll('.thumbnail').forEach(el => el.classList.remove('active'));
+        element.classList.add('active');
+        document.getElementById('mainImage').innerHTML = `<img src="/uploads/${src}" alt="">`;
+    }
+
+    function decreaseQty() {
+        const qty = document.getElementById('quantity');
+        if (qty.value > 1) qty.value = parseInt(qty.value) - 1;
+    }
+
+    function increaseQty() {
+        const qty = document.getElementById('quantity');
+        if (parseInt(qty.value) < product.stock) qty.value = parseInt(qty.value) + 1;
+    }
+
+    function addToCart() {
+        const token = localStorage.getItem('token');
+        const user = JSON.parse(localStorage.getItem('user') || '{}');
+        
+        if (!token || !user.id) {
+            alert('Please login first');
+            window.location.href = '/login';
+            return;
+        }
+
+        const quantity = parseInt(document.getElementById('quantity').value);
+        const images = product.images ? product.images.split(',')[0] : '';
+
+        // Send to backend API
+        fetch('/api/cart', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({
+                user_id: user.id,
+                product_id: product.id,
+                name: product.name,
+                description: product.description,
+                price: product.price,
+                quantity: quantity,
+                images: images
+            })
+        })
+        .then(res => res.json())
+        .then(data => {
+            alert('Added to cart!');
+            updateCartCount();
+        })
+        .catch(err => console.error('Error:', err));
+    }
+
+    let currentReviewPage = 1;
+
+    function getCurrentUser() {
+        try { return JSON.parse(localStorage.getItem('user') || 'null'); } catch (e) { return null; }
+    }
+
+    async function loadReviews(page = 1) {
+        currentReviewPage = page;
+        try {
+            const response = await fetch(`/api/reviews/product/${productId}?page=${page}&limit=5`);
+            if (!response.ok) throw new Error('Failed to load reviews');
+
+            const data = await response.json();
+            const currentUser = getCurrentUser();
+            const isAdmin = currentUser && currentUser.role === 'admin';
+
+            updateRatingSummary(data.average, data.count);
+
+            if (data.reviews.length === 0) {
+                document.getElementById('reviewsList').innerHTML = `
+                    <div class="reviews-empty">No reviews yet. Be the first to review this product!</div>
+                `;
+                document.getElementById('reviewsPagination').innerHTML = '';
+                return;
+            }
+
+            const html = data.reviews.map(review => `
+                <div class="review-card">
+                    <div class="review-header">
+                        <span class="reviewer-name">${review.User ? review.User.name : 'Anonymous'}</span>
+                        <span class="review-date">${new Date(review.created_at).toLocaleDateString()}</span>
+                    </div>
+                    <div class="review-rating">${starString(review.rating)}</div>
+                    <div class="review-text">${review.comment || ''}</div>
+                    ${isAdmin ? `<button class="btn-admin-remove-review" onclick="adminDeleteReview(${review.id})">Remove (Admin)</button>` : ''}
+                </div>
+            `).join('');
+
+            document.getElementById('reviewsList').innerHTML = html;
+            renderReviewPagination(data.totalPages, data.page);
+        } catch (err) {
+            console.error('Error loading reviews:', err);
+            document.getElementById('reviewsList').innerHTML = `
+                <div class="reviews-empty">No reviews yet. Be the first to review this product!</div>
+            `;
+            document.getElementById('reviewsPagination').innerHTML = '';
+        }
+    }
+
+    function renderReviewPagination(totalPages, page) {
+        const el = document.getElementById('reviewsPagination');
+        if (totalPages <= 1) {
+            el.innerHTML = '';
+            return;
+        }
+
+        let html = '';
+        for (let i = 1; i <= totalPages; i++) {
+            html += `<button class="${i === page ? 'active' : ''}" onclick="loadReviews(${i})">${i}</button>`;
+        }
+        el.innerHTML = html;
+    }
+
+    function starString(rating) {
+        const full = '★'.repeat(rating);
+        const empty = '☆'.repeat(5 - rating);
+        return full + empty;
+    }
+
+    async function adminDeleteReview(reviewId) {
+        if (!confirm('Remove this review? This cannot be undone.')) return;
+
+        const token = localStorage.getItem('token');
+        try {
+            const response = await fetch(`/api/reviews/${reviewId}`, {
+                method: 'DELETE',
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+
+            if (!response.ok) {
+                const data = await response.json().catch(() => ({}));
+                alert(data.message || 'Could not remove review.');
+                return;
+            }
+
+            loadReviews(currentReviewPage);
+        } catch (err) {
+            console.error(err);
+            alert('Something went wrong removing the review.');
+        }
+    }
+
+    function updateRatingSummary(average, count) {
+        const ratingEl = document.querySelector('.product-rating');
+        if (!ratingEl) return;
+
+        if (count === 0) {
+            ratingEl.innerHTML = `
+                <span class="stars">${starString(0)}</span>
+                <span class="rating-text">No reviews yet</span>
+            `;
+            return;
+        }
+
+        const rounded = Math.round(average);
+        ratingEl.innerHTML = `
+            <span class="stars">${starString(rounded)}</span>
+            <span class="rating-text">${average.toFixed(1)} (${count} review${count !== 1 ? 's' : ''})</span>
+        `;
+    }
+
+    updateCartCount();
+    loadProductDetails();
+</script>
+
+</body>
+</html>

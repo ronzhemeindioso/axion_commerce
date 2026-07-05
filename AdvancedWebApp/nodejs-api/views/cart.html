@@ -3,216 +3,741 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>My Cart</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css">
+    <title>Shopping Cart — Aperture</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root{
+            --ink:#2B2220;
+            --muted:#948078;
+            --muted-strong:#6B5850;
+            --faint:#F0DDD5;
+            --line:#F8EFEA;
+            --panel:#FFFFFF;
+            --canvas:#FEFBF9;
+            --accent:#C1745B;
+            --accent-dark:#9C5844;
+            --accent-soft:#FAEFEA;
+            --neutral:#6B7280;
+            --neutral-soft:#F1F2F4;
+            --violet:#3D1534;
+            --cream:#FFF4EB;
+            --wheat:#F6E0B6;
+            --good:#1EA672;
+            --good-soft:#E7F8F1;
+            --warn:#C97A1E;
+            --warn-soft:#FBF0E1;
+            --bad:#D6483F;
+            --bad-soft:#FBEBEA;
+            --radius:14px;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Inter', system-ui, sans-serif;
+            color: var(--ink);
+            background: var(--canvas);
+        }
+
+        /* ── Toasts ────────────────────────── */
+        #toastHost {
+            position: fixed;
+            top: 90px;
+            right: 20px;
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .toast {
+            min-width: 240px;
+            max-width: 320px;
+            background: var(--panel);
+            border: 1px solid var(--line);
+            border-left: 4px solid var(--accent);
+            border-radius: 10px;
+            padding: 12px 16px;
+            font-size: 13px;
+            font-weight: 500;
+            box-shadow: 0 8px 24px rgba(0,0,0,.1);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            animation: toast-in .2s ease-out;
+        }
+        .toast.success { border-left-color: var(--good); }
+        .toast.warning { border-left-color: var(--warn); }
+        .toast.danger  { border-left-color: var(--bad); }
+        .toast button {
+            background: none;
+            border: none;
+            color: var(--muted);
+            cursor: pointer;
+            font-size: 14px;
+            line-height: 1;
+        }
+        @keyframes toast-in {
+            from { opacity: 0; transform: translateX(16px); }
+            to   { opacity: 1; transform: translateX(0); }
+        }
+
+        .navbar {
+            background: var(--panel);
+            border-bottom: 1px solid var(--line);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .nav-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            height: 70px;
+        }
+
+        .brand {
+            font-weight: 800;
+            font-size: 18px;
+            color: var(--accent);
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .brand-icon {
+            width: 28px;
+            height: 28px;
+            background: var(--accent-soft);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--accent);
+            font-weight: 700;
+        }
+
+        .nav-menu {
+            display: flex;
+            gap: 32px;
+            list-style: none;
+        }
+
+        .nav-menu a {
+            text-decoration: none;
+            color: var(--muted);
+            font-weight: 500;
+            font-size: 14px;
+            transition: color 0.15s;
+        }
+
+        .nav-menu a:hover {
+            color: var(--accent);
+        }
+
+        .nav-actions {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+
+        .nav-user {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--muted-strong);
+            margin-right: 4px;
+            white-space: nowrap;
+        }
+
+        .btn-icon {
+            width: 36px;
+            height: 36px;
+            border: 1px solid var(--line);
+            background: var(--panel);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            transition: all 0.15s;
+            text-decoration: none;
+            color: var(--ink);
+            position: relative;
+        }
+
+        .btn-icon:hover {
+            background: var(--accent-soft);
+            border-color: var(--faint);
+        }
+
+        .btn-nav {
+            border: 1px solid var(--line);
+            background: var(--panel);
+            border-radius: 8px;
+            padding: 0 14px;
+            height: 36px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all .15s;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            color: var(--ink);
+        }
+        .btn-nav-primary {
+            background: var(--accent);
+            border-color: var(--accent);
+            color: #fff;
+        }
+        .btn-nav-primary:hover { background: var(--accent-dark); }
+        .btn-nav-danger { color: var(--bad); border-color: var(--faint); }
+        .btn-nav-danger:hover { background: var(--bad-soft); border-color: var(--bad); }
+
+        .cart-badge {
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            background: var(--bad);
+            color: white;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+            font-weight: 700;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 40px 24px;
+        }
+
+        .page-title {
+            font-size: 32px;
+            font-weight: 800;
+            color: var(--ink);
+            margin-bottom: 32px;
+        }
+
+        .cart-content {
+            display: grid;
+            grid-template-columns: 1fr 320px;
+            gap: 32px;
+        }
+
+        .cart-items {
+            background: var(--panel);
+            border: 1px solid var(--line);
+            border-radius: var(--radius);
+            overflow: hidden;
+        }
+
+        .cart-item {
+            display: grid;
+            grid-template-columns: 100px 1fr 100px 140px 50px;
+            gap: 20px;
+            align-items: center;
+            padding: 20px;
+            border-bottom: 1px solid var(--line);
+        }
+
+        .cart-item:last-child {
+            border-bottom: none;
+        }
+
+        .item-image {
+            width: 100px;
+            height: 100px;
+            background: var(--neutral-soft);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+
+        .item-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .item-info h3 {
+            font-weight: 700;
+            color: var(--ink);
+            margin-bottom: 4px;
+        }
+
+        .item-info p {
+            font-size: 13px;
+            color: var(--muted);
+        }
+
+        .item-price {
+            font-weight: 700;
+            color: var(--accent);
+        }
+
+        .quantity-group {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .quantity-btn {
+            width: 28px;
+            height: 28px;
+            border: 1px solid var(--line);
+            background: var(--panel);
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 700;
+            color: var(--ink);
+            transition: all 0.15s;
+            flex-shrink: 0;
+        }
+
+        .quantity-btn:hover {
+            border-color: var(--accent);
+            color: var(--accent);
+        }
+
+        .quantity-btn:disabled {
+            cursor: not-allowed;
+            opacity: .4;
+        }
+
+        .quantity-input {
+            width: 44px;
+            padding: 6px 4px;
+            border: 1px solid var(--line);
+            border-radius: 6px;
+            text-align: center;
+            font-weight: 600;
+            font-family: inherit;
+        }
+
+        .btn-remove {
+            background: var(--bad-soft);
+            color: var(--bad);
+            border: none;
+            width: 32px;
+            height: 32px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 700;
+            transition: all 0.15s;
+        }
+
+        .btn-remove:hover {
+            background: var(--bad);
+            color: white;
+        }
+
+        .empty-cart {
+            padding: 60px 40px;
+            text-align: center;
+        }
+
+        .empty-cart-icon {
+            font-size: 60px;
+            margin-bottom: 16px;
+        }
+
+        .empty-cart p {
+            color: var(--muted);
+            margin-bottom: 24px;
+        }
+
+        .btn-continue-shopping {
+            background: var(--accent);
+            color: white;
+            border: none;
+            padding: 10px 24px;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .btn-continue-shopping:hover {
+            background: var(--accent-dark);
+        }
+
+        .cart-summary {
+            background: var(--panel);
+            border: 1px solid var(--line);
+            border-radius: var(--radius);
+            padding: 24px;
+            height: fit-content;
+            position: sticky;
+            top: 90px;
+        }
+
+        .summary-title {
+            font-weight: 700;
+            font-size: 16px;
+            color: var(--ink);
+            margin-bottom: 20px;
+        }
+
+        .summary-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 12px 0;
+            border-bottom: 1px solid var(--line);
+            font-size: 14px;
+        }
+
+        .summary-row.total {
+            border: none;
+            padding: 16px 0;
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--accent);
+        }
+
+        .btn-checkout {
+            width: 100%;
+            background: var(--accent);
+            color: white;
+            border: none;
+            padding: 12px;
+            border-radius: 8px;
+            font-weight: 700;
+            font-size: 15px;
+            cursor: pointer;
+            margin-top: 16px;
+            transition: background 0.15s;
+        }
+
+        .btn-checkout:hover {
+            background: var(--accent-dark);
+        }
+
+        .btn-checkout:disabled {
+            background: var(--neutral-soft);
+            color: var(--muted);
+            cursor: not-allowed;
+        }
+
+        @media (max-width: 768px) {
+            .cart-content {
+                grid-template-columns: 1fr;
+            }
+
+            .cart-item {
+                grid-template-columns: 80px 1fr;
+                gap: 12px;
+            }
+
+            .item-image {
+                width: 80px;
+                height: 80px;
+                grid-column: 1;
+                grid-row: 1 / 3;
+            }
+
+            .item-price,
+            .quantity-group,
+            .btn-remove {
+                display: none;
+            }
+
+            .cart-summary {
+                position: static;
+            }
+
+            .nav-user { display: none; }
+        }
+    </style>
 </head>
 <body>
 
-<nav class="navbar navbar-dark bg-dark px-4">
-    <span class="navbar-brand">🛒 MyShop</span>
-    <div>
-        <a href="/products" class="btn btn-secondary btn-sm me-2">← Back to Products</a>
-        <button class="btn btn-danger btn-sm" id="btnLogout">Logout</button>
+<div id="toastHost"></div>
+
+<nav class="navbar">
+    <div class="nav-content">
+        <a href="/" class="brand">
+            <div class="brand-icon">📷</div>
+            Aperture
+        </a>
+        <ul class="nav-menu">
+            <li><a href="/">Home</a></li>
+            <li><a href="/shop">Shop</a></li>
+        </ul>
+        <div class="nav-actions">
+            <span id="navUser" class="nav-user" style="display:none;"></span>
+
+            <a href="/products" id="navAdminLink" class="btn-icon" style="display:none;" title="Admin">⚙️</a>
+
+            <a href="/profile-orders" id="navOrdersLink" class="btn-icon" style="display:none;" title="My Orders">📦</a>
+
+            <a href="/cart" class="btn-icon" style="position: relative;" title="Cart">
+                🛒
+                <span class="cart-badge" id="cartCount" style="display: none;">0</span>
+            </a>
+
+            <a href="/setup-profile" id="navProfileLink" class="btn-icon" style="display:none;" title="Profile">👤</a>
+
+            <a href="/login" id="navLoginLink" class="btn-nav btn-nav-primary">Login</a>
+            <button id="navLogoutBtn" class="btn-nav btn-nav-danger" style="display:none;">Logout</button>
+        </div>
     </div>
 </nav>
 
-<div class="container mt-4">
-    <h2>My Cart</h2>
+<div class="container">
+    <h1 class="page-title">Shopping Cart</h1>
 
-    <table id="cartTable" class="table table-bordered">
-        <thead>
-            <tr>
-                <th>Image</th>
-                <th>Name</th>
-                <th>Price</th>
-                <th>Quantity</th>
-                <th>Subtotal</th>
-                <th>Actions</th>
-            </tr>
-        </thead>
-        <tbody></tbody>
-    </table>
+    <div class="cart-content">
+        <div class="cart-items" id="cartItems">
+            <!-- Cart items loaded by JavaScript -->
+        </div>
 
-    <div class="text-end mt-3">
-        <h4>Total: ₱<span id="totalAmount">0.00</span></h4>
-        <button class="btn btn-success btn-lg" id="btnCheckout">
-            Checkout 🛒
-        </button>
+        <div class="cart-summary">
+            <div class="summary-title">Order Summary</div>
+            <div class="summary-row">
+                <span>Subtotal</span>
+                <span id="subtotal">₱0.00</span>
+            </div>
+            <div class="summary-row">
+                <span>Shipping</span>
+                <span>₱0.00</span>
+            </div>
+            <div class="summary-row">
+                <span>Tax</span>
+                <span>₱0.00</span>
+            </div>
+            <div class="summary-row total">
+                <span>Total</span>
+                <span id="total">₱0.00</span>
+            </div>
+            <button class="btn-checkout" id="btnCheckout">Proceed to Checkout</button>
+        </div>
     </div>
 </div>
 
-<script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-<script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
-<script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
-
 <script>
-const CART_URL = '/api/cart';
+const CART_URL    = '/api/cart';
 const UPLOADS_URL = '/uploads/';
 
-const token = localStorage.getItem('token');
-const user = JSON.parse(localStorage.getItem('user'));
+let cartItems = [];
 
-// Redirect if not logged in
-if (!token || !user) {
+function getToken() { return localStorage.getItem('token'); }
+function getUser()  { try { return JSON.parse(localStorage.getItem('user') || 'null'); } catch (e) { return null; } }
+
+// A cart requires a logged-in user, so bounce out immediately if there's no session.
+const token = getToken();
+const user  = getUser();
+if (!token || !user || !user.id) {
     window.location.href = '/login';
 }
 
-function loadCart() {
-    $.ajax({
-        url: CART_URL + '/' + user.id,
-        method: 'GET',
-        headers: { 'Authorization': 'Bearer ' + token },
-        success: function(data) {
-            if ($.fn.DataTable.isDataTable('#cartTable')) {
-                $('#cartTable').DataTable().destroy();
-            }
-            $('#cartTable tbody').empty();
+// ---------- Nav / auth state ----------
+function refreshNav() {
+    const loggedIn = !!(token && user);
 
-            let total = 0;
-            data.forEach(item => {
-                total += parseFloat(item.price) * item.quantity;
-            });
-            $('#totalAmount').text(total.toFixed(2));
+    document.getElementById('navLoginLink').style.display   = loggedIn ? 'none' : 'inline-flex';
+    document.getElementById('navLogoutBtn').style.display   = loggedIn ? 'inline-flex' : 'none';
+    document.getElementById('navProfileLink').style.display = loggedIn ? 'flex' : 'none';
+    document.getElementById('navOrdersLink').style.display = loggedIn ? 'flex' : 'none';
+    document.getElementById('navAdminLink').style.display   = (loggedIn && user.role === 'admin') ? 'flex' : 'none';
 
-            $('#cartTable').DataTable({
-                data: data,
-                columns: [
-                    {
-                        data: 'images',
-                        render: function(images) {
-                            if (!images) return 'No image';
-                            const first = images.split(',')[0];
-                            return `<img src="${UPLOADS_URL}${first}" height="50" style="border-radius:4px;">`;
-                        }
-                    },
-                    { data: 'name' },
-                    {
-                        data: 'price',
-                        render: function(price) {
-                            return '₱' + parseFloat(price).toFixed(2);
-                        }
-                    },
-                    {
-                        data: null,
-                        render: function(data) {
-                            return `
-                                <div class="input-group" style="width:120px">
-                                    <button class="btn btn-sm btn-secondary btnMinus" data-id="${data.id}" data-qty="${data.quantity}">-</button>
-                                    <input type="number" class="form-control form-control-sm text-center qtyInput"
-                                        value="${data.quantity}" min="1" data-id="${data.id}" style="width:50px">
-                                    <button class="btn btn-sm btn-secondary btnPlus" data-id="${data.id}" data-qty="${data.quantity}">+</button>
-                                </div>
-                            `;
-                        }
-                    },
-                    {
-                        data: null,
-                        render: function(data) {
-                            const subtotal = parseFloat(data.price) * data.quantity;
-                            return '₱' + subtotal.toFixed(2);
-                        }
-                    },
-                    {
-                        data: 'id',
-                        render: function(id) {
-                            return `
-                                <button class="btn btn-sm btn-danger btnRemove" data-id="${id}">Remove</button>
-                            `;
-                        }
-                    }
-                ]
-            });
-        }
-    });
+    const navUser = document.getElementById('navUser');
+    if (loggedIn) {
+        navUser.style.display = 'inline';
+        navUser.textContent = 'Hi, ' + user.name;
+    } else {
+        navUser.style.display = 'none';
+        navUser.textContent = '';
+    }
 }
 
-// Increase quantity
-$(document).on('click', '.btnPlus', function() {
-    const id = $(this).data('id');
-    const qty = parseInt($(this).data('qty')) + 1;
-    updateQuantity(id, qty);
-});
-
-// Decrease quantity
-$(document).on('click', '.btnMinus', function() {
-    const id = $(this).data('id');
-    const qty = parseInt($(this).data('qty')) - 1;
-    if (qty < 1) return;
-    updateQuantity(id, qty);
-});
-
-// Manual quantity input
-$(document).on('change', '.qtyInput', function() {
-    const id = $(this).data('id');
-    const qty = parseInt($(this).val());
-    if (qty < 1) return;
-    updateQuantity(id, qty);
-});
-
-function updateQuantity(id, quantity) {
-    $.ajax({
-        url: CART_URL + '/' + id,
-        method: 'PUT',
-        headers: { 'Authorization': 'Bearer ' + token },
-        contentType: 'application/json',
-        data: JSON.stringify({ quantity }),
-        success: function() { loadCart(); }
-    });
+function clearSession() {
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
 }
 
-// Remove item
-$(document).on('click', '.btnRemove', function() {
-    const id = $(this).data('id');
-    if (confirm('Remove this item from cart?')) {
-        $.ajax({
-            url: CART_URL + '/' + id,
-            method: 'DELETE',
-            headers: { 'Authorization': 'Bearer ' + token },
-            success: function() { loadCart(); }
-        });
-    }
-});
-
-// Checkout
-$('#btnCheckout').click(function() {
-    if (confirm('Place your order now?')) {
-        $.ajax({
-            url: CART_URL + '/checkout',
-            method: 'POST',
-            headers: { 'Authorization': 'Bearer ' + token },
-            contentType: 'application/json',
-            data: JSON.stringify({ user_id: user.id }),
-            success: function(data) {
-                alert('Order placed successfully! Order ID: ' + data.order_id + '\nTotal: ₱' + parseFloat(data.total_amount).toFixed(2));
-                window.location.href = '/shop';
-            },
-            error: function(xhr) {
-                const msg = xhr.responseJSON ? xhr.responseJSON.message : 'Checkout failed';
-                alert(msg);
-            }
-        });
-    }
-});
-
-// Logout
-$('#btnLogout').click(function() {
-    $.ajax({
-        url: '/api/auth/logout',
+document.getElementById('navLogoutBtn').addEventListener('click', function () {
+    fetch('/api/auth/logout', {
         method: 'POST',
-        headers: { 'Authorization': 'Bearer ' + token },
-        success: function() {
-            localStorage.removeItem('token');
-            localStorage.removeItem('user');
-            window.location.href = '/login';
-        }
+        headers: { 'Authorization': 'Bearer ' + token }
+    }).catch(() => {}).finally(() => {
+        clearSession();
+        window.location.href = '/login';
     });
 });
 
-$(document).ready(function() {
-    loadCart();
+// ---------- Toasts ----------
+function showToast(message, variant) {
+    const host = document.getElementById('toastHost');
+    const el = document.createElement('div');
+    el.className = 'toast ' + (variant || '');
+    el.innerHTML = `<span>${message}</span><button aria-label="Close">✕</button>`;
+    host.appendChild(el);
+
+    const remove = () => { if (el.parentNode) el.parentNode.removeChild(el); };
+    el.querySelector('button').addEventListener('click', remove);
+    setTimeout(remove, 2500);
+}
+
+// ---------- Cart badge ----------
+function updateCartCount() {
+    const badge = document.getElementById('cartCount');
+    const count = cartItems.reduce((sum, item) => sum + (item.quantity || 0), 0);
+    if (count > 0) {
+        badge.textContent = count;
+        badge.style.display = 'flex';
+    } else {
+        badge.style.display = 'none';
+    }
+}
+
+// ---------- Load cart ----------
+async function loadCart() {
+    try {
+        const response = await fetch(`${CART_URL}/${user.id}`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+
+        if (response.status === 401) {
+            clearSession();
+            window.location.href = '/login';
+            return;
+        }
+
+        cartItems = response.ok ? await response.json() : [];
+        displayCart();
+    } catch (err) {
+        console.error('Error loading cart:', err);
+        cartItems = [];
+        displayCart();
+    }
+}
+
+function displayCart() {
+    if (cartItems.length === 0) {
+        displayEmptyCart();
+        return;
+    }
+
+    const cartDiv = document.getElementById('cartItems');
+    cartDiv.innerHTML = cartItems.map(item => `
+        <div class="cart-item">
+            <div class="item-image">
+                ${item.images ? `<img src="${UPLOADS_URL}${item.images.split(',')[0]}" alt="${item.name}">` : '📷'}
+            </div>
+            <div class="item-info">
+                <h3>${item.name}</h3>
+                <p>${item.description || 'Product'}</p>
+            </div>
+            <div class="item-price">₱${parseFloat(item.price).toFixed(2)}</div>
+            <div class="quantity-group">
+                <button class="quantity-btn" ${item.quantity <= 1 ? 'disabled' : ''} onclick="updateQuantity(${item.id}, ${item.quantity - 1})">−</button>
+                <input type="number" class="quantity-input" value="${item.quantity}" min="1"
+                       onchange="updateQuantity(${item.id}, this.value)">
+                <button class="quantity-btn" onclick="updateQuantity(${item.id}, ${item.quantity + 1})">+</button>
+            </div>
+            <button class="btn-remove" onclick="removeFromCart(${item.id})" title="Remove">×</button>
+        </div>
+    `).join('');
+
+    document.getElementById('btnCheckout').disabled = false;
+    updateSummary();
+    updateCartCount();
+}
+
+function displayEmptyCart() {
+    const cartDiv = document.getElementById('cartItems');
+    cartDiv.innerHTML = `
+        <div class="empty-cart">
+            <div class="empty-cart-icon">🛒</div>
+            <p>Your cart is empty</p>
+            <a href="/shop" class="btn-continue-shopping">Continue Shopping</a>
+        </div>
+    `;
+    document.getElementById('btnCheckout').disabled = true;
+    updateSummary();
+    updateCartCount();
+}
+
+function updateSummary() {
+    const subtotal = cartItems.reduce((sum, item) => sum + (parseFloat(item.price) * item.quantity), 0);
+    document.getElementById('subtotal').textContent = `₱${subtotal.toFixed(2)}`;
+    document.getElementById('total').textContent = `₱${subtotal.toFixed(2)}`;
+}
+
+// ---------- Quantity ----------
+async function updateQuantity(itemId, newQty) {
+    const qty = parseInt(newQty);
+    if (!qty || qty < 1) return;
+
+    try {
+        const response = await fetch(`${CART_URL}/${itemId}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({ quantity: qty })
+        });
+
+        if (response.status === 401) {
+            clearSession();
+            window.location.href = '/login';
+            return;
+        }
+
+        loadCart();
+    } catch (err) {
+        console.error('Error updating cart:', err);
+        showToast('Could not update quantity.', 'danger');
+    }
+}
+
+// ---------- Remove ----------
+async function removeFromCart(itemId) {
+    if (!confirm('Remove this item from cart?')) return;
+
+    try {
+        const response = await fetch(`${CART_URL}/${itemId}`, {
+            method: 'DELETE',
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+
+        if (response.status === 401) {
+            clearSession();
+            window.location.href = '/login';
+            return;
+        }
+
+        showToast('Item removed from cart.', 'success');
+        loadCart();
+    } catch (err) {
+        console.error('Error removing item:', err);
+        showToast('Could not remove item.', 'danger');
+    }
+}
+
+// ---------- Checkout ----------
+document.getElementById('btnCheckout').addEventListener('click', () => {
+    if (cartItems.length === 0) return;
+    window.location.href = '/checkout';
 });
+
+refreshNav();
+loadCart();
 </script>
 
 </body>
