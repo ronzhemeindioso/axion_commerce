@@ -1238,6 +1238,17 @@ document.getElementById('searchInput').addEventListener('input', function () {
 refreshNav();
 updateCartCount();
 loadAllProducts();
+
+// If arriving from a homepage search (e.g. /shop?search=lens), prefill the search box
+(function prefillSearchFromURL() {
+    const params = new URLSearchParams(window.location.search);
+    const q = params.get('search');
+    if (q) {
+        document.getElementById('searchInput').value = q;
+        searchQuery = q;
+        applyFilters();
+    }
+})();
 </script>
 
 </body>

@@ -122,7 +122,7 @@
 
         .nav-actions {
             display: flex;
-            gap: 14px;
+            gap: 12px;
             align-items: center;
         }
 
@@ -140,23 +140,148 @@
             transition: all 0.15s;
             text-decoration: none;
             color: var(--ink);
+            position: relative;
         }
 
         .btn-icon:hover { background: var(--accent-soft); border-color: var(--faint); }
 
+        /* ── Search (icon + autocomplete panel) ── */
+        .search-wrap { position: relative; }
+
+        .search-panel {
+            position: absolute;
+            top: calc(100% + 10px);
+            right: 0;
+            width: 360px;
+            max-width: calc(100vw - 48px);
+            background: var(--panel);
+            border: 1px solid var(--line);
+            border-radius: 12px;
+            box-shadow: 0 12px 32px rgba(43,34,32,.14);
+            padding: 10px;
+            display: none;
+            flex-direction: column;
+            z-index: 200;
+        }
+        .search-panel.open { display: flex; }
+
+        .search-panel-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 12px;
+            border: 1px solid var(--line);
+            border-radius: 9px;
+            background: var(--canvas);
+            color: var(--muted);
+        }
+        .search-panel-row:focus-within {
+            border-color: var(--accent);
+            background: var(--panel);
+        }
+        .search-panel-row svg { flex-shrink: 0; }
+        .search-panel-row input {
+            border: none;
+            outline: none;
+            background: transparent;
+            font-family: inherit;
+            font-size: 13.5px;
+            color: var(--ink);
+            width: 100%;
+        }
+        .search-panel-row input::placeholder { color: var(--muted); }
+
+        .search-panel-results {
+            max-height: 380px;
+            overflow-y: auto;
+            margin-top: 6px;
+        }
+
+        .search-result-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 9px 10px;
+            border-radius: 9px;
+            text-decoration: none;
+            color: var(--ink);
+            cursor: pointer;
+        }
+        .search-result-item:hover { background: var(--accent-soft); }
+
+        .search-result-thumb {
+            width: 38px;
+            height: 38px;
+            border-radius: 8px;
+            background: var(--cream);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 15px;
+            flex-shrink: 0;
+            overflow: hidden;
+        }
+        .search-result-thumb img { width: 100%; height: 100%; object-fit: cover; }
+
+        .search-result-info { min-width: 0; flex: 1; }
+        .search-result-name {
+            font-size: 13.5px;
+            font-weight: 600;
+            color: var(--ink);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .search-result-cat {
+            font-size: 12px;
+            color: var(--muted);
+        }
+        .search-result-price {
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--accent-dark);
+            flex-shrink: 0;
+        }
+
+        .search-panel-hint,
+        .search-panel-empty {
+            padding: 14px 10px;
+            font-size: 13px;
+            color: var(--muted);
+            text-align: center;
+        }
+
+        .search-view-all {
+            display: block;
+            text-align: center;
+            padding: 10px;
+            margin-top: 4px;
+            border-top: 1px solid var(--line);
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--accent);
+            text-decoration: none;
+            border-radius: 0 0 8px 8px;
+        }
+        .search-view-all:hover { background: var(--accent-soft); }
+
+        @media (max-width: 480px) {
+            .search-panel { position: fixed; top: 60px; left: 12px; right: 12px; width: auto; }
+        }
+
         .cart-badge {
             position: absolute;
-            top: -6px;
-            right: -6px;
-            background: var(--accent);
+            top: -8px;
+            right: -8px;
+            background: var(--bad);
             color: white;
-            width: 18px;
-            height: 18px;
+            width: 20px;
+            height: 20px;
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 10px;
+            font-size: 11px;
             font-weight: 700;
         }
 
@@ -694,6 +819,24 @@
             <li><a href="#contact">Contact</a></li>
         </ul>
         <div class="nav-actions">
+            <div class="search-wrap" id="searchWrap">
+                <button type="button" class="btn-icon" id="searchToggleBtn" title="Search" aria-label="Search products">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16">
+                        <circle cx="11" cy="11" r="8"/>
+                        <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                    </svg>
+                </button>
+                <div class="search-panel" id="searchPanel">
+                    <div class="search-panel-row">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="15" height="15">
+                            <circle cx="11" cy="11" r="8"/>
+                            <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                        </svg>
+                        <input type="text" id="searchPanelInput" placeholder="Search cameras, lenses, bags…" autocomplete="off">
+                    </div>
+                    <div class="search-panel-results" id="searchPanelResults"></div>
+                </div>
+            </div>
             <a href="/cart" class="btn-icon" style="position: relative;">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16">
                     <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/>
@@ -839,6 +982,7 @@
     </div>
 </footer>
 
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
 <script>
     function updateCartCount() {
         const cart = JSON.parse(localStorage.getItem('cart') || '[]');
@@ -883,7 +1027,7 @@
 
             // Hottest picks — first 4
             grid.innerHTML = cachedProducts.slice(0, 4).map(product => `
-                <div class="product-card" onclick="window.location.href='/product/${product.id}'">
+                <div class="product-card" onclick="window.location.href='product-detail.html?id=${product.id}'">
                     <div class="product-image">
                         ${product.images ? `<img src="/uploads/${product.images.split(',')[0]}" alt="${product.name}">` : '📷'}
                     </div>
@@ -934,6 +1078,115 @@
 
     updateCartCount();
     loadFeaturedProducts();
+
+    // ── Search / autocomplete (jQuery + /api/products/search) ──
+    $(function () {
+        const $wrap    = $('#searchWrap');
+        const $toggle  = $('#searchToggleBtn');
+        const $panel   = $('#searchPanel');
+        const $input   = $('#searchPanelInput');
+        const $results = $('#searchPanelResults');
+
+        let searchTimer = null;
+        let lastQuery   = '';
+
+        function openPanel() {
+            $panel.addClass('open');
+            setTimeout(() => $input.trigger('focus'), 0);
+        }
+
+        function closePanel() {
+            $panel.removeClass('open');
+        }
+
+        $toggle.on('click', function (e) {
+            e.stopPropagation();
+            $panel.hasClass('open') ? closePanel() : openPanel();
+        });
+
+        // Close when clicking outside the search widget
+        $(document).on('click', function (e) {
+            if (!$wrap.is(e.target) && $wrap.has(e.target).length === 0) {
+                closePanel();
+            }
+        });
+
+        // Close on Escape
+        $(document).on('keydown', function (e) {
+            if (e.key === 'Escape') closePanel();
+        });
+
+        function renderResults(query, products) {
+            if (!query) {
+                $results.html('<div class="search-panel-hint">Start typing to find cameras, lenses, bags, and more.</div>');
+                return;
+            }
+
+            if (!products.length) {
+                $results.html('<div class="search-panel-empty">No products found for “' + $('<div>').text(query).html() + '”.</div>');
+                return;
+            }
+
+            const items = products.map(function (p) {
+                const img = p.images
+                    ? '<img src="/uploads/' + p.images.split(',')[0] + '" alt="">'
+                    : '📷';
+                const price = '₱' + parseFloat(p.price).toFixed(2);
+                return (
+                    '<a class="search-result-item" href="product-detail.html?id=' + p.id + '">' +
+                        '<div class="search-result-thumb">' + img + '</div>' +
+                        '<div class="search-result-info">' +
+                            '<div class="search-result-name">' + $('<div>').text(p.name).html() + '</div>' +
+                            '<div class="search-result-cat">' + $('<div>').text(p.category || '').html() + '</div>' +
+                        '</div>' +
+                        '<div class="search-result-price">' + price + '</div>' +
+                    '</a>'
+                );
+            }).join('');
+
+            const viewAll =
+                '<a class="search-view-all" href="/shop?search=' + encodeURIComponent(query) + '">' +
+                    'View all results for “' + $('<div>').text(query).html() + '”' +
+                '</a>';
+
+            $results.html(items + viewAll);
+        }
+
+        function runSearch(query) {
+            lastQuery = query;
+            if (!query) {
+                renderResults('', []);
+                return;
+            }
+
+            $.getJSON('/api/products/search', { q: query })
+                .done(function (products) {
+                    // Guard against out-of-order responses
+                    if (query === $input.val().trim()) {
+                        renderResults(query, Array.isArray(products) ? products : []);
+                    }
+                })
+                .fail(function () {
+                    $results.html('<div class="search-panel-empty">Couldn\'t search right now. Please try again.</div>');
+                });
+        }
+
+        $input.on('input', function () {
+            const query = $(this).val().trim();
+            clearTimeout(searchTimer);
+            searchTimer = setTimeout(function () { runSearch(query); }, 300);
+        });
+
+        $input.on('keydown', function (e) {
+            if (e.key === 'Enter') {
+                const query = $(this).val().trim();
+                if (query) window.location.href = '/shop?search=' + encodeURIComponent(query);
+            }
+        });
+
+        // Initial hint state
+        renderResults('', []);
+    });
 </script>
 
 </body>

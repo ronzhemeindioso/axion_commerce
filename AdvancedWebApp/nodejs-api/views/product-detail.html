@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Product Details — Aperture</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:wght@500;600;700&display=swap" rel="stylesheet">
     <style>
         :root{
             --ink:#2B2220;
@@ -29,6 +29,7 @@
             --bad:#D6483F;
             --bad-soft:#FBEBEA;
             --radius:14px;
+            --font-serif: 'Playfair Display', serif;
         }
         
         * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -48,53 +49,73 @@
         }
 
         .nav-content {
-            max-width: 1200px;
+            max-width: 1180px;
             margin: 0 auto;
             padding: 0 24px;
             display: flex;
             align-items: center;
             justify-content: space-between;
-            height: 70px;
+            height: 60px;
         }
 
         .brand {
-            font-weight: 800;
-            font-size: 18px;
-            color: var(--accent);
+            font-family: var(--font-serif);
+            font-weight: 700;
+            font-size: 15px;
+            color: var(--ink);
             text-decoration: none;
-            display: flex;
+            display: inline-flex;
             align-items: center;
             gap: 8px;
         }
 
         .brand-icon {
-            width: 28px;
-            height: 28px;
-            background: var(--accent-soft);
+            width: 22px;
+            height: 22px;
             border-radius: 50%;
+            background: var(--accent-soft);
+            color: var(--accent);
             display: flex;
             align-items: center;
             justify-content: center;
-            color: var(--accent);
-            font-weight: 700;
+            flex-shrink: 0;
         }
+        .brand-icon svg{ width: 13px; height: 13px; }
 
         .nav-menu {
             display: flex;
-            gap: 32px;
+            gap: 4px;
             list-style: none;
         }
 
         .nav-menu a {
+            display: inline-flex;
+            align-items: center;
             text-decoration: none;
-            color: var(--muted);
+            color: var(--muted-strong);
             font-weight: 500;
-            font-size: 14px;
+            font-size: 13.5px;
+            padding: 8px 16px;
+            border-radius: 9px;
+            position: relative;
             transition: color 0.15s;
         }
 
-        .nav-menu a:hover {
+        .nav-menu a:hover { color: var(--accent); }
+
+        .nav-menu a.active{
             color: var(--accent);
+            font-weight: 600;
+        }
+        .nav-menu a.active::after{
+            content: "";
+            position: absolute;
+            left: 16px;
+            right: 16px;
+            bottom: 2px;
+            height: 2px;
+            border-radius: 2px;
+            background: var(--accent);
         }
 
         .nav-actions {
@@ -102,60 +123,6 @@
             gap: 12px;
             align-items: center;
         }
-
-        .nav-user {
-            font-size: 13px;
-            font-weight: 600;
-            color: var(--muted-strong);
-            margin-right: 4px;
-            white-space: nowrap;
-        }
-
-        .nav-link-item {
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            text-decoration: none;
-            color: var(--muted);
-            padding: 8px 14px;
-            border-radius: 9px;
-            font-size: 13.5px;
-            font-weight: 500;
-            position: relative;
-            transition: color .15s ease, background .15s ease;
-        }
-        .nav-link-item:hover {
-            color: var(--accent);
-            background: var(--accent-soft);
-        }
-        .nav-link-item .cart-badge {
-            position: static;
-            margin-left: 2px;
-        }
-
-        .btn-nav {
-            border: 1px solid var(--line);
-            background: var(--panel);
-            border-radius: 8px;
-            padding: 0 14px;
-            height: 36px;
-            font-size: 13px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all .15s;
-            text-decoration: none;
-            display: inline-flex;
-            align-items: center;
-            color: var(--ink);
-        }
-        .btn-nav-primary {
-            background: var(--accent);
-            border-color: var(--accent);
-            color: #fff;
-        }
-        .btn-nav-primary:hover { background: var(--accent-dark); }
-        .btn-nav-danger { color: var(--bad); border-color: var(--faint); }
-        .btn-nav-danger:hover { background: var(--bad-soft); border-color: var(--bad); }
 
         /* ── Admin top nav (mirrors products.html exactly) ────────── */
         .admin-topnav{
@@ -228,19 +195,20 @@
         #adminLogoutBtn:hover{ color: #B93A32; }
 
         .btn-icon {
-            width: 36px;
-            height: 36px;
+            width: 34px;
+            height: 34px;
             border: 1px solid var(--line);
             background: var(--panel);
-            border-radius: 8px;
+            border-radius: 50%;
             cursor: pointer;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 16px;
+            font-size: 13px;
             transition: all 0.15s;
             text-decoration: none;
             color: var(--ink);
+            position: relative;
         }
 
         .btn-icon:hover {
@@ -262,6 +230,69 @@
             justify-content: center;
             font-size: 11px;
             font-weight: 700;
+        }
+
+        .profile-dropdown {
+            position: relative;
+        }
+        .dropdown-menu {
+            position: absolute;
+            top: calc(100% + 8px);
+            right: 0;
+            background: var(--panel);
+            border: 1px solid var(--line);
+            border-radius: 12px;
+            box-shadow: 0 12px 32px rgba(43,34,32,.14);
+            min-width: 190px;
+            padding: 6px;
+            display: none;
+            flex-direction: column;
+            gap: 2px;
+            z-index: 200;
+        }
+        .dropdown-menu.open {
+            display: flex;
+        }
+        .dropdown-user {
+            padding: 10px 12px 8px;
+            font-size: 12.5px;
+            font-weight: 700;
+            color: var(--muted-strong);
+            border-bottom: 1px solid var(--line);
+            margin-bottom: 4px;
+        }
+        .dropdown-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 9px 12px;
+            border-radius: 8px;
+            font-size: 13.5px;
+            font-weight: 500;
+            color: var(--ink);
+            text-decoration: none;
+            border: none;
+            background: none;
+            width: 100%;
+            text-align: left;
+            cursor: pointer;
+            font-family: inherit;
+        }
+        .dropdown-item:hover {
+            background: var(--accent-soft);
+            color: var(--accent);
+        }
+        .dropdown-item svg {
+            width: 15px;
+            height: 15px;
+            flex-shrink: 0;
+        }
+        .dropdown-item-danger {
+            color: var(--bad);
+        }
+        .dropdown-item-danger:hover {
+            background: var(--bad-soft);
+            color: var(--bad);
         }
 
         .container {
@@ -679,6 +710,8 @@
         .modal-btn-danger:hover { background: #B93A32; }
 
         @media (max-width: 768px) {
+            .nav-menu { display: none; }
+
             .product-detail {
                 grid-template-columns: 1fr;
                 padding: 24px;
@@ -708,27 +741,81 @@
 <nav class="navbar" id="storefrontNav">
     <div class="nav-content">
         <a href="/" class="brand">
-            <div class="brand-icon">📷</div>
-            Aperture
+            <span class="brand-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="10"/>
+                    <line x1="14.31" y1="8" x2="20.05" y2="17.94"/>
+                    <line x1="9.69" y1="8" x2="21.17" y2="8"/>
+                    <line x1="7.38" y1="12" x2="13.12" y2="2.06"/>
+                    <line x1="9.69" y1="16" x2="3.95" y2="6.06"/>
+                    <line x1="14.31" y1="16" x2="2.83" y2="16"/>
+                    <line x1="16.62" y1="12" x2="10.88" y2="21.94"/>
+                </svg>
+            </span>
+            Axion
         </a>
         <ul class="nav-menu">
             <li><a href="/">Home</a></li>
-            <li><a href="/shop">Shop</a></li>
+            <li><a href="/shop" class="active">Shop</a></li>
+            <li><a href="/#about">About</a></li>
+            <li><a href="/#contact">Contact</a></li>
         </ul>
         <div class="nav-actions">
-            <span id="navUser" class="nav-user" style="display:none;"></span>
-
-            <a href="/profile-orders" id="navOrdersLink" class="nav-link-item" style="display:none;">My Orders</a>
-
-            <a href="/cart" id="navCartLink" class="nav-link-item">
-                Add to Cart
+            <a href="/cart" id="navCartLink" class="btn-icon" style="position: relative;">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16">
+                    <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/>
+                    <path d="M3 6h18"/>
+                    <path d="M16 10a4 4 0 0 1-8 0"/>
+                </svg>
                 <span class="cart-badge" id="cartCount" style="display: none;">0</span>
             </a>
 
-            <a href="/edit-profile" id="navProfileLink" class="btn-icon" style="display:none;" title="Profile">👤</a>
+            <div class="profile-dropdown" id="profileDropdown">
+                <button type="button" class="btn-icon" id="profileDropdownToggle" title="Account">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16">
+                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                        <circle cx="12" cy="7" r="4"/>
+                    </svg>
+                </button>
+                <div class="dropdown-menu" id="profileDropdownMenu">
+                    <div id="navUser" class="dropdown-user" style="display:none;"></div>
 
-            <a href="/login" id="navLoginLink" class="btn-nav btn-nav-primary">Login</a>
-            <button id="navLogoutBtn" class="btn-nav btn-nav-danger" style="display:none;">Logout</button>
+                    <a href="/profile-orders" id="navOrdersLink" class="dropdown-item" style="display:none;">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/>
+                            <path d="M3.3 7 12 12l8.7-5"/>
+                            <path d="M12 22V12"/>
+                        </svg>
+                        My Orders
+                    </a>
+
+                    <a href="/edit-profile" id="navProfileLink" class="dropdown-item" style="display:none;">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                            <circle cx="12" cy="7" r="4"/>
+                        </svg>
+                        Edit Profile
+                    </a>
+
+                    <a href="/login" id="navLoginLink" class="dropdown-item">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/>
+                            <polyline points="10 17 15 12 10 7"/>
+                            <line x1="15" y1="12" x2="3" y2="12"/>
+                        </svg>
+                        Login
+                    </a>
+
+                    <button type="button" id="navLogoutBtn" class="dropdown-item dropdown-item-danger" style="display:none;">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+                            <polyline points="16 17 21 12 16 7"/>
+                            <line x1="21" y1="12" x2="9" y2="12"/>
+                        </svg>
+                        Logout
+                    </button>
+                </div>
+            </div>
         </div>
     </div>
 </nav>
@@ -856,6 +943,25 @@
     document.getElementById('adminLogoutBtn').addEventListener('click', function (e) {
         e.preventDefault();
         logoutUser();
+    });
+
+    document.getElementById('profileDropdownToggle').addEventListener('click', function (e) {
+        e.stopPropagation();
+        document.getElementById('profileDropdownMenu').classList.toggle('open');
+    });
+
+    document.addEventListener('click', function (e) {
+        const menu = document.getElementById('profileDropdownMenu');
+        const toggle = document.getElementById('profileDropdownToggle');
+        if (menu.classList.contains('open') && !menu.contains(e.target) && !toggle.contains(e.target)) {
+            menu.classList.remove('open');
+        }
+    });
+
+    document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape') {
+            document.getElementById('profileDropdownMenu').classList.remove('open');
+        }
     });
 
     // Update cart count
