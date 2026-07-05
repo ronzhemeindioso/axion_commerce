@@ -43,6 +43,7 @@ app.get('/orders', indexController.showOrders);
 app.get('/users', indexController.showUsers);
 app.get('/charts', indexController.showCharts);
 app.get('/setup-profile', indexController.showSetupProfile);
+app.get('/edit-profile', indexController.showEditProfile);
 
 // API routes
 app.use('/api/products', productRoutes);

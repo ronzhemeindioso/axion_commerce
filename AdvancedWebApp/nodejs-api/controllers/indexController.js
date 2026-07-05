@@ -58,6 +58,10 @@ function showSetupProfile(req, res) {
     res.sendFile(path.join(viewsPath, 'setup-profile.html'));
 }
 
+function showEditProfile(req, res) {
+    res.sendFile(path.join(viewsPath, 'edit-profile.html'));
+}
+
 function showDeletedProducts(req, res) {
     res.sendFile(path.join(viewsPath, 'deleted-products.html'));
 }
@@ -77,5 +81,6 @@ module.exports = {
     showUsers,
     showCharts,
     showSetupProfile,
+    showEditProfile,
     showDeletedProducts   // add this
 };

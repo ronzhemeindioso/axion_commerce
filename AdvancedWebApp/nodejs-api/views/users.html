@@ -554,6 +554,7 @@
             <a href="/users" class="active">Users</a>
             <a href="/orders">Orders</a>
             <a href="/products">Products</a>
+            <a href="/shop">Reviews</a>
             <a href="#" id="btnLogout">Logout</a>
         </div>
     </div>
@@ -671,6 +672,7 @@
 <script>
     const API_URL = '/api/auth';
     const token = localStorage.getItem('token');
+    const currentUser = JSON.parse(localStorage.getItem('user') || 'null');
     let usersTable;
     let currentData = [];
 
@@ -767,8 +769,9 @@
                         {
                             data: 'role',
                             render: function (role, type, row) {
+                                const isSelf = currentUser && String(row.id) === String(currentUser.id);
                                 return `
-                                    <select class="role-select roleSelect" data-id="${row.id}">
+                                    <select class="role-select roleSelect" data-id="${row.id}" ${isSelf ? 'disabled title="You cannot change your own role"' : ''}>
                                         <option value="user" ${role === 'user' ? 'selected' : ''}>User</option>
                                         <option value="admin" ${role === 'admin' ? 'selected' : ''}>Admin</option>
                                     </select>
@@ -786,8 +789,9 @@
                             orderable: false,
                             render: function (row) {
                                 const isActive = row.is_active;
+                                const isSelf = currentUser && String(row.id) === String(currentUser.id);
                                 return `
-                                    <select class="role-select statusSelect" data-id="${row.id}">
+                                    <select class="role-select statusSelect" data-id="${row.id}" ${isSelf ? 'disabled title="You cannot change your own status"' : ''}>
                                         <option value="1" ${isActive ? 'selected' : ''}>Active</option>
                                         <option value="0" ${!isActive ? 'selected' : ''}>Inactive</option>
                                     </select>
@@ -862,6 +866,12 @@
         const row = currentData.find(u => String(u.id) === String(id));
         const name = row ? (row.name || row.email || ('#' + id)) : ('#' + id);
 
+        if (currentUser && String(id) === String(currentUser.id)) {
+            $select.val(prevValue);
+            alert('You cannot change your own role.');
+            return;
+        }
+
         if (role === prevValue) return;
 
         openConfirmModal(
@@ -871,13 +881,19 @@
     });
 
     // ── Toggle active/inactive ───────────────────────────────────
-    $(document).on('change', '.statusSelect', function () {
+        $(document).on('change', '.statusSelect', function () {
         const $select = $(this);
         const id = $select.data('id');
         const newActive = $select.val();
         const prevValue = $select.data('prevValue');
         const row = currentData.find(u => String(u.id) === String(id));
         const name = row ? (row.name || row.email || ('#' + id)) : ('#' + id);
+
+        if (currentUser && String(id) === String(currentUser.id)) {
+            $select.val(prevValue);
+            alert('You cannot change your own status.');
+            return;
+        }
 
         if (newActive === prevValue) return;
 

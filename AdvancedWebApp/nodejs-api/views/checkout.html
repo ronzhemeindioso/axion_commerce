@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Checkout — Aperture</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:wght@500;600;700&display=swap" rel="stylesheet">
     <style>
         :root{
             --ink:#2B2220;
@@ -29,6 +29,7 @@
             --bad:#D6483F;
             --bad-soft:#FBEBEA;
             --radius:14px;
+            --font-serif: 'Playfair Display', serif;
         }
         
         * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -42,23 +43,59 @@
         .navbar {
             background: var(--panel);
             border-bottom: 1px solid var(--line);
+            position: sticky;
+            top: 0;
+            z-index: 100;
         }
 
         .nav-content {
-            max-width: 1200px;
+            max-width: 1180px;
             margin: 0 auto;
             padding: 0 24px;
             display: flex;
             align-items: center;
             justify-content: space-between;
-            height: 70px;
+            height: 60px;
         }
 
         .brand {
-            font-weight: 800;
-            font-size: 18px;
-            color: var(--accent);
+            font-family: var(--font-serif);
+            font-weight: 700;
+            font-size: 15px;
+            color: var(--ink);
             text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .brand-icon {
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            background: var(--accent-soft);
+            color: var(--accent);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+        .brand-icon svg{ width: 13px; height: 13px; }
+
+        .nav-back {
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--muted);
+            text-decoration: none;
+            padding: 8px 14px;
+            border: 1px solid var(--line);
+            border-radius: 8px;
+            transition: border-color .15s, color .15s;
+        }
+
+        .nav-back:hover {
+            border-color: var(--accent);
+            color: var(--accent);
         }
 
         .container {
@@ -269,7 +306,21 @@
 
 <nav class="navbar">
     <div class="nav-content">
-        <a href="/" class="brand">📷 Aperture</a>
+        <a href="/" class="brand">
+            <span class="brand-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="10"/>
+                    <line x1="14.31" y1="8" x2="20.05" y2="17.94"/>
+                    <line x1="9.69" y1="8" x2="21.17" y2="8"/>
+                    <line x1="7.38" y1="12" x2="13.12" y2="2.06"/>
+                    <line x1="9.69" y1="16" x2="3.95" y2="6.06"/>
+                    <line x1="14.31" y1="16" x2="2.83" y2="16"/>
+                    <line x1="16.62" y1="12" x2="10.88" y2="21.94"/>
+                </svg>
+            </span>
+            Axion
+        </a>
+        <a href="/shop" class="nav-back">← Back to Shop</a>
     </div>
 </nav>
 
@@ -392,17 +443,33 @@
 
         userData = user;
 
-        // Load user data into form
+        // Load basic info immediately from the session
         document.getElementById('firstName').value = user.name?.split(' ')[0] || '';
         document.getElementById('lastName').value = user.name?.split(' ')[1] || '';
         document.getElementById('email').value = user.email || '';
-        document.getElementById('phone').value = user.phone || '';
-        document.getElementById('addressLine1').value = user.address_line1 || '';
-        document.getElementById('addressLine2').value = user.address_line2 || '';
-        document.getElementById('city').value = user.city || '';
-        document.getElementById('province').value = user.province || '';
-        document.getElementById('zipCode').value = user.zip_code || '';
-        document.getElementById('country').value = user.country || '';
+
+        // Load the rest (phone/shipping address) from the user's saved profile,
+        // if they filled it out after registering. Left blank if they haven't.
+        try {
+            const profileRes = await fetch('/api/auth/profile', {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+
+            if (profileRes.ok) {
+                const profileData = await profileRes.json();
+                const profile = profileData.user || {};
+
+                document.getElementById('phone').value = profile.phone || '';
+                document.getElementById('addressLine1').value = profile.address_line1 || '';
+                document.getElementById('addressLine2').value = profile.address_line2 || '';
+                document.getElementById('city').value = profile.city || '';
+                document.getElementById('province').value = profile.province || '';
+                document.getElementById('zipCode').value = profile.zip_code || '';
+                document.getElementById('country').value = profile.country || '';
+            }
+        } catch (err) {
+            console.error('Error loading profile:', err);
+        }
 
         // Load cart
         try {

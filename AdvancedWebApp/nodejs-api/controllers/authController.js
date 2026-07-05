@@ -51,6 +51,25 @@ exports.register = async (req, res) => {
         res.status(500).json({ error: err.message });
     }
 };
+// GET OWN PROFILE
+exports.getProfile = async (req, res) => {
+    try {
+        const id = req.user.id;
+        const user = await User.findByPk(id, {
+            attributes: [
+                'id', 'name', 'email', 'role', 'username', 'phone', 'avatar',
+                'address_line1', 'address_line2', 'city', 'province', 'zip_code', 'country'
+            ]
+        });
+
+        if (!user) return res.status(404).json({ message: 'User not found' });
+
+        res.json({ user });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+};
+
 // SETUP PROFILE
 exports.setupProfile = async (req, res) => {
     try {
@@ -181,6 +200,10 @@ exports.getAll = async (req, res) => {
 // UPDATE ROLE
 exports.updateRole = async (req, res) => {
     try {
+        if (String(req.user.id) === String(req.params.id)) {
+            return res.status(403).json({ message: 'You cannot change your own role.' });
+        }
+
         const { role } = req.body;
         await User.update({ role }, { where: { id: req.params.id } });
         res.json({ message: 'Role updated successfully' });
@@ -192,6 +215,10 @@ exports.updateRole = async (req, res) => {
 // DEACTIVATE / ACTIVATE USER
 exports.toggleActive = async (req, res) => {
     try {
+        if (String(req.user.id) === String(req.params.id)) {
+            return res.status(403).json({ message: 'You cannot change your own status.' });
+        }
+
         const { is_active } = req.body;
         await User.update({ is_active }, { where: { id: req.params.id } });
         res.json({ message: is_active ? 'User activated' : 'User deactivated' });

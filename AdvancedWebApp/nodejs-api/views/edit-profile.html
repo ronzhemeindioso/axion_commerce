@@ -1,0 +1,958 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <script>
+        (function () {
+            var token = localStorage.getItem('token');
+            if (!token) {
+                window.location.replace('/login');
+            }
+        })();
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edit Profile — Aperture</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root{
+            --ink:#2B2220;
+            --muted:#948078;
+            --muted-strong:#6B5850;
+            --faint:#F0DDD5;
+            --line:#F8EFEA;
+            --panel:#FFFFFF;
+            --canvas:#FEFBF9;
+            --accent:#C1745B;
+            --accent-dark:#9C5844;
+            --accent-soft:#FAEFEA;
+            --neutral:#6B7280;
+            --neutral-soft:#F1F2F4;
+            --violet:#3D1534;
+            --cream:#FFF4EB;
+            --wheat:#F6E0B6;
+            --good:#1EA672;
+            --good-soft:#E7F8F1;
+            --warn:#C97A1E;
+            --warn-soft:#FBF0E1;
+            --bad:#D6483F;
+            --bad-soft:#FBEBEA;
+            --radius:14px;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Inter', system-ui, sans-serif;
+            color: var(--ink);
+            background: var(--canvas);
+        }
+
+        .navbar {
+            background: var(--panel);
+            border-bottom: 1px solid var(--line);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .nav-content {
+            max-width: 1180px;
+            margin: 0 auto;
+            padding: 0 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            height: 60px;
+        }
+
+        .brand {
+            font-weight: 700;
+            font-size: 15px;
+            color: var(--ink);
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .brand-icon {
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            background: var(--accent-soft);
+            color: var(--accent);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+        .brand-icon svg{ width: 13px; height: 13px; }
+
+        .nav-menu {
+            display: flex;
+            gap: 4px;
+            list-style: none;
+        }
+
+        .nav-menu a {
+            display: inline-flex;
+            align-items: center;
+            text-decoration: none;
+            color: var(--muted-strong);
+            font-weight: 500;
+            font-size: 13.5px;
+            padding: 8px 16px;
+            border-radius: 9px;
+            position: relative;
+            transition: color 0.15s;
+        }
+        .nav-menu a:hover { color: var(--accent); }
+        .nav-menu a.active{ color: var(--accent); font-weight: 600; }
+        .nav-menu a.active::after{
+            content: "";
+            position: absolute;
+            left: 16px; right: 16px; bottom: 2px;
+            height: 2px;
+            border-radius: 2px;
+            background: var(--accent);
+        }
+
+        .nav-actions {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+
+        .nav-user {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--muted-strong);
+            margin-right: 4px;
+            white-space: nowrap;
+        }
+
+        .btn-icon {
+            width: 34px;
+            height: 34px;
+            border: 1px solid var(--line);
+            background: var(--panel);
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 13px;
+            transition: all 0.15s;
+            text-decoration: none;
+            color: var(--ink);
+            position: relative;
+        }
+        .btn-icon:hover {
+            background: var(--accent-soft);
+            border-color: var(--faint);
+        }
+
+        .cart-badge {
+            position: absolute;
+            top: -8px; right: -8px;
+            background: var(--bad);
+            color: white;
+            width: 20px; height: 20px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+            font-weight: 700;
+        }
+
+        .profile-dropdown { position: relative; }
+        .dropdown-menu {
+            position: absolute;
+            top: calc(100% + 8px);
+            right: 0;
+            background: var(--panel);
+            border: 1px solid var(--line);
+            border-radius: 12px;
+            box-shadow: 0 12px 32px rgba(43,34,32,.14);
+            min-width: 190px;
+            padding: 6px;
+            display: none;
+            flex-direction: column;
+            gap: 2px;
+            z-index: 200;
+        }
+        .dropdown-menu.open { display: flex; }
+        .dropdown-user {
+            padding: 10px 12px 8px;
+            font-size: 12.5px;
+            font-weight: 700;
+            color: var(--muted-strong);
+            border-bottom: 1px solid var(--line);
+            margin-bottom: 4px;
+        }
+        .dropdown-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 9px 12px;
+            border-radius: 8px;
+            font-size: 13.5px;
+            font-weight: 500;
+            color: var(--ink);
+            text-decoration: none;
+            border: none;
+            background: none;
+            width: 100%;
+            text-align: left;
+            cursor: pointer;
+            font-family: inherit;
+        }
+        .dropdown-item:hover { background: var(--accent-soft); color: var(--accent); }
+        .dropdown-item svg { width: 15px; height: 15px; flex-shrink: 0; }
+        .dropdown-item-danger { color: var(--bad); }
+        .dropdown-item-danger:hover { background: var(--bad-soft); color: var(--bad); }
+
+        @media (max-width: 768px) {
+            .nav-user { display: none; }
+        }
+
+        .nav-back:hover {
+            border-color: var(--accent);
+            color: var(--accent);
+        }
+
+        .container {
+            max-width: 980px;
+            margin: 0 auto;
+            padding: 48px 24px 80px;
+        }
+
+        .page-header {
+            padding-bottom: 20px;
+            margin-bottom: 32px;
+            border-bottom: 1px solid var(--line);
+        }
+
+        .page-title {
+            font-size: 22px;
+            font-weight: 700;
+            color: var(--ink);
+            margin-bottom: 4px;
+            letter-spacing: -0.2px;
+        }
+
+        .page-subtitle {
+            font-size: 13.5px;
+            color: var(--muted);
+        }
+
+        .profile-card {
+            background: var(--panel);
+            border: 1px solid var(--line);
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 1px 2px rgba(43,34,32,0.03), 0 10px 28px rgba(193,116,91,0.07);
+        }
+
+        .success-message,
+        .error-message {
+            display: none;
+            padding: 12px 20px;
+            font-size: 13.5px;
+            font-weight: 500;
+            border-bottom: 1px solid var(--line);
+            border-left: 3px solid transparent;
+        }
+
+        .success-message {
+            background: var(--good-soft);
+            color: var(--good);
+            border-left-color: var(--good);
+        }
+
+        .error-message {
+            background: var(--bad-soft);
+            color: var(--bad);
+            border-left-color: var(--bad);
+        }
+
+        .loading-state {
+            font-size: 13.5px;
+            color: var(--muted);
+            padding: 28px 32px;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            min-width: 0;
+        }
+
+        .form-section {
+            padding: 28px 32px;
+            min-width: 0;
+        }
+
+        .form-section:first-child {
+            border-right: 1px solid var(--line);
+        }
+
+        @media (max-width: 720px) {
+            .form-grid { grid-template-columns: 1fr; }
+            .form-section:first-child {
+                border-right: none;
+                border-bottom: 1px solid var(--line);
+            }
+        }
+
+        .form-title {
+            font-size: 11.5px;
+            font-weight: 700;
+            color: var(--accent-dark);
+            margin-bottom: 20px;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+        }
+
+        .avatar-row {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            margin-bottom: 24px;
+            padding-bottom: 24px;
+            border-bottom: 1px solid var(--line);
+        }
+
+        .avatar-preview {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            background: var(--accent-soft);
+            border: 1px solid var(--faint);
+            box-shadow: 0 0 0 3px var(--cream);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            flex-shrink: 0;
+            font-weight: 600;
+            color: var(--accent-dark);
+            font-size: 14px;
+        }
+
+        .avatar-preview img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .avatar-actions { display: flex; flex-direction: column; gap: 4px; }
+
+        .btn-upload {
+            padding: 6px 13px;
+            border: 1px solid var(--line);
+            border-radius: 6px;
+            font-size: 12.5px;
+            font-weight: 600;
+            color: var(--accent-dark);
+            background: #fff;
+            cursor: pointer;
+            font-family: inherit;
+            transition: border-color .15s, background .15s;
+            align-self: flex-start;
+        }
+
+        .btn-upload:hover {
+            border-color: var(--accent);
+            background: var(--accent-soft);
+        }
+
+        .avatar-hint {
+            font-size: 11.5px;
+            color: var(--muted);
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            margin-bottom: 16px;
+            min-width: 0;
+        }
+
+        .form-row.full {
+            grid-template-columns: 1fr;
+        }
+
+        .form-row:last-child { margin-bottom: 0; }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            min-width: 0;
+        }
+
+        .form-group label {
+            font-size: 11.5px;
+            font-weight: 600;
+            color: var(--muted);
+            margin-bottom: 6px;
+            letter-spacing: 0.2px;
+        }
+
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            min-width: 0;
+            padding: 9px 12px;
+            border: 1px solid var(--line);
+            border-radius: 6px;
+            font-size: 13.5px;
+            font-family: inherit;
+            color: var(--ink);
+            outline: none;
+            background: #fff;
+            transition: border-color 0.15s;
+        }
+
+        .form-group input:disabled {
+            color: var(--muted-strong);
+            background: var(--cream);
+            border-color: var(--line);
+            cursor: not-allowed;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px var(--accent-soft);
+        }
+
+        .form-actions {
+            padding: 20px 32px;
+            display: flex;
+            justify-content: flex-end;
+            border-top: 1px solid var(--line);
+        }
+
+        .btn-save {
+            background: linear-gradient(135deg, var(--accent) 0%, var(--accent-dark) 100%);
+            color: white;
+            border: none;
+            padding: 10px 24px;
+            border-radius: 6px;
+            font-weight: 600;
+            font-size: 13.5px;
+            cursor: pointer;
+            transition: box-shadow 0.15s, transform 0.15s;
+            font-family: inherit;
+            box-shadow: 0 2px 8px rgba(193,116,91,0.28);
+        }
+
+        .btn-save:hover {
+            box-shadow: 0 4px 14px rgba(193,116,91,0.38);
+            transform: translateY(-1px);
+        }
+
+        .btn-save:active {
+            transform: translateY(0);
+            box-shadow: 0 2px 6px rgba(193,116,91,0.28);
+        }
+
+        .btn-save:disabled {
+            background: var(--faint);
+            color: var(--muted);
+            box-shadow: none;
+            transform: none;
+            cursor: not-allowed;
+        }
+
+        @media (max-width: 640px) {
+            .form-row { grid-template-columns: 1fr; }
+            .form-section { padding: 24px 20px; }
+            .form-actions { padding: 16px 20px; }
+        }
+    </style>
+</head>
+<body>
+
+<div id="toastHost" style="position:fixed;top:90px;right:20px;z-index:1000;display:flex;flex-direction:column;gap:10px;"></div>
+
+<nav class="navbar" id="storefrontNav">
+    <div class="nav-content">
+        <a href="/" class="brand">
+            <span class="brand-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="10"/>
+                    <line x1="14.31" y1="8" x2="20.05" y2="17.94"/>
+                    <line x1="9.69" y1="8" x2="21.17" y2="8"/>
+                    <line x1="7.38" y1="12" x2="13.12" y2="2.06"/>
+                    <line x1="9.69" y1="16" x2="3.95" y2="6.06"/>
+                    <line x1="14.31" y1="16" x2="2.83" y2="16"/>
+                    <line x1="16.62" y1="12" x2="10.88" y2="21.94"/>
+                </svg>
+            </span>
+            Axion
+        </a>
+        <ul class="nav-menu">
+            <li><a href="/">Home</a></li>
+            <li><a href="/#about">About</a></li>
+            <li><a href="/shop">Shop</a></li>
+            <li><a href="/#contact">Contact</a></li>
+        </ul>
+        <div class="nav-actions">
+            <a href="/cart" id="navCartLink" class="btn-icon" style="position: relative;">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16">
+                    <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/>
+                    <path d="M3 6h18"/>
+                    <path d="M16 10a4 4 0 0 1-8 0"/>
+                </svg>
+                <span class="cart-badge" id="cartCount" style="display: none;">0</span>
+            </a>
+
+            <div class="profile-dropdown" id="profileDropdown">
+                <button type="button" class="btn-icon" id="profileDropdownToggle" title="Account">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16">
+                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                        <circle cx="12" cy="7" r="4"/>
+                    </svg>
+                </button>
+                <div class="dropdown-menu" id="profileDropdownMenu">
+                    <div id="navUser" class="dropdown-user" style="display:none;"></div>
+
+                    <a href="/profile-orders" id="navOrdersLink" class="dropdown-item" style="display:none;">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/>
+                            <path d="M3.3 7 12 12l8.7-5"/>
+                            <path d="M12 22V12"/>
+                        </svg>
+                        My Orders
+                    </a>
+
+                    <a href="/edit-profile" id="navProfileLink" class="dropdown-item active" style="display:none;">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                            <circle cx="12" cy="7" r="4"/>
+                        </svg>
+                        Edit Profile
+                    </a>
+
+                    <a href="/login" id="navLoginLink" class="dropdown-item">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/>
+                            <polyline points="10 17 15 12 10 7"/>
+                            <line x1="15" y1="12" x2="3" y2="12"/>
+                        </svg>
+                        Login
+                    </a>
+
+                    <button type="button" id="navLogoutBtn" class="dropdown-item dropdown-item-danger" style="display:none;">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+                            <polyline points="16 17 21 12 16 7"/>
+                            <line x1="21" y1="12" x2="9" y2="12"/>
+                        </svg>
+                        Logout
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</nav>
+
+<div class="container">
+    <div class="page-header">
+        <h1 class="page-title">Edit Profile</h1>
+        <p class="page-subtitle">Update your personal details and shipping address.</p>
+    </div>
+
+    <div class="profile-card">
+        <div class="success-message" id="successMsg">Profile updated successfully.</div>
+        <div class="error-message" id="errorMsg"></div>
+        <div class="loading-state" id="loadingState">Loading your profile…</div>
+
+        <form id="profileForm" style="display:none;">
+
+            <div class="form-grid">
+
+            <div class="form-section">
+                <h2 class="form-title">Personal info</h2>
+
+                <div class="avatar-row">
+                    <div class="avatar-preview" id="avatarPreview">?</div>
+                    <div class="avatar-actions">
+                        <button type="button" class="btn-upload" id="avatarBtn">Change photo</button>
+                        <span class="avatar-hint">JPG or PNG, up to 2 MB</span>
+                    </div>
+                    <input type="file" id="avatarInput" accept="image/jpeg,image/png" style="display:none">
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Full name</label>
+                        <input type="text" id="fullName" disabled>
+                    </div>
+                    <div class="form-group">
+                        <label>Email</label>
+                        <input type="email" id="email" disabled>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Username</label>
+                        <input type="text" id="username" placeholder="e.g. juandc" autocomplete="username">
+                    </div>
+                    <div class="form-group">
+                        <label>Phone</label>
+                        <input type="text" id="phone" placeholder="09123456789" autocomplete="tel" maxlength="11" inputmode="numeric">
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-section">
+                <h2 class="form-title">Shipping address</h2>
+
+                <div class="form-row full">
+                    <div class="form-group">
+                        <label>Address line 1</label>
+                        <input type="text" id="addressLine1" placeholder="House/Unit no., Street name" autocomplete="address-line1">
+                    </div>
+                </div>
+
+                <div class="form-row full">
+                    <div class="form-group">
+                        <label>Address line 2 (optional)</label>
+                        <input type="text" id="addressLine2" placeholder="Barangay, Subdivision, Building" autocomplete="address-line2">
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>City / Municipality</label>
+                        <input type="text" id="city" placeholder="e.g. Cainta" autocomplete="address-level2">
+                    </div>
+                    <div class="form-group">
+                        <label>Province / State</label>
+                        <input type="text" id="province" placeholder="e.g. Rizal" autocomplete="address-level1">
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>ZIP / Postal code</label>
+                        <input type="text" id="zipCode" placeholder="e.g. 1900" autocomplete="postal-code" maxlength="4" inputmode="numeric">
+                    </div>
+                    <div class="form-group">
+                        <label>Country</label>
+                        <select id="country">
+                            <option value="">Select country…</option>
+                            <option value="PH">Philippines</option>
+                            <option value="US">United States</option>
+                            <option value="SG">Singapore</option>
+                            <option value="MY">Malaysia</option>
+                            <option value="JP">Japan</option>
+                            <option value="OTHER">Other</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            </div>
+
+            <div class="form-actions">
+                <button type="submit" class="btn-save">Save changes</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    const token = localStorage.getItem('token');
+    const storedUser = JSON.parse(localStorage.getItem('user') || 'null');
+    const CART_URL = '/api/cart';
+
+    function navGetToken() { return localStorage.getItem('token'); }
+    function navGetUser()  { try { return JSON.parse(localStorage.getItem('user') || 'null'); } catch (e) { return null; } }
+
+    function refreshNav() {
+        const t = navGetToken();
+        const u = navGetUser();
+        const loggedIn = !!(t && u);
+
+        document.getElementById('navLoginLink').style.display   = loggedIn ? 'none' : 'inline-flex';
+        document.getElementById('navLogoutBtn').style.display   = loggedIn ? 'inline-flex' : 'none';
+        document.getElementById('navProfileLink').style.display = loggedIn ? 'flex' : 'none';
+        document.getElementById('navOrdersLink').style.display  = loggedIn ? 'flex' : 'none';
+
+        const navUser = document.getElementById('navUser');
+        if (loggedIn) {
+            navUser.style.display = 'inline';
+            navUser.textContent = 'Hi, ' + u.name;
+        } else {
+            navUser.style.display = 'none';
+            navUser.textContent = '';
+        }
+    }
+
+    function navLogout() {
+        const t = navGetToken();
+        fetch('/api/auth/logout', {
+            method: 'POST',
+            headers: { 'Authorization': 'Bearer ' + t }
+        }).catch(() => {}).finally(() => {
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+            window.location.href = '/login';
+        });
+    }
+
+    function updateCartCount() {
+        const t = navGetToken();
+        const u = navGetUser();
+        const badge = document.getElementById('cartCount');
+
+        if (!t || !u) {
+            badge.style.display = 'none';
+            badge.textContent = '0';
+            return;
+        }
+
+        fetch(CART_URL + '/' + u.id, {
+            headers: { 'Authorization': 'Bearer ' + t }
+        })
+            .then(res => res.ok ? res.json() : [])
+            .then(items => {
+                const count = Array.isArray(items) ? items.reduce((sum, i) => sum + (i.quantity || 0), 0) : 0;
+                if (count > 0) {
+                    badge.textContent = count;
+                    badge.style.display = 'flex';
+                } else {
+                    badge.style.display = 'none';
+                    badge.textContent = '0';
+                }
+            })
+            .catch(() => {});
+    }
+
+    document.getElementById('navLogoutBtn').addEventListener('click', navLogout);
+
+    document.getElementById('profileDropdownToggle').addEventListener('click', function (e) {
+        e.stopPropagation();
+        document.getElementById('profileDropdownMenu').classList.toggle('open');
+    });
+
+    document.addEventListener('click', function (e) {
+        const menu = document.getElementById('profileDropdownMenu');
+        const toggle = document.getElementById('profileDropdownToggle');
+        if (menu.classList.contains('open') && !menu.contains(e.target) && !toggle.contains(e.target)) {
+            menu.classList.remove('open');
+        }
+    });
+
+    document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape') {
+            document.getElementById('profileDropdownMenu').classList.remove('open');
+        }
+    });
+
+    refreshNav();
+    updateCartCount();
+
+    function showError(msg) {
+        hideSuccess();
+        const box = document.getElementById('errorMsg');
+        box.textContent = msg;
+        box.style.display = 'block';
+    }
+
+    function hideError() {
+        document.getElementById('errorMsg').style.display = 'none';
+    }
+
+    function showSuccess(msg) {
+        hideError();
+        const box = document.getElementById('successMsg');
+        box.textContent = msg;
+        box.style.display = 'block';
+    }
+
+    function hideSuccess() {
+        document.getElementById('successMsg').style.display = 'none';
+    }
+
+    function initials(name) {
+        if (!name) return '?';
+        return name.trim().split(/\s+/).slice(0, 2).map(p => p[0].toUpperCase()).join('');
+    }
+
+    function applyAvatar(src, name) {
+        const preview = document.getElementById('avatarPreview');
+        if (src) {
+            preview.innerHTML = '<img src="' + src + '" alt="Avatar">';
+            preview.dataset.src = src;
+        } else {
+            preview.textContent = initials(name);
+            preview.dataset.src = '';
+        }
+    }
+
+    // ── Load current profile (prefilled if it exists, empty otherwise) ──
+    async function loadProfile() {
+        try {
+            const res = await fetch('/api/auth/profile', {
+                headers: { 'Authorization': 'Bearer ' + token }
+            });
+
+            if (res.status === 401) {
+                localStorage.removeItem('token');
+                localStorage.removeItem('user');
+                window.location.replace('/login');
+                return;
+            }
+
+            const data = await res.json();
+            if (!res.ok) {
+                showError(data.message || 'Could not load your profile.');
+                document.getElementById('loadingState').style.display = 'none';
+                document.getElementById('profileForm').style.display = 'block';
+                return;
+            }
+
+            const user = data.user || {};
+
+            document.getElementById('fullName').value = user.name || '';
+            document.getElementById('email').value = user.email || '';
+
+            // Shipping / profile fields — filled if the user set them up before,
+            // left empty otherwise so the form shows blank inputs.
+            document.getElementById('username').value = user.username || '';
+            document.getElementById('phone').value = user.phone || '';
+            document.getElementById('addressLine1').value = user.address_line1 || '';
+            document.getElementById('addressLine2').value = user.address_line2 || '';
+            document.getElementById('city').value = user.city || '';
+            document.getElementById('province').value = user.province || '';
+            document.getElementById('zipCode').value = user.zip_code || '';
+            document.getElementById('country').value = user.country || '';
+
+            applyAvatar(user.avatar || '', user.name);
+
+            if (storedUser) {
+                localStorage.setItem('user', JSON.stringify({
+                    ...storedUser,
+                    name: user.name || storedUser.name,
+                    email: user.email || storedUser.email
+                }));
+            }
+
+            document.getElementById('loadingState').style.display = 'none';
+            document.getElementById('profileForm').style.display = 'block';
+        } catch (err) {
+            document.getElementById('loadingState').textContent = 'Could not connect to server.';
+        }
+    }
+
+    loadProfile();
+
+    // ── Avatar upload preview ──
+    const avatarBtn   = document.getElementById('avatarBtn');
+    const avatarInput = document.getElementById('avatarInput');
+
+    avatarBtn.addEventListener('click', () => avatarInput.click());
+
+    avatarInput.addEventListener('change', function () {
+        const file = this.files[0];
+        if (!file) return;
+
+        if (file.size > 2 * 1024 * 1024) {
+            showError('Photo must be under 2 MB.');
+            avatarInput.value = '';
+            return;
+        }
+
+        hideError();
+
+        const reader = new FileReader();
+        reader.onload = (e) => applyAvatar(e.target.result, document.getElementById('fullName').value);
+        reader.readAsDataURL(file);
+    });
+
+    // ZIP code: digits only, capped at 4
+    document.getElementById('zipCode').addEventListener('input', function () {
+        const cleaned = this.value.replace(/[^0-9]/g, '').slice(0, 4);
+        if (cleaned !== this.value) this.value = cleaned;
+    });
+
+    // Phone: digits only, capped at 11
+    document.getElementById('phone').addEventListener('input', function () {
+        const cleaned = this.value.replace(/[^0-9]/g, '').slice(0, 11);
+        if (cleaned !== this.value) this.value = cleaned;
+    });
+
+    document.getElementById('profileForm').addEventListener('submit', async function (e) {
+        e.preventDefault();
+        hideError();
+        hideSuccess();
+
+        const username     = document.getElementById('username').value.trim();
+        const phone        = document.getElementById('phone').value.trim();
+        const addressLine1 = document.getElementById('addressLine1').value.trim();
+        const addressLine2 = document.getElementById('addressLine2').value.trim();
+        const city         = document.getElementById('city').value.trim();
+        const province     = document.getElementById('province').value.trim();
+        const zipCode      = document.getElementById('zipCode').value.trim();
+        const country      = document.getElementById('country').value;
+        const btn          = document.querySelector('.btn-save');
+
+        if (!username) { showError('Please enter a username.'); return; }
+        if (!addressLine1 || !city || !province || !zipCode || !country) {
+            showError('Please fill in your full shipping address.');
+            return;
+        }
+        if (!/^[0-9]{4}$/.test(zipCode)) { showError('ZIP / postal code must be exactly 4 numbers.'); return; }
+        if (!/^[0-9]{11}$/.test(phone)) { showError('Phone number must be exactly 11 numbers.'); return; }
+
+        const avatarBase64 = document.getElementById('avatarPreview').dataset.src || null;
+
+        btn.textContent = 'Saving…';
+        btn.disabled = true;
+
+        try {
+            const res = await fetch('/api/auth/profile/setup', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+                },
+                body: JSON.stringify({
+                    username, phone, addressLine1, addressLine2,
+                    city, province, zipCode, country,
+                    avatar: avatarBase64
+                })
+            });
+
+            if (res.status === 413) {
+                showError('Your photo is too large to upload. Please choose an image under 2 MB.');
+                return;
+            }
+
+            let data = {};
+            try { data = await res.json(); } catch (parseErr) {}
+
+            if (res.ok) {
+                showSuccess('Profile updated successfully.');
+            } else {
+                showError(data.message || 'Could not save profile.');
+            }
+        } catch (err) {
+            showError('Could not connect to server.');
+        } finally {
+            btn.textContent = 'Save changes';
+            btn.disabled = false;
+        }
+    });
+</script>
+
+</body>
+</html>

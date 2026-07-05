@@ -99,9 +99,133 @@
 
         .nav-actions {
             display: flex;
-            gap: 16px;
+            gap: 12px;
             align-items: center;
         }
+
+        .nav-user {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--muted-strong);
+            margin-right: 4px;
+            white-space: nowrap;
+        }
+
+        .nav-link-item {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            text-decoration: none;
+            color: var(--muted);
+            padding: 8px 14px;
+            border-radius: 9px;
+            font-size: 13.5px;
+            font-weight: 500;
+            position: relative;
+            transition: color .15s ease, background .15s ease;
+        }
+        .nav-link-item:hover {
+            color: var(--accent);
+            background: var(--accent-soft);
+        }
+        .nav-link-item .cart-badge {
+            position: static;
+            margin-left: 2px;
+        }
+
+        .btn-nav {
+            border: 1px solid var(--line);
+            background: var(--panel);
+            border-radius: 8px;
+            padding: 0 14px;
+            height: 36px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all .15s;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            color: var(--ink);
+        }
+        .btn-nav-primary {
+            background: var(--accent);
+            border-color: var(--accent);
+            color: #fff;
+        }
+        .btn-nav-primary:hover { background: var(--accent-dark); }
+        .btn-nav-danger { color: var(--bad); border-color: var(--faint); }
+        .btn-nav-danger:hover { background: var(--bad-soft); border-color: var(--bad); }
+
+        /* ── Admin top nav (mirrors products.html exactly) ────────── */
+        .admin-topnav{
+            background: var(--panel);
+            border-bottom: 1px solid var(--line);
+            padding: 0 24px;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        .admin-topnav-inner{
+            max-width: 1180px;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            height: 60px;
+        }
+        .admin-brand{
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: 800;
+            font-size: 15px;
+            letter-spacing: -0.01em;
+            color: var(--ink);
+        }
+        .admin-brand-icon{
+            width: 22px; height: 22px;
+            border-radius: 50%;
+            background: var(--accent-soft);
+            color: var(--accent);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            font-size: 12px;
+        }
+        .admin-brand-icon svg{ width: 13px; height: 13px; }
+        .admin-topnav-links{ display: flex; gap: 4px; }
+        .admin-topnav-links a{
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            text-decoration: none;
+            color: var(--muted);
+            padding: 8px 14px;
+            border-radius: 9px;
+            font-size: 13.5px;
+            font-weight: 500;
+            position: relative;
+            transition: color .15s ease;
+        }
+        .admin-topnav-links a:hover{ color: var(--accent); }
+        .admin-topnav-links a.active{
+            color: var(--accent);
+            font-weight: 600;
+        }
+        .admin-topnav-links a.active::after{
+            content: "";
+            position: absolute;
+            left: 14px;
+            right: 14px;
+            bottom: 2px;
+            height: 2px;
+            border-radius: 2px;
+            background: var(--accent);
+        }
+        #adminLogoutBtn{ color: var(--bad); }
+        #adminLogoutBtn:hover{ color: #B93A32; }
 
         .btn-icon {
             width: 36px;
@@ -482,6 +606,78 @@
             border-radius: var(--radius);
         }
 
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(43, 34, 32, .45);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+        .modal-card {
+            background: var(--panel);
+            border-radius: 16px;
+            padding: 28px 32px;
+            max-width: 460px;
+            width: 90%;
+            box-shadow: 0 20px 60px rgba(0,0,0,.2);
+        }
+        .modal-card-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 16px;
+        }
+        .modal-card-title {
+            font-size: 19px;
+            font-weight: 800;
+            color: var(--bad);
+            margin: 0;
+        }
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 16px;
+            color: var(--muted);
+            cursor: pointer;
+            line-height: 1;
+        }
+        .modal-card-body {
+            font-size: 14px;
+            color: var(--muted-strong);
+            line-height: 1.6;
+            margin-bottom: 24px;
+        }
+        .modal-card-footer {
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+        }
+        .modal-btn {
+            border: none;
+            border-radius: 10px;
+            padding: 10px 20px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all .15s;
+        }
+        .modal-btn-cancel {
+            background: var(--neutral-soft);
+            color: var(--ink);
+        }
+        .modal-btn-cancel:hover { background: var(--faint); }
+        .modal-btn-danger {
+            background: var(--bad);
+            color: #fff;
+        }
+        .modal-btn-danger:hover { background: #B93A32; }
+
         @media (max-width: 768px) {
             .product-detail {
                 grid-template-columns: 1fr;
@@ -508,7 +704,8 @@
 </head>
 <body>
 
-<nav class="navbar">
+<!-- Storefront Navigation (customers & guests) -->
+<nav class="navbar" id="storefrontNav">
     <div class="nav-content">
         <a href="/" class="brand">
             <div class="brand-icon">📷</div>
@@ -519,15 +716,50 @@
             <li><a href="/shop">Shop</a></li>
         </ul>
         <div class="nav-actions">
-            <a href="/profile-orders" class="btn-icon" title="My Orders">📦</a>
-            <a href="/cart" class="btn-icon" style="position: relative;">
-                🛒
+            <span id="navUser" class="nav-user" style="display:none;"></span>
+
+            <a href="/profile-orders" id="navOrdersLink" class="nav-link-item" style="display:none;">My Orders</a>
+
+            <a href="/cart" id="navCartLink" class="nav-link-item">
+                Add to Cart
                 <span class="cart-badge" id="cartCount" style="display: none;">0</span>
             </a>
-            <a href="/setup-profile" class="btn-icon">👤</a>
+
+            <a href="/edit-profile" id="navProfileLink" class="btn-icon" style="display:none;" title="Profile">👤</a>
+
+            <a href="/login" id="navLoginLink" class="btn-nav btn-nav-primary">Login</a>
+            <button id="navLogoutBtn" class="btn-nav btn-nav-danger" style="display:none;">Logout</button>
         </div>
     </div>
 </nav>
+
+<!-- Admin Navigation (mirrors products.html topnav exactly, with Shop as the active link) -->
+<div class="admin-topnav" id="adminTopNav" style="display:none;">
+    <div class="admin-topnav-inner">
+        <div class="admin-brand">
+        <span class="admin-brand-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"/>
+                <line x1="14.31" y1="8" x2="20.05" y2="17.94"/>
+                <line x1="9.69" y1="8" x2="21.17" y2="8"/>
+                <line x1="7.38" y1="12" x2="13.12" y2="2.06"/>
+                <line x1="9.69" y1="16" x2="3.95" y2="6.06"/>
+                <line x1="14.31" y1="16" x2="2.83" y2="16"/>
+                <line x1="16.62" y1="12" x2="10.88" y2="21.94"/>
+            </svg>
+        </span>
+        Store Admin
+    </div>
+        <div class="admin-topnav-links">
+            <a href="/charts">Home</a>
+            <a href="/users">Users</a>
+            <a href="/orders">Orders</a>
+            <a href="/products">Products</a>
+            <a href="/shop" class="active">Reviews</a>
+            <a href="#" id="adminLogoutBtn">Logout</a>
+        </div>
+    </div>
+</div>
 
 <div class="container">
     <div class="product-detail" id="productDetail">
@@ -545,19 +777,120 @@
     </div>
 </div>
 
+<!-- Remove review confirm modal -->
+<div class="modal-overlay" id="deleteReviewModal">
+    <div class="modal-card">
+        <div class="modal-card-header">
+            <h5 class="modal-card-title">Remove review?</h5>
+            <button type="button" class="modal-close" onclick="closeDeleteReviewModal()">&times;</button>
+        </div>
+        <div class="modal-card-body">
+            Remove this review? This cannot be undone.
+        </div>
+        <div class="modal-card-footer">
+            <button class="modal-btn modal-btn-cancel" onclick="closeDeleteReviewModal()">Cancel</button>
+            <button type="button" class="modal-btn modal-btn-danger" id="btnConfirmDeleteReview">Remove</button>
+        </div>
+    </div>
+</div>
+
 <script>
     const productId = new URLSearchParams(window.location.search).get('id') || 
                       window.location.pathname.split('/').pop();
     let product = {};
 
+    const CART_URL = '/api/cart';
+
+    // ---------- Auth helpers ----------
+    function getToken() { return localStorage.getItem('token'); }
+    function getUser()  { try { return JSON.parse(localStorage.getItem('user') || 'null'); } catch (e) { return null; } }
+    function isAdmin()  { const u = getUser(); return !!(getToken() && u && u.role === 'admin'); }
+
+    function refreshNav() {
+        const token = getToken();
+        const user  = getUser();
+        const loggedIn = !!(token && user);
+        const admin = loggedIn && user.role === 'admin';
+
+        // Admins get the Store Admin topnav (mirrors products.html); everyone
+        // else gets the storefront nav with shopping links.
+        document.getElementById('storefrontNav').style.display = admin ? 'none' : 'block';
+        document.getElementById('adminTopNav').style.display   = admin ? 'block' : 'none';
+
+        if (admin) return;
+
+        document.getElementById('navLoginLink').style.display   = loggedIn ? 'none' : 'inline-flex';
+        document.getElementById('navLogoutBtn').style.display   = loggedIn ? 'inline-flex' : 'none';
+        document.getElementById('navProfileLink').style.display = loggedIn ? 'flex' : 'none';
+        document.getElementById('navOrdersLink').style.display  = loggedIn ? 'flex' : 'none';
+        document.getElementById('navCartLink').style.display    = 'inline-flex';
+
+        const navUser = document.getElementById('navUser');
+        if (loggedIn) {
+            navUser.style.display = 'inline';
+            navUser.textContent = 'Hi, ' + user.name;
+        } else {
+            navUser.style.display = 'none';
+            navUser.textContent = '';
+        }
+    }
+
+    function clearSession() {
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        refreshNav();
+    }
+
+    function logoutUser() {
+        const token = getToken();
+        fetch('/api/auth/logout', {
+            method: 'POST',
+            headers: { 'Authorization': 'Bearer ' + token }
+        }).catch(() => {}).finally(() => {
+            clearSession();
+            window.location.href = '/login';
+        });
+    }
+
+    document.getElementById('navLogoutBtn').addEventListener('click', logoutUser);
+    document.getElementById('adminLogoutBtn').addEventListener('click', function (e) {
+        e.preventDefault();
+        logoutUser();
+    });
+
     // Update cart count
     function updateCartCount() {
-        const cart = JSON.parse(localStorage.getItem('cart') || '[]');
+        const token = getToken();
+        const user  = getUser();
         const badge = document.getElementById('cartCount');
-        if (cart.length > 0) {
-            badge.textContent = cart.length;
-            badge.style.display = 'flex';
+
+        if (!token || !user || isAdmin()) {
+            badge.style.display = 'none';
+            badge.textContent = '0';
+            return;
         }
+
+        fetch(CART_URL + '/' + user.id, {
+            headers: { 'Authorization': 'Bearer ' + token }
+        })
+            .then(res => {
+                if (res.status === 401) {
+                    clearSession();
+                    return [];
+                }
+                return res.ok ? res.json() : [];
+            })
+            .then(items => {
+                const count = Array.isArray(items) ? items.reduce((sum, i) => sum + (i.quantity || 0), 0) : 0;
+                if (count > 0) {
+                    badge.textContent = count;
+                    badge.style.display = 'flex';
+                } else {
+                    badge.style.display = 'none';
+                    badge.textContent = '0';
+                }
+            })
+            .catch(() => {});
     }
 
     // Load product details
@@ -614,12 +947,14 @@
                     <button class="quantity-btn" onclick="increaseQty()">+</button>
                 </div>
 
+                ${isAdmin() ? '' : `
                 <div class="actions">
                     <button class="btn-add-cart" onclick="addToCart()" ${product.stock === 0 ? 'disabled' : ''}>
                         Add to Cart
                     </button>
                     <button class="btn-wishlist" title="Add to wishlist">❤️</button>
                 </div>
+                `}
 
                 <div class="product-details-table">
                     <div class="detail-row">
@@ -764,8 +1099,25 @@
         return full + empty;
     }
 
-    async function adminDeleteReview(reviewId) {
-        if (!confirm('Remove this review? This cannot be undone.')) return;
+    let reviewIdPendingDelete = null;
+
+    function adminDeleteReview(reviewId) {
+        reviewIdPendingDelete = reviewId;
+        document.getElementById('deleteReviewModal').classList.add('active');
+    }
+
+    function closeDeleteReviewModal() {
+        reviewIdPendingDelete = null;
+        document.getElementById('deleteReviewModal').classList.remove('active');
+    }
+
+    document.getElementById('deleteReviewModal').addEventListener('click', (e) => {
+        if (e.target.id === 'deleteReviewModal') closeDeleteReviewModal();
+    });
+
+    document.getElementById('btnConfirmDeleteReview').addEventListener('click', async () => {
+        if (!reviewIdPendingDelete) return;
+        const reviewId = reviewIdPendingDelete;
 
         const token = localStorage.getItem('token');
         try {
@@ -777,16 +1129,18 @@
             if (!response.ok) {
                 const data = await response.json().catch(() => ({}));
                 alert(data.message || 'Could not remove review.');
+                closeDeleteReviewModal();
                 return;
             }
 
+            closeDeleteReviewModal();
             loadReviews(currentReviewPage);
         } catch (err) {
             console.error(err);
             alert('Something went wrong removing the review.');
+            closeDeleteReviewModal();
         }
-    }
-
+    });
     function updateRatingSummary(average, count) {
         const ratingEl = document.querySelector('.product-rating');
         if (!ratingEl) return;
@@ -806,6 +1160,7 @@
         `;
     }
 
+    refreshNav();
     updateCartCount();
     loadProductDetails();
 </script>
