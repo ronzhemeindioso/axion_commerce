@@ -210,6 +210,37 @@
             cursor: pointer;
         }
 
+        .card-details {
+            max-height: 0;
+            overflow: hidden;
+            opacity: 0;
+            transition: max-height 0.25s ease, opacity 0.2s ease, margin 0.25s ease;
+            margin-left: 24px;
+            margin-bottom: 0;
+        }
+
+        .card-details.active {
+            max-height: 260px;
+            opacity: 1;
+            margin-bottom: 16px;
+        }
+
+        .card-details-inner {
+            background: var(--bg, #f7f7f8);
+            border: 1px solid var(--line);
+            border-radius: 10px;
+            padding: 16px;
+            margin-top: 4px;
+        }
+
+        .card-details .form-row {
+            margin-bottom: 14px;
+        }
+
+        .card-details .form-row:last-child {
+            margin-bottom: 0;
+        }
+
         .order-summary {
             background: var(--panel);
             border: 1px solid var(--line);
@@ -406,6 +437,34 @@
                     <input type="radio" name="payment" value="card" id="payCard" checked>
                     <label for="payCard">Credit / Debit Card</label>
                 </div>
+
+                <div class="card-details active" id="cardDetails">
+                    <div class="card-details-inner">
+                        <div class="form-row full">
+                            <div class="form-group">
+                                <label>Name on Card</label>
+                                <input type="text" id="cardName" placeholder="Juan Dela Cruz" autocomplete="off">
+                            </div>
+                        </div>
+                        <div class="form-row full">
+                            <div class="form-group">
+                                <label>Card Number</label>
+                                <input type="text" id="cardNumber" placeholder="1234 5678 9012 3456" inputmode="numeric" maxlength="19" autocomplete="off">
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Expiry Date</label>
+                                <input type="text" id="cardExpiry" placeholder="MM / YY" inputmode="numeric" maxlength="7" autocomplete="off">
+                            </div>
+                            <div class="form-group">
+                                <label>CVV</label>
+                                <input type="text" id="cardCvv" placeholder="123" inputmode="numeric" maxlength="4" autocomplete="off">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 <div class="payment-option">
                     <input type="radio" name="payment" value="cod" id="payCod">
                     <label for="payCod">Cash on Delivery</label>
@@ -496,12 +555,63 @@
         document.getElementById('orderTotal').textContent = `₱${total.toFixed(2)}`;
     }
 
+    // Toggles the card details dropdown open/closed based on which
+    // payment option is selected, and marks the card fields required
+    // only while they're actually visible.
+    const cardDetails = document.getElementById('cardDetails');
+    const cardInputs = ['cardName', 'cardNumber', 'cardExpiry', 'cardCvv'].map(id => document.getElementById(id));
+
+    function setCardFieldsRequired(isRequired) {
+        cardInputs.forEach(input => {
+            if (isRequired) {
+                input.setAttribute('required', 'required');
+            } else {
+                input.removeAttribute('required');
+            }
+        });
+    }
+
+    function updatePaymentUI() {
+        const selected = document.querySelector('input[name="payment"]:checked').value;
+        const isCard = selected === 'card';
+        cardDetails.classList.toggle('active', isCard);
+        setCardFieldsRequired(isCard);
+    }
+
+    document.querySelectorAll('input[name="payment"]').forEach(radio => {
+        radio.addEventListener('change', updatePaymentUI);
+    });
+
+    // Auto-format card number as "1234 5678 9012 3456"
+    document.getElementById('cardNumber').addEventListener('input', (e) => {
+        let digits = e.target.value.replace(/\D/g, '').slice(0, 16);
+        e.target.value = digits.replace(/(.{4})/g, '$1 ').trim();
+    });
+
+    // Auto-format expiry as "MM / YY"
+    document.getElementById('cardExpiry').addEventListener('input', (e) => {
+        let digits = e.target.value.replace(/\D/g, '').slice(0, 4);
+        if (digits.length >= 3) {
+            e.target.value = `${digits.slice(0, 2)} / ${digits.slice(2)}`;
+        } else {
+            e.target.value = digits;
+        }
+    });
+
+    // CVV: digits only
+    document.getElementById('cardCvv').addEventListener('input', (e) => {
+        e.target.value = e.target.value.replace(/\D/g, '').slice(0, 4);
+    });
+
+    // Set the correct initial state on page load (card is checked by default)
+    updatePaymentUI();
+
     // Pulls every field out of the form so it actually travels with the order,
     // instead of only sending user_id like before.
     function collectCheckoutPayload() {
         const paymentMethod = document.querySelector('input[name="payment"]:checked').value;
 
-        return {
+        const payload = {
             user_id: userData.id,
             billing: {
                 first_name: document.getElementById('firstName').value.trim(),
@@ -517,6 +627,11 @@
             },
             payment_method: paymentMethod
         };
+
+        // Card fields are intentionally NOT included here. They stay in the
+        // browser only, for UI purposes, and are never sent to the server
+        // or saved anywhere.
+        return payload;
     }
 
     document.getElementById('btnPlaceOrder').addEventListener('click', async () => {
