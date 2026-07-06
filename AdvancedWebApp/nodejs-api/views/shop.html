@@ -609,35 +609,33 @@
             cursor: not-allowed;
         }
 
-        /* ── Pagination ────────────────────────── */
-        .pagination {
+        /* ── Infinite scroll status / sentinel ────────────────────────── */
+        .infinite-status {
             display: flex;
             justify-content: center;
-            gap: 8px;
-            margin-top: 40px;
-        }
-
-        .pagination button {
-            padding: 8px 12px;
-            border: 1px solid var(--line);
-            background: var(--panel);
-            border-radius: 6px;
-            cursor: pointer;
-            font-weight: 500;
+            align-items: center;
+            gap: 10px;
+            margin-top: 32px;
+            min-height: 30px;
             font-size: 13px;
-            transition: all 0.15s;
             color: var(--muted);
         }
 
-        .pagination button:hover {
-            border-color: var(--accent);
-            color: var(--accent);
+        .infinite-spinner {
+            width: 16px;
+            height: 16px;
+            border: 2px solid var(--faint);
+            border-top-color: var(--accent);
+            border-radius: 50%;
+            animation: infinite-spin 0.7s linear infinite;
         }
 
-        .pagination button.active {
-            background: var(--accent);
-            color: white;
-            border-color: var(--accent);
+        @keyframes infinite-spin {
+            to { transform: rotate(360deg); }
+        }
+
+        #scrollSentinel {
+            height: 1px;
         }
 
         .profile-dropdown {
@@ -886,9 +884,9 @@
             <!-- Products loaded by JavaScript -->
         </div>
 
-        <div class="pagination" id="pagination">
-            <!-- Pagination loaded by JavaScript -->
-        </div>
+        <!-- Infinite scroll: sentinel is observed, status shows spinner / end-of-list message -->
+        <div id="scrollSentinel"></div>
+        <div class="infinite-status" id="infiniteStatus"></div>
     </main>
 </div>
 
@@ -896,10 +894,12 @@
 const API_URL     = '/api/products';
 const CART_URL    = '/api/cart';
 const UPLOADS_URL = '/uploads/';
+const BATCH_SIZE  = 10;
 
-let currentPage       = 1;
 let allProducts       = [];
 let filteredProducts  = [];
+let renderedCount     = 0;
+let isLoadingBatch    = false;
 let searchQuery       = '';
 let searchTimer       = null;
 const productCache    = {};
@@ -1111,6 +1111,8 @@ function populateFilters() {
     });
 }
 
+// Re-applies filters/search/sort, then resets the infinite-scroll list back
+// to the top and renders the first batch.
 function applyFilters() {
     const selectedCategory = document.getElementById('categoryFilter').value;
     const minPrice = parseFloat(document.getElementById('minPrice').value) || 0;
@@ -1130,8 +1132,7 @@ function applyFilters() {
     });
 
     sortProducts();
-    currentPage = 1;
-    displayProducts();
+    resetAndRenderProducts();
 }
 
 function sortProducts() {
@@ -1148,78 +1149,132 @@ function sortProducts() {
     });
 }
 
-function displayProducts() {
-    const itemsPerPage = 12;
-    const start = (currentPage - 1) * itemsPerPage;
-    const end = start + itemsPerPage;
-    const paginatedProducts = filteredProducts.slice(start, end);
+// Clears the grid and renders the first batch — called whenever the
+// filter/search/sort criteria change.
+function resetAndRenderProducts() {
+    renderedCount = 0;
+    document.getElementById('productsGrid').innerHTML = '';
 
-    const grid = document.getElementById('productsGrid');
+    if (filteredProducts.length === 0) {
+        document.getElementById('productsGrid').innerHTML =
+            `<div class="empty-state">No products match your filters.</div>`;
+        document.getElementById('productCount').textContent = 'Showing 0 products';
+        document.getElementById('infiniteStatus').innerHTML = '';
+        return;
+    }
 
-    if (paginatedProducts.length === 0) {
-        grid.innerHTML = `<div class="empty-state">No products match your filters.</div>`;
+    renderNextBatch();
+}
+
+function buildProductCard(product) {
+    const outOfStock = product.stock <= 0;
+    const stockBadge = outOfStock
+        ? `<span class="stock-low">Out of stock</span>`
+        : product.stock <= 5
+            ? `<span class="stock-low">Only ${product.stock} left!</span>`
+            : `<span class="stock-ok">${product.stock} in stock</span>`;
+
+    const actionButton = isAdmin()
+        ? ''
+        : `<button class="btn-add-cart" ${outOfStock ? 'disabled' : ''} onclick="addToCart(event, ${product.id})">
+                ${outOfStock ? 'Out of stock' : 'Add to Cart'}
+           </button>`;
+
+    return `
+    <div class="product-card" onclick="window.location.href='product-detail.html?id=${product.id}'">
+        <div class="product-image">
+            ${product.images ? `<img src="${UPLOADS_URL}${product.images.split(',')[0]}" alt="${product.name}" loading="lazy">` : '📷'}
+        </div>
+        <div class="product-info">
+            <div class="product-category">${product.category || 'Uncategorized'}</div>
+            <div class="product-name">${product.name}</div>
+            <div class="product-rating">
+                <span class="stars">★★★★★</span>
+                <span class="rating-count">(48)</span>
+            </div>
+            <div class="product-bottom">
+                <div class="product-price-row">
+                    <span class="product-price">₱${parseFloat(product.price).toFixed(2)}</span>
+                    ${stockBadge}
+                </div>
+                ${actionButton}
+            </div>
+        </div>
+    </div>`;
+}
+
+// Appends the next BATCH_SIZE products to the grid. Guarded against
+// concurrent calls (isLoadingBatch) and against loading past the end.
+function renderNextBatch() {
+    if (isLoadingBatch) return;
+    if (renderedCount >= filteredProducts.length) {
+        updateInfiniteStatus();
+        return;
+    }
+
+    isLoadingBatch = true;
+    updateInfiniteStatus();
+
+    // Small delay so the "Loading more…" state is perceptible even on a
+    // fast local API — mirrors how a real paginated fetch would feel.
+    setTimeout(() => {
+        const start = renderedCount;
+        const end = Math.min(start + BATCH_SIZE, filteredProducts.length);
+        const nextItems = filteredProducts.slice(start, end);
+
+        const grid = document.getElementById('productsGrid');
+        grid.insertAdjacentHTML('beforeend', nextItems.map(buildProductCard).join(''));
+
+        renderedCount = end;
+        isLoadingBatch = false;
+
+        document.getElementById('productCount').textContent =
+            `Showing ${renderedCount} of ${filteredProducts.length} products`;
+
+        updateInfiniteStatus();
+
+        // The sentinel only fires again when its visibility CHANGES. If the
+        // page is short enough that the sentinel never actually leaves the
+        // viewport, it would otherwise get stuck after the first batch.
+        // Forcing a fresh observe() re-checks its current position and, if
+        // it's still on screen, immediately queues the next batch.
+        recheckSentinel();
+    }, 200);
+}
+
+function recheckSentinel() {
+    const sentinel = document.getElementById('scrollSentinel');
+    scrollObserver.unobserve(sentinel);
+    scrollObserver.observe(sentinel);
+}
+
+function updateInfiniteStatus() {
+    const status = document.getElementById('infiniteStatus');
+
+    if (isLoadingBatch) {
+        status.innerHTML = `<span class="infinite-spinner"></span> Loading more products…`;
+    } else if (filteredProducts.length > 0 && renderedCount >= filteredProducts.length) {
+        status.innerHTML = `You've reached the end of the list.`;
     } else {
-        grid.innerHTML = paginatedProducts.map(product => {
-            const outOfStock = product.stock <= 0;
-            const stockBadge = outOfStock
-                ? `<span class="stock-low">Out of stock</span>`
-                : product.stock <= 5
-                    ? `<span class="stock-low">Only ${product.stock} left!</span>`
-                    : `<span class="stock-ok">${product.stock} in stock</span>`;
-
-            const actionButton = isAdmin()
-                ? ''
-                : `<button class="btn-add-cart" ${outOfStock ? 'disabled' : ''} onclick="addToCart(event, ${product.id})">
-                        ${outOfStock ? 'Out of stock' : 'Add to Cart'}
-                   </button>`;
-
-            return `
-            <div class="product-card" onclick="window.location.href='product-detail.html?id=${product.id}'">
-                <div class="product-image">
-                    ${product.images ? `<img src="${UPLOADS_URL}${product.images.split(',')[0]}" alt="${product.name}" loading="lazy">` : '📷'}
-                </div>
-                <div class="product-info">
-                    <div class="product-category">${product.category || 'Uncategorized'}</div>
-                    <div class="product-name">${product.name}</div>
-                    <div class="product-rating">
-                        <span class="stars">★★★★★</span>
-                        <span class="rating-count">(48)</span>
-                    </div>
-                    <div class="product-bottom">
-                        <div class="product-price-row">
-                            <span class="product-price">₱${parseFloat(product.price).toFixed(2)}</span>
-                            ${stockBadge}
-                        </div>
-                        ${actionButton}
-                    </div>
-                </div>
-            </div>`;
-        }).join('');
-    }
-
-    document.getElementById('productCount').textContent =
-        `Showing ${paginatedProducts.length} of ${filteredProducts.length} products`;
-
-    displayPagination(filteredProducts.length, itemsPerPage);
-}
-
-function displayPagination(total, itemsPerPage) {
-    const pages = Math.ceil(total / itemsPerPage);
-    const pagination = document.getElementById('pagination');
-    pagination.innerHTML = '';
-
-    for (let i = 1; i <= pages; i++) {
-        const btn = document.createElement('button');
-        btn.textContent = i;
-        btn.className = i === currentPage ? 'active' : '';
-        btn.onclick = () => {
-            currentPage = i;
-            displayProducts();
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-        };
-        pagination.appendChild(btn);
+        status.innerHTML = '';
     }
 }
+
+// ---------- Infinite scroll trigger ----------
+// Watches a 1px sentinel below the grid; once it scrolls into view, the
+// next batch loads automatically — no click, no page numbers.
+const scrollObserver = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+        if (entry.isIntersecting) {
+            renderNextBatch();
+        }
+    });
+}, {
+    root: null,
+    rootMargin: '200px', // start loading a bit before the sentinel is actually on screen
+    threshold: 0
+});
+scrollObserver.observe(document.getElementById('scrollSentinel'));
 
 // ---------- Event wiring ----------
 document.getElementById('categoryFilter').addEventListener('change', applyFilters);
