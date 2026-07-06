@@ -28,6 +28,18 @@ const User = sequelize.define('User', {
         type: DataTypes.BOOLEAN,
         defaultValue: true
     },
+    is_verified: {
+        type: DataTypes.BOOLEAN,
+        defaultValue: false
+    },
+    verification_token: {
+        type: DataTypes.STRING,
+        allowNull: true
+    },
+    verification_token_expires: {
+        type: DataTypes.DATE,
+        allowNull: true
+    },
     token: {
         type: DataTypes.STRING(1000),
         allowNull: true

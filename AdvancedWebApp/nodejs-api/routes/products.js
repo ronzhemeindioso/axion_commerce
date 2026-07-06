@@ -11,6 +11,9 @@ router.get('/deleted/all', verifyToken, isAdmin, productController.getDeleted);
 router.patch('/:id/restore', verifyToken, isAdmin, productController.restore);
 router.delete('/:id/permanent', verifyToken, isAdmin, productController.hardDelete);
 
+// must stay above /:id, same reasoning as /search and /deleted/all
+router.get('/alerts/low-stock', verifyToken, isAdmin, productController.getLowStockAlerts);
+
 router.get('/', productController.getAll);
 router.get('/:id', productController.getOne);
 router.post('/', verifyToken, isAdmin, productController.upload.array('images', 5), productController.handleUploadError, productController.create);

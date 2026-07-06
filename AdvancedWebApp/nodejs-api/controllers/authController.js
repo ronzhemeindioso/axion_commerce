@@ -1,8 +1,32 @@
 const User = require('../sequelize/models/User');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const crypto = require('crypto');
+const transporter = require('../config/mailer');
 
 const SECRET_KEY = process.env.JWT_SECRET || 'your_secret_key_here';
+const APP_BASE_URL = process.env.APP_BASE_URL || 'http://localhost:5000';
+
+// Sends the "verify your email" link. Failures are logged but don't block
+// registration — the user can still request a new link later if needed.
+async function sendVerificationEmail(user, token) {
+    const verifyUrl = `${APP_BASE_URL}/api/auth/verify-email?token=${token}`;
+    try {
+        await transporter.sendMail({
+            from: process.env.MAIL_FROM || process.env.MAIL_USER,
+            to: user.email,
+            subject: 'Verify your email address',
+            html: `
+                <p>Hi ${user.name},</p>
+                <p>Thanks for registering. Please confirm your email address to activate your account:</p>
+                <p><a href="${verifyUrl}">${verifyUrl}</a></p>
+                <p>This link expires in 24 hours.</p>
+            `
+        });
+    } catch (err) {
+        console.error('Failed to send verification email:', err.message);
+    }
+}
 
 // REGISTER
 exports.register = async (req, res) => {
@@ -27,26 +51,76 @@ exports.register = async (req, res) => {
 
         const hashedPassword = bcrypt.hashSync(password, 10);
 
-        const user = await User.create({ name: fullName, email, password: hashedPassword, role: 'user' });
+        const verificationToken = crypto.randomBytes(32).toString('hex');
+        const verificationExpires = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24h
 
-        const token = jwt.sign(
-            { id: user.id, email: user.email, role: user.role },
-            SECRET_KEY,
-            { expiresIn: '24h' }
-        );
-
-        await user.update({ token });
-
-        res.status(201).json({
-            message: 'User registered successfully',
-            token: token,
-            user: {
-                id: user.id,
-                name: user.name,
-                email: user.email,
-                role: user.role
-            }
+        const user = await User.create({
+            name: fullName,
+            email,
+            password: hashedPassword,
+            role: 'user',
+            is_verified: false,
+            verification_token: verificationToken,
+            verification_token_expires: verificationExpires
         });
+
+        await sendVerificationEmail(user, verificationToken);
+
+        // No JWT issued here — the account isn't usable until the email link is clicked.
+        res.status(201).json({
+            message: 'Registration successful! Please check your email to verify your account before logging in.'
+        });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+};
+
+// VERIFY EMAIL — public link clicked from the email
+exports.verifyEmail = async (req, res) => {
+    try {
+        const { token } = req.query;
+        if (!token) return res.redirect('/login?verified=0');
+
+        const user = await User.findOne({ where: { verification_token: token } });
+
+        if (!user || !user.verification_token_expires || user.verification_token_expires < new Date()) {
+            return res.redirect('/login?verified=0');
+        }
+
+        await user.update({
+            is_verified: true,
+            verification_token: null,
+            verification_token_expires: null
+        });
+
+        res.redirect('/login?verified=1');
+    } catch (err) {
+        res.redirect('/login?verified=0');
+    }
+};
+
+// RESEND VERIFICATION EMAIL
+exports.resendVerification = async (req, res) => {
+    try {
+        const { email } = req.body;
+        const user = await User.findOne({ where: { email } });
+
+        // Same response whether or not the account exists, so this can't be used to enumerate emails
+        if (!user || user.is_verified) {
+            return res.json({ message: 'If that account exists and is unverified, a new link has been sent.' });
+        }
+
+        const verificationToken = crypto.randomBytes(32).toString('hex');
+        const verificationExpires = new Date(Date.now() + 24 * 60 * 60 * 1000);
+
+        await user.update({
+            verification_token: verificationToken,
+            verification_token_expires: verificationExpires
+        });
+
+        await sendVerificationEmail(user, verificationToken);
+
+        res.json({ message: 'If that account exists and is unverified, a new link has been sent.' });
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
@@ -147,6 +221,8 @@ exports.login = async (req, res) => {
         if (!user) return res.status(404).json({ message: 'User not found' });
 
         if (!user.is_active) return res.status(403).json({ message: 'Account is deactivated' });
+
+        if (!user.is_verified) return res.status(403).json({ message: 'Please verify your email before logging in. Check your inbox for the verification link.' });
 
         const isMatch = bcrypt.compareSync(password, user.password);
         if (!isMatch) return res.status(401).json({ message: 'Invalid password' });

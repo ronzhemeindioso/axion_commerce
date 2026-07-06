@@ -284,6 +284,14 @@
             <span id="errorText">Something went wrong.</span>
         </div>
 
+        <div class="error-msg hidden" id="successMsg" style="background:#E7F8F1;border-color:#BEE8D3;color:#1EA672;">
+            <svg class="error-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+                <polyline points="22 4 12 14.01 9 11.01"/>
+            </svg>
+            <span id="successText">Check your email to verify your account.</span>
+        </div>
+
         <form id="registerForm" novalidate>
 
             <div class="field-row">
@@ -398,11 +406,10 @@
             data: JSON.stringify({ firstName, lastName, email, password }),
             dataType: 'json'
         })
-        .done(function (data) {
-            if (data.token) localStorage.setItem('token', data.token);
-            if (data.user)  localStorage.setItem('user', JSON.stringify(data.user));
-            sessionStorage.setItem('canAccessSetupProfile', '1');
-            window.location.href = '/setup-profile';
+       .done(function (data) {
+            $('#registerForm').hide();
+            $('#successText').text(data.message || 'Check your email to verify your account.');
+            $('#successMsg').removeClass('hidden');
         })
         .fail(function (jqXHR) {
             const data = jqXHR.responseJSON || {};

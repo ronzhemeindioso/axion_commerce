@@ -39,6 +39,30 @@ exports.handleUploadError = (err, req, res, next) => {
     next();
 };
 
+// Low-stock threshold — products at/below this (but not soft-deleted) trigger the admin banner.
+// Matches the existing stock-pill "warn" cutoff used in products.html.
+const LOW_STOCK_THRESHOLD = parseInt(process.env.LOW_STOCK_THRESHOLD) || 10;
+
+// GET /api/products/alerts/low-stock — admin-only, powers the site-wide banner
+exports.getLowStockAlerts = async (req, res) => {
+    try {
+        const products = await Product.findAll({
+            where: { stock: { [Op.lte]: LOW_STOCK_THRESHOLD } },
+            attributes: ['id', 'name', 'stock'],
+            order: [['stock', 'ASC']]
+        });
+
+        res.json({
+            threshold: LOW_STOCK_THRESHOLD,
+            count: products.length,
+            outOfStockCount: products.filter(p => p.stock === 0).length,
+            products
+        });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+};
+
 // GET all products (supports ?page=&limit= for infinite scroll)
 exports.getAll = async (req, res) => {
     try {

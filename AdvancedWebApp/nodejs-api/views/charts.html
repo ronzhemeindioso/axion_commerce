@@ -196,10 +196,46 @@
             .pie-layout{ flex-direction:column; }
             .pie-canvas-col{ flex:0 0 auto; width:200px; height:200px; margin:0 auto; }
         }
+            .low-stock-banner{
+            padding:10px 40px;
+            text-align:center;
+            font-size:13.5px;
+            font-weight:600;
+            font-family:'Inter',system-ui,-apple-system,sans-serif;
+            display:none;
+            position:relative;
+        }
+        .low-stock-banner--warn{
+            background:#FBF0E1;
+            color:#C97A1E;
+            border-bottom:1px solid #F6E0B6;
+        }
+        .low-stock-banner--critical{
+            background:#FBEBEA;
+            color:#D6483F;
+            border-bottom:1px solid #D6483F;
+        }
+        .low-stock-banner a{ color:inherit; text-decoration:underline; }
+        .low-stock-banner-close{
+            position:absolute;
+            right:14px;
+            top:50%;
+            transform:translateY(-50%);
+            background:none;
+            border:none;
+            font-size:16px;
+            line-height:1;
+            font-weight:700;
+            color:inherit;
+            opacity:.6;
+            cursor:pointer;
+            padding:4px;
+        }
+        .low-stock-banner-close:hover{ opacity:1; }
     </style>
 </head>
 <body>
-
+<div id="lowStockBanner" class="low-stock-banner"></div>
 <div class="topnav">
     <div class="topnav-inner">
         <div class="brand">
@@ -335,6 +371,36 @@
 <script>
     const API = '/api';
     const token = localStorage.getItem('token');
+
+    function checkLowStockBanner() {
+    if (!token) return;
+    if (sessionStorage.getItem('lowStockBannerDismissed') === 'true') return;
+
+    fetch('/api/products/alerts/low-stock', {
+        headers: { 'Authorization': 'Bearer ' + token }
+    })
+    .then(res => res.ok ? res.json() : null)
+    .then(data => {
+        if (!data || data.count === 0) return;
+        const banner = document.getElementById('lowStockBanner');
+        const lowOnly = data.count - data.outOfStockCount;
+        const isCritical = data.outOfStockCount > 0;
+        const msg = isCritical
+            ? `⚠ ${data.outOfStockCount} product${data.outOfStockCount === 1 ? ' is' : 's are'} out of stock${lowOnly > 0 ? `, and ${lowOnly} more ${lowOnly === 1 ? 'is' : 'are'} running low` : ''}.`
+            : `⚠ ${data.count} product${data.count === 1 ? ' is' : 's are'} running low on stock (${data.threshold} or fewer left).`;
+        banner.innerHTML = `${msg} <a href="/products">Review inventory &rarr;</a>` +
+            `<button type="button" class="low-stock-banner-close" id="lowStockBannerClose" aria-label="Dismiss">&times;</button>`;
+        banner.classList.add(isCritical ? 'low-stock-banner--critical' : 'low-stock-banner--warn');
+        banner.style.display = 'block';
+
+        document.getElementById('lowStockBannerClose').addEventListener('click', function () {
+            banner.style.display = 'none';
+            sessionStorage.setItem('lowStockBannerDismissed', 'true');
+        });
+    })
+    .catch(() => {});
+}
+checkLowStockBanner();
 
     document.getElementById('btnLogout').addEventListener('click', function (e) {
         e.preventDefault();

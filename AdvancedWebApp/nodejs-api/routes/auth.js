@@ -4,6 +4,8 @@ const authController = require('../controllers/authController');
 const { verifyToken, isAdmin } = require('../middleware/auth');
 
 router.post('/register', authController.register);
+router.get('/verify-email', authController.verifyEmail);
+router.post('/resend-verification', authController.resendVerification);
 router.post('/login', authController.login);
 router.post('/logout', verifyToken, authController.logout);
 router.get('/users', verifyToken, isAdmin, authController.getAll);
