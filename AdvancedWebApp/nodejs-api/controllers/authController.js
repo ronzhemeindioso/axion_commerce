@@ -235,6 +235,10 @@ exports.login = async (req, res) => {
 
         await user.update({ token });
 
+        // A user counts as "set up" once they've gone through the profile
+        // setup form at least once (username is the first required field there).
+        const profileComplete = !!(user.username && user.username.trim());
+
         res.json({
             message: 'Login successful',
             token: token,
@@ -242,7 +246,8 @@ exports.login = async (req, res) => {
                 id: user.id,
                 name: user.name,
                 email: user.email,
-                role: user.role
+                role: user.role,
+                profileComplete
             }
         });
     } catch (err) {

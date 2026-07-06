@@ -3,9 +3,13 @@
 <head>
     <script>
         (function () {
+            // Any logged-in user may reach this page directly (e.g. right after
+            // verifying their email and logging in with an incomplete profile).
+            // We used to also require a 'canAccessSetupProfile' session flag here,
+            // but nothing in the app ever set that flag, so this page always
+            // bounced back to /login — which then bounced back here, forever.
             var token = localStorage.getItem('token');
-            var justRegistered = sessionStorage.getItem('canAccessSetupProfile');
-            if (!token || justRegistered !== '1') {
+            if (!token) {
                 window.location.replace('/login');
             }
         })();
@@ -619,6 +623,14 @@
 
             if (res.ok) {
                 sessionStorage.removeItem('canAccessSetupProfile');
+
+                // Profile is now complete — keep the stored user object in sync
+                // so future page loads don't bounce them back here.
+                if (user) {
+                    user.profileComplete = true;
+                    localStorage.setItem('user', JSON.stringify(user));
+                }
+
                 window.location.href = (user && user.role === 'admin') ? '/products' : '/shop';
             } else {
                 showError(data.message || 'Could not save profile.');

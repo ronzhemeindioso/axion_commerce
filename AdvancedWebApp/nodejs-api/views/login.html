@@ -8,7 +8,13 @@
             var token = localStorage.getItem('token');
             var user = JSON.parse(localStorage.getItem('user') || 'null');
             if (token && user) {
-                window.location.replace(user.role === 'admin' ? '/products' : '/shop');
+                if (user.role === 'admin') {
+                    window.location.replace('/products');
+                } else if (!user.profileComplete) {
+                    window.location.replace('/setup-profile');
+                } else {
+                    window.location.replace('/shop');
+                }
             }
         })();
     </script>
@@ -303,10 +309,101 @@
             opacity: .5;
             margin-bottom: .15rem;
         }
+
+        /* ── Email verified modal ── */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(50, 30, 20, 0.45);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity .25s ease;
+        }
+
+        .modal-overlay.show {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .modal-card {
+            background: #fff;
+            width: 100%;
+            max-width: 360px;
+            border-radius: 18px;
+            padding: 2.2rem 2rem 1.8rem;
+            text-align: center;
+            box-shadow: 0 30px 70px rgba(0,0,0,0.25);
+            transform: translateY(14px) scale(.97);
+            transition: transform .25s ease;
+        }
+
+        .modal-overlay.show .modal-card {
+            transform: translateY(0) scale(1);
+        }
+
+        .modal-icon {
+            width: 56px;
+            height: 56px;
+            margin: 0 auto 1.1rem;
+            border-radius: 50%;
+            background: #E7F8F1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #1EA672;
+        }
+
+        .modal-card h2 {
+            font-size: 1.25rem;
+            font-weight: 800;
+            color: var(--midnight-violet);
+            margin-bottom: .5rem;
+        }
+
+        .modal-card p {
+            font-size: .85rem;
+            color: #6b5b52;
+            line-height: 1.6;
+            margin-bottom: 1.4rem;
+        }
+
+        .modal-btn {
+            background: var(--french-blue);
+            color: #fff;
+            border: none;
+            width: 100%;
+            padding: .8rem;
+            border-radius: 10px;
+            font-size: .85rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: background .2s ease;
+        }
+
+        .modal-btn:hover { background: var(--midnight-violet); }
     </style>
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
 </head>
 <body>
+
+    <!-- Email verified success popup -->
+    <div class="modal-overlay" id="verifiedModal">
+        <div class="modal-card">
+            <div class="modal-icon">
+                <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+                    <polyline points="22 4 12 14.01 9 11.01"/>
+                </svg>
+            </div>
+            <h2>Congratulations! 🎉</h2>
+            <p>Your account has been verified. You can now log in to continue.</p>
+            <button type="button" class="modal-btn" id="verifiedModalClose">Got it</button>
+        </div>
+    </div>
 
 <div class="login-wrapper">
 
@@ -339,14 +436,6 @@
                 <line x1="12" y1="16" x2="12.01" y2="16"/>
             </svg>
             <span id="errorText">Invalid email or password.</span>
-        </div>
-
-        <div class="error-msg hidden" id="verifiedMsg" style="background:#E7F8F1;border-color:#BEE8D3;color:#1EA672;">
-            <svg class="error-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
-                <polyline points="22 4 12 14.01 9 11.01"/>
-            </svg>
-            <span>Email verified! You can now log in.</span>
         </div>
 
         <form id="loginForm" novalidate>
@@ -402,6 +491,17 @@
         this.innerHTML = isText ? eyeOpen : eyeOff;
     });
 
+    // Show the "email verified" popup as soon as the page loads from the
+    // verification link — not only after the user submits the login form.
+    const pageParams = new URLSearchParams(window.location.search);
+    if (pageParams.get('verified') === '1') {
+        document.getElementById('verifiedModal').classList.add('show');
+    }
+
+    document.getElementById('verifiedModalClose').addEventListener('click', function () {
+        document.getElementById('verifiedModal').classList.remove('show');
+    });
+
     $('#loginForm').on('submit', function (e) {
         e.preventDefault();
 
@@ -409,9 +509,6 @@
         const password = $('#password').val();
         const $errorMsg = $('#errorMsg');
         const $errorTxt = $('#errorText');
-
-        const params = new URLSearchParams(window.location.search);
-        if (params.get('verified') === '1') $('#verifiedMsg').removeClass('hidden');
         const $btn      = $('.btn-login');
 
         if (!email || !password) {
@@ -434,7 +531,17 @@
         .done(function (data) {
             if (data.token) localStorage.setItem('token', data.token);
             if (data.user)  localStorage.setItem('user', JSON.stringify(data.user));
-            window.location.href = (data.user && data.user.role === 'admin') ? '/products' : '/shop';
+
+            const user = data.user || {};
+            if (user.role === 'admin') {
+                window.location.href = '/products';
+            } else if (!user.profileComplete) {
+                // First login after verifying — send them to finish their profile
+                // instead of dropping them straight into the shop.
+                window.location.href = '/setup-profile';
+            } else {
+                window.location.href = '/shop';
+            }
         })
         .fail(function (jqXHR) {
             const data = jqXHR.responseJSON || {};
