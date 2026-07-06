@@ -551,7 +551,7 @@
             if (response.ok) {
                 document.getElementById('successMsg').style.display = 'block';
                 setTimeout(() => {
-                    window.location.href = `/orders?orderId=${data.order_id}`;
+                    window.location.href = `/profile-orders?orderId=${data.order_id}`;
                 }, 2000);
             } else {
                 document.getElementById('errorMsg').textContent = data.message || 'Checkout failed';

@@ -5,6 +5,18 @@ const Product = require('../sequelize/models/Product');
 const transporter = require('../config/mailer');
 const PDFDocument = require('pdfkit');
 
+function derivePaymentStatus(status, paymentMethod) {
+    if (status === 'refunded' || status === 'return_refund') return 'refunded';
+
+    if (paymentMethod === 'card') {
+        return status === 'cancelled' ? 'refunded' : 'paid';
+    }
+
+    // Cash on Delivery: no money changes hands until the order is delivered.
+    if (status === 'cancelled') return 'unpaid';
+    return status === 'delivered' ? 'paid' : 'unpaid';
+}
+
 // GET all orders (admin)
 exports.getAll = async (req, res) => {
     try {
@@ -128,7 +140,8 @@ exports.getOne = async (req, res) => {
             ...order.toJSON(),
             items: itemsWithImages,
             customer: user,
-            customerOrderCount: orderCount
+            customerOrderCount: orderCount,
+            payment_status: derivePaymentStatus(order.status, order.payment_method)
         });
     } catch (err) {
         res.status(500).json({ error: err.message });
@@ -142,22 +155,14 @@ exports.updateStatus = async (req, res) => {
         const order = await Order.findByPk(req.params.id);
         if (!order) return res.status(404).json({ message: 'Order not found' });
 
-        // Only statuses where the item physically comes back put stock back
-        // on the shelf: "cancelled" (never shipped/kept) and "return_refund"
-        // (customer sent the item back). Plain "refunded" means money was
-        // returned but the item was NOT — e.g. a goodwill refund — so it must
-        // NOT touch stock. Treat cancelled/return_refund as one "stock-
-        // restoring" group so moving between the two never double-restocks.
+
         const STOCK_RESTORING_STATUSES = ['cancelled', 'return_refund'];
         const wasRestoring = STOCK_RESTORING_STATUSES.includes(order.status);
         const isNowRestoring = STOCK_RESTORING_STATUSES.includes(status);
 
-        await order.update({ status, tracking_number: trackingNumber || null });
+        const tracking_number = ['shipped', 'delivered'].includes(status) ? (trackingNumber || null) : null;
+        await order.update({ status, tracking_number });
 
-        // Restore stock exactly once, only on the transition INTO a
-        // stock-restoring status — re-saving an already cancelled/refunded
-        // order (e.g. adding a tracking number) must not restock again, and
-        // hopping cancelled -> refunded (or vice versa) must not restock twice.
         if (isNowRestoring && !wasRestoring) {
             const restoredItems = await OrderItem.findAll({ where: { order_id: order.id } });
             for (const item of restoredItems) {
@@ -168,10 +173,6 @@ exports.updateStatus = async (req, res) => {
             }
         }
 
-        // Reverse that restock on the transition OUT of a stock-restoring
-        // status — otherwise stock stays inflated after an order is
-        // reinstated, and a later re-cancel/re-refund double-adds it back
-        // (42 -> 43 -> 43 -> 44).
         if (wasRestoring && !isNowRestoring) {
             const reinstatedItems = await OrderItem.findAll({ where: { order_id: order.id } });
             for (const item of reinstatedItems) {
@@ -197,7 +198,7 @@ exports.updateStatus = async (req, res) => {
                     <p>Your order <strong>#${order.id}</strong> status has been updated to:
                         <strong style="text-transform: uppercase;">${status}</strong>
                     </p>
-                    ${trackingNumber ? `<p>Tracking Number: <strong>${trackingNumber}</strong></p>` : ''}
+                    ${tracking_number ? `<p>Tracking Number: <strong>${tracking_number}</strong></p>` : ''}
                     <p>Total Amount: <strong>₱${parseFloat(order.total_amount).toFixed(2)}</strong></p>
                     <p>Please see the attached PDF for your full receipt.</p>
                     <hr>

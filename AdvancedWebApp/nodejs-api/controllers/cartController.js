@@ -62,7 +62,7 @@ exports.deleteCart = async (req, res) => {
 // CHECKOUT - convert cart to order + decrement stock
 exports.checkout = async (req, res) => {
     try {
-        const { user_id } = req.body;
+        const { user_id, payment_method } = req.body;
 
         const cartItems = await Cart.findAll({ where: { user_id } });
         if (cartItems.length === 0) {
@@ -85,8 +85,17 @@ exports.checkout = async (req, res) => {
             return sum + (parseFloat(item.price) * item.quantity);
         }, 0);
 
+        // payment_method comes from the checkout form's radio buttons ('card' / 'cod').
+        const method = payment_method === 'cod' ? 'cod' : 'card';
+        const payment_reference = `TXN-${Date.now()}-${Math.floor(1000 + Math.random() * 9000)}`;
+
         // Create order
-        const order = await Order.create({ user_id, total_amount });
+        const order = await Order.create({
+            user_id,
+            total_amount,
+            payment_method: method,
+            payment_reference
+        });
 
         // Create order items + decrement stock
         for (const item of cartItems) {

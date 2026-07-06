@@ -169,6 +169,7 @@
             flex-shrink:0;
         }
         .stat-icon svg{ width:20px; height:20px; }
+        .stat-icon-peso{ font-size:20px; font-weight:800; line-height:1; }
         .stat-card .num{
             font-size:24px;
             font-weight:800;
@@ -365,6 +366,25 @@
    Left column gets its own card so both columns read as equal-weight blocks. */
 .od-body-grid{ display:grid; grid-template-columns:240px 1fr; gap:20px; align-items:start; }
 
+/* Stacked layout: each row is a full-width card — Customer Info, then
+   Product Details, then Payment + Shipping grouped together at the bottom. */
+.od-body-stack{ display:flex; flex-direction:column; gap:20px; }
+.od-stack-row{
+    background:var(--canvas);
+    border:1px solid var(--line);
+    border-radius:10px;
+    padding:16px;
+    display:flex; flex-direction:column; gap:0;
+}
+.od-stack-row .od-section{ padding-bottom:16px; margin-bottom:16px; border-bottom:1px solid var(--line); }
+.od-stack-row .od-section:last-child{ padding-bottom:0; margin-bottom:0; border-bottom:none; }
+
+/* Side-by-side variant — used for Shipping + Payment so they sit next to
+   each other instead of stacking with a divider between them. */
+.od-stack-row-split{ display:grid; grid-template-columns:1fr 1fr; gap:24px; }
+.od-stack-row-split .od-section{ padding-bottom:0; margin-bottom:0; border-bottom:none; }
+@media (max-width: 640px){ .od-stack-row-split{ grid-template-columns:1fr; } }
+
 .od-col-left, .od-col-right{
     background:var(--canvas);
     border:1px solid var(--line);
@@ -391,6 +411,11 @@
 .od-info-grid dd{ font-size:13.5px; color:var(--ink); margin:0; }
 .od-info-grid dd a{ color:var(--muted-strong); text-decoration:none; }
 .od-info-grid dd a:hover{ color:var(--accent); text-decoration:underline; }
+
+/* Wider variant for full-width rows (e.g. Customer Information) so fields
+   fill the available space instead of leaving the right side empty. */
+.od-info-grid-2col{ display:grid; grid-template-columns:1fr 1fr; gap:14px 24px; }
+@media (max-width: 640px){ .od-info-grid-2col{ grid-template-columns:1fr; } }
 
 .od-order-count{
     display:inline-flex; align-items:center; margin-top:2px;
@@ -822,9 +847,7 @@
             </div>
         </div>
         <div class="stat-card">
-            <div class="stat-icon">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
-            </div>
+            <div class="stat-icon stat-icon-peso">₱</div>
             <div>
                 <div class="num" id="statRevenue">—</div>
                 <div class="label">Total revenue</div>
@@ -1111,25 +1134,24 @@
 
                 // Payment status is NOT in the database yet — this pill is a visual-only
                 // placeholder, styled neutral/gray so it never competes with the real order-status pill.
-                const paymentPillMap = {
-                    confirmed: { label: 'Paid' },
-                    pending: { label: 'Unpaid' },
-                    cancelled: { label: 'Refunded' }
+                const paymentStatusMap = {
+                    paid: { label: 'Paid', cls: 'pill-good' },
+                    unpaid: { label: 'Unpaid', cls: 'pill-neutral' },
+                    refunded: { label: 'Refunded', cls: 'pill-bad' }
                 };
-                const pay = paymentPillMap[data.status] || paymentPillMap.pending;
-                const paymentPillHtml = `<span class="pill pill-neutral"><span class="pill-dot"></span>${pay.label}</span>`;
+                const payStatus = paymentStatusMap[data.payment_status] || paymentStatusMap.unpaid;
+                const paymentPillHtml = `<span class="pill ${payStatus.cls}"><span class="pill-dot"></span>${payStatus.label}</span>`;
 
                 const customerHtml = c ? `
                     <div class="od-section">
                         <div class="od-label">Customer Information</div>
-                        <dl class="od-info-grid">
+                        <dl class="od-info-grid od-info-grid-2col">
                             <div><dt>Name</dt><dd><strong>${c.name || 'Unknown'}</strong></dd></div>
                             <div><dt>Email</dt><dd>${c.email ? `<a href="mailto:${c.email}">${c.email}</a>` : '—'}</dd></div>
                             <div><dt>Phone</dt><dd>${c.phone ? `<a href="tel:${c.phone}">${c.phone}</a>` : '—'}</dd></div>
                             <div><dt>Address</dt><dd>${addressParts || 'No address on file'}</dd></div>
                         </dl>
-                        ${data.customerOrderCount ? `<div class="od-order-count" style="margin-top:12px;">${data.customerOrderCount} order${data.customerOrderCount === 1 ? '' : 's'} from this customer</div>` : ''}
-                    </div>
+                        </div>
                 ` : `
                     <div class="od-section">
                         <div class="od-label">Customer Information</div>
@@ -1137,10 +1159,29 @@
                     </div>
                 `;
 
-                // Payment Information placeholder — a real "coming soon" card (icon + copy)
-                // instead of a single italic line, so the left column doesn't trail off into
-                // empty space. Swap this block for real fields once the DB supports payments.
-                const paymentHtml = `
+                const paymentMethodLabels = {
+                    card: 'Credit / Debit Card',
+                    cod: 'Cash on Delivery'
+                };
+
+                const shippingHtml = `
+                    <div class="od-section od-shipping-section">
+                        <div class="od-label">Shipping Information</div>
+                        <dl class="od-info-grid">
+                            <div><dt>Tracking Number</dt><dd>${data.tracking_number || '—'}</dd></div>
+                        </dl>
+                    </div>
+                `;
+
+                const paymentHtml = data.payment_method ? `
+                    <div class="od-section od-payment-section">
+                        <div class="od-label">Payment Information</div>
+                        <dl class="od-info-grid">
+                            <div><dt>Method</dt><dd><strong>${paymentMethodLabels[data.payment_method] || data.payment_method}</strong></dd></div>
+                            <div><dt>Reference</dt><dd>${data.payment_reference || '—'}</dd></div>
+                        </dl>
+                    </div>
+                ` : `
                     <div class="od-section od-payment-section">
                         <div class="od-label">Payment Information</div>
                         <div class="od-payment-placeholder">
@@ -1151,8 +1192,8 @@
                                 </svg>
                             </span>
                             <div class="od-payment-placeholder-text">
-                                <strong>Coming soon</strong>
-                                Payment method and transaction details will appear here once payment tracking is added.
+                                <strong>No payment on file</strong>
+                                This order was placed before payment tracking was added.
                             </div>
                         </div>
                     </div>
@@ -1215,12 +1256,15 @@
                             ${paymentPillHtml}
                         </div>
                     </div>
-                    <div class="od-body-grid">
-                        <div class="od-col-left">
+                    <div class="od-body-stack">
+                        <div class="od-stack-row">
                             ${customerHtml}
-                            ${paymentHtml}
                         </div>
-                        <div class="od-col-right">
+                        <div class="od-stack-row od-stack-row-split">
+                            ${paymentHtml}
+                            ${shippingHtml}
+                        </div>
+                        <div class="od-stack-row">
                             ${itemsHtml}
                         </div>
                     </div>

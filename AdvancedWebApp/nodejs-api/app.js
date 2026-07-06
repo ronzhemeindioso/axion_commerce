@@ -52,7 +52,7 @@ app.use('/api/cart', cartRoutes);
 app.use('/api/orders', orderRoutes);
 app.use('/api/reviews', reviewRoutes);
 
-sequelize.sync()
+sequelize.sync({ alter: true })
     .then(() => console.log('Database synced!'))
     .catch(err => console.log('Sequelize sync error:', err));
 

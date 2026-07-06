@@ -486,7 +486,7 @@
         </form>
 
         <div class="skip-row">
-            <a href="/products" id="skipLink" onclick="sessionStorage.removeItem('canAccessSetupProfile')">Skip for now — I'll fill this in later</a>
+            <a href="/shop" id="skipLink" onclick="sessionStorage.removeItem('canAccessSetupProfile'); var u = JSON.parse(localStorage.getItem('user') || 'null'); this.href = (u && u.role === 'admin') ? '/products' : '/shop';">Skip for now — I'll fill this in later</a>
         </div>
 
     </div>

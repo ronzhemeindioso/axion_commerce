@@ -22,7 +22,15 @@ const Order = sequelize.define('Order', {
     tracking_number: {
         type: DataTypes.STRING,
         allowNull: true
-    }   
+    },
+    payment_method: {
+        type: DataTypes.STRING,
+        allowNull: true
+    },
+    payment_reference: {
+        type: DataTypes.STRING,
+        allowNull: true
+    }
 }, {
     tableName: 'orders',
     timestamps: true,
