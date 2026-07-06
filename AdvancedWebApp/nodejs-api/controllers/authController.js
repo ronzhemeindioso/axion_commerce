@@ -17,10 +17,97 @@ async function sendVerificationEmail(user, token) {
             to: user.email,
             subject: 'Verify your email address',
             html: `
-                <p>Hi ${user.name},</p>
-                <p>Thanks for registering. Please confirm your email address to activate your account:</p>
-                <p><a href="${verifyUrl}">${verifyUrl}</a></p>
-                <p>This link expires in 24 hours.</p>
+            <!DOCTYPE html>
+            <html>
+            <body style="margin:0; padding:0; background-color:#F1F2F4; font-family: Arial, Helvetica, sans-serif;">
+                <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#F1F2F4; padding: 30px 0;">
+                    <tr>
+                        <td align="center">
+                            <table role="presentation" width="480" cellpadding="0" cellspacing="0" style="background-color:#FFFFFF; border-radius:14px; overflow:hidden;">
+
+                                <!-- Logo header -->
+                                <tr>
+                                    <td align="center" style="background-color:#FFFFFF; padding:28px 32px 20px 32px;">
+                                        <table role="presentation" cellpadding="0" cellspacing="0" style="margin:0 auto;">
+                                            <tr>
+                                                <td style="width:36px; height:36px; border-radius:10px; background-color:#C1745B; text-align:center; vertical-align:middle;">
+                                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block; vertical-align:middle;">
+                                                        <circle cx="12" cy="12" r="10"></circle>
+                                                        <line x1="14.31" y1="8" x2="20.05" y2="17.94"></line>
+                                                        <line x1="9.69" y1="8" x2="21.17" y2="8"></line>
+                                                        <line x1="7.38" y1="12" x2="13.12" y2="2.06"></line>
+                                                        <line x1="9.69" y1="16" x2="3.95" y2="6.06"></line>
+                                                        <line x1="14.31" y1="16" x2="2.83" y2="16"></line>
+                                                        <line x1="16.62" y1="12" x2="10.88" y2="21.94"></line>
+                                                    </svg>
+                                                </td>
+                                                <td style="width:10px;"></td>
+                                                <td style="font-size:22px; font-weight:bold; color:#2B2220;">Axion</td>
+                                            </tr>
+                                        </table>
+                                    </td>
+                                </tr>
+
+                                <!-- Dark banner -->
+                                <tr>
+                                    <td align="center" style="background-color:#2B2220; padding:32px 32px 36px 32px;">
+                                        <div style="width:44px; height:44px; line-height:44px; border-radius:50%; background-color:#3D1534; color:#FFF4EB; font-size:20px; margin:0 auto 16px auto;">&#9993;</div>
+                                        <p style="margin:0 0 8px 0; color:#F6E0B6; font-size:12px; font-weight:bold; letter-spacing:1.5px; text-transform:uppercase;">Thanks for signing up!</p>
+                                        <p style="margin:0; color:#FFFFFF; font-size:22px; font-weight:bold;">Verify Your E-mail Address</p>
+                                    </td>
+                                </tr>
+
+                                <!-- Body -->
+                                <tr>
+                                    <td align="center" style="padding:36px 32px 8px 32px;">
+                                        <p style="margin:0 0 16px 0; color:#2B2220; font-size:20px; font-weight:bold;">Hi ${user.name},</p>
+                                        <p style="margin:0; color:#6B5850; font-size:14px; line-height:1.7;">
+                                            You're almost ready to get started. Please click the button below to verify your email address and activate your account.
+                                        </p>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td align="center" style="padding:28px 32px 32px 32px;">
+                                        <a href="${verifyUrl}"
+                                           style="display:inline-block; background-color:#C1745B; color:#FFFFFF; text-decoration:none;
+                                                  font-size:14px; font-weight:bold; letter-spacing:0.5px; padding:14px 40px; border-radius:14px;">
+                                            VERIFY YOUR EMAIL
+                                        </a>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td align="center" style="padding:0 32px 8px 32px;">
+                                        <p style="margin:0; color:#948078; font-size:12px;">This link expires in 24 hours.</p>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td align="center" style="padding:20px 32px 36px 32px;">
+                                        <p style="margin:0; color:#2B2220; font-size:14px;">Thanks,</p>
+                                        <p style="margin:0; color:#2B2220; font-size:14px; font-weight:bold;">The Axion Team</p>
+                                    </td>
+                                </tr>
+
+                                <!-- Footer -->
+                                <tr>
+                                    <td align="center" style="background-color:#FAEFEA; padding:28px 32px;">
+                                        <p style="margin:0 0 10px 0; color:#9C5844; font-size:14px; font-weight:bold;">Get in touch</p>
+                                        <p style="margin:0 0 4px 0; color:#6B5850; font-size:13px;">+1 111 333 4444</p>
+                                        <p style="margin:0; color:#6B5850; font-size:13px;">info@axion.com</p>
+                                    </td>
+                                </tr>
+
+                                <!-- Bottom bar -->
+                                <tr>
+                                    <td align="center" style="background-color:#2B2220; padding:14px 32px;">
+                                        <p style="margin:0; color:#F0DDD5; font-size:11px;">Copyright &copy; Axion. All Rights Reserved.</p>
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+                </table>
+            </body>
+            </html>
             `
         });
     } catch (err) {
