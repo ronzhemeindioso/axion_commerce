@@ -809,7 +809,8 @@
                             </div>
                             <div class="mb-3">
                                 <label>Images (up to 5)</label>
-                                <input type="file" id="productImages" class="form-control" multiple accept="image/*">
+                                <input type="file" id="productImages" class="form-control" multiple accept="image/jpeg,image/png,image/webp,image/gif">
+                                <div id="productImagesError" class="invalid-feedback"></div>
                                 <div id="newImagesPreview" class="d-flex flex-wrap gap-2 mt-2"></div>
                             </div>
                             <div id="currentImages" class="mb-2"></div>
@@ -911,19 +912,46 @@ function renderExistingImages() {
     $wrap.html(html + '</div>');
 }
 
+// Quiz 4: client-side file-type restriction, in addition to the
+// server-side multer fileFilter check in productControllerSeq.js
+const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+
+function showFileError(message) {
+    $('#productImagesError').text(message);
+    $('#productImages').addClass('is-invalid');
+}
+
+function clearFileError() {
+    $('#productImagesError').text('');
+    $('#productImages').removeClass('is-invalid');
+}
+
 $('#productImages').on('change', function () {
     const picked = Array.from(this.files);
+    let firstError = '';
+
     for (const file of picked) {
+        if (!ALLOWED_IMAGE_TYPES.includes(file.type)) {
+            firstError = firstError || `"${file.name}" is not a supported image type. Allowed: JPG, PNG, WEBP, GIF.`;
+            continue;
+        }
         if (file.size > MAX_IMAGE_MB * 1024 * 1024) {
-            alert(`"${file.name}" is over ${MAX_IMAGE_MB}MB and was skipped.`);
+            firstError = firstError || `"${file.name}" is over ${MAX_IMAGE_MB}MB and was skipped.`;
             continue;
         }
         if (selectedFiles.length + existingImages.length >= MAX_IMAGES) {
-            alert(`You can only have up to ${MAX_IMAGES} images total.`);
+            firstError = firstError || `You can only have up to ${MAX_IMAGES} images total.`;
             break;
         }
         selectedFiles.push(file);
     }
+
+    if (firstError) {
+        showFileError(firstError);
+    } else {
+        clearFileError();
+    }
+
     syncFileInput();
     renderNewImagesPreview();
 });
@@ -1173,6 +1201,7 @@ $('#btnAdd').click(function() {
     existingImages = [];
     renderNewImagesPreview();
     renderExistingImages();
+    clearFileError();
 
     if ($('#productForm').data('validator')) {
         $('#productForm').data('validator').resetForm();
@@ -1203,6 +1232,7 @@ $(document).on('click', '.btnEdit', function() {
             existingImages = product.images ? product.images.split(',').filter(Boolean) : [];
             renderNewImagesPreview();
             renderExistingImages();
+            clearFileError();
 
             if ($('#productForm').data('validator')) {
                 $('#productForm').data('validator').resetForm();
