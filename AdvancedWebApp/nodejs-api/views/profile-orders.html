@@ -612,6 +612,33 @@
         .btn-continue:hover {
             background: var(--accent-dark);
         }
+
+        /* ── Infinite scroll status / sentinel ─────────────────────── */
+        .infinite-status {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            padding: 24px 0 4px;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--muted);
+        }
+        .infinite-spinner {
+            width: 16px;
+            height: 16px;
+            border: 2px solid var(--faint);
+            border-top-color: var(--accent);
+            border-radius: 50%;
+            display: inline-block;
+            animation: infinite-spin 0.7s linear infinite;
+        }
+        @keyframes infinite-spin {
+            to { transform: rotate(360deg); }
+        }
+        #scrollSentinel {
+            height: 1px;
+        }
     </style>
 </head>
 <body>
@@ -732,10 +759,20 @@
     <div class="orders-list" id="ordersList">
         <!-- Orders loaded by JavaScript -->
     </div>
+
+    <!-- Infinite scroll: sentinel is observed, status shows spinner / end-of-list message -->
+    <div id="scrollSentinel"></div>
+    <div class="infinite-status" id="infiniteStatus"></div>
 </div>
 
 <script>
     let myReviews = {}; // key: `${order_id}_${product_id}` -> review
+
+    // ── Infinite scroll state ────────────────────────────────────
+    const BATCH_SIZE = 5;
+    let allOrders = [];      // full order list fetched once from the API
+    let renderedCount = 0;   // how many orders are currently rendered
+    let scrollObserver = null;
 
     async function loadMyReviews(token) {
         try {
@@ -782,53 +819,108 @@
                         <a href="/shop" class="btn-continue">Start Shopping</a>
                     </div>
                 `;
+                document.getElementById('infiniteStatus').innerHTML = '';
                 return;
             }
 
-            const html = orders.map(order => {
-                const status = order.status || 'pending';
-                return `
-                <div class="order-card" onclick="viewOrderDetails(${order.id})">
-                    <div class="order-header">
-                        <div class="order-info">
-                            <span class="order-label">Order ID</span>
-                            <span class="order-value">#${order.id}</span>
-                        </div>
-                        <div class="order-info">
-                            <span class="order-label">Date</span>
-                            <span class="order-value">${new Date(order.created_at).toLocaleDateString()}</span>
-                        </div>
-                        <div class="order-info">
-                            <span class="order-label">Total</span>
-                            <span class="order-value">₱${parseFloat(order.total_amount).toFixed(2)}</span>
-                        </div>
-                        <div class="order-info">
-                            <span class="order-label">Status</span>
-                            <span class="status-badge ${status.toLowerCase()}">${status.toUpperCase()}</span>
-                        </div>
-                        ${order.tracking_number ? `
-                        <div class="order-info">
-                            <span class="order-label">Tracking Number</span>
-                            <span class="order-value">${order.tracking_number}</span>
-                        </div>
-                        ` : ''}
-                    </div>
-                    <div class="order-items" id="items-${order.id}">
-                        Loading items...
-                    </div>
-                </div>
-            `;
-            }).join('');
+            // Most recent orders first, then reveal them BATCH_SIZE at a time
+            // as the user scrolls near the bottom of the list.
+            allOrders = orders;
+            renderedCount = 0;
+            document.getElementById('ordersList').innerHTML = '';
 
-            document.getElementById('ordersList').innerHTML = html;
-
-            // Load order items
-            orders.forEach(order => loadOrderItems(order.id, order.status || 'pending', token));
+            setupScrollObserver();
+            renderNextBatch(token);
 
         } catch (err) {
             console.error('Error:', err);
             document.getElementById('ordersList').innerHTML = '<p style="color: var(--bad);">Error loading orders</p>';
+            document.getElementById('infiniteStatus').innerHTML = '';
         }
+    }
+
+    function renderNextBatch(token) {
+        const status = document.getElementById('infiniteStatus');
+
+        if (renderedCount >= allOrders.length) {
+            status.innerHTML = allOrders.length > BATCH_SIZE
+                ? `You've reached the end of your order history.`
+                : '';
+            return;
+        }
+
+        status.innerHTML = `<span class="infinite-spinner"></span> Loading more orders…`;
+
+        const nextSlice = allOrders.slice(renderedCount, renderedCount + BATCH_SIZE);
+
+        const html = nextSlice.map(order => {
+            const status = order.status || 'pending';
+            return `
+            <div class="order-card" onclick="viewOrderDetails(${order.id})">
+                <div class="order-header">
+                    <div class="order-info">
+                        <span class="order-label">Order ID</span>
+                        <span class="order-value">#${order.id}</span>
+                    </div>
+                    <div class="order-info">
+                        <span class="order-label">Date</span>
+                        <span class="order-value">${new Date(order.created_at).toLocaleDateString()}</span>
+                    </div>
+                    <div class="order-info">
+                        <span class="order-label">Total</span>
+                        <span class="order-value">₱${parseFloat(order.total_amount).toFixed(2)}</span>
+                    </div>
+                    <div class="order-info">
+                        <span class="order-label">Status</span>
+                        <span class="status-badge ${status.toLowerCase()}">${status.toUpperCase()}</span>
+                    </div>
+                    ${order.tracking_number ? `
+                    <div class="order-info">
+                        <span class="order-label">Tracking Number</span>
+                        <span class="order-value">${order.tracking_number}</span>
+                    </div>
+                    ` : ''}
+                </div>
+                <div class="order-items" id="items-${order.id}">
+                    Loading items...
+                </div>
+            </div>
+        `;
+        }).join('');
+
+        document.getElementById('ordersList').insertAdjacentHTML('beforeend', html);
+
+        // Load line items for just the newly-rendered batch
+        nextSlice.forEach(order => loadOrderItems(order.id, order.status || 'pending', token));
+
+        renderedCount += nextSlice.length;
+
+        if (renderedCount >= allOrders.length) {
+            status.innerHTML = allOrders.length > BATCH_SIZE
+                ? `You've reached the end of your order history.`
+                : '';
+        } else {
+            status.innerHTML = '';
+        }
+    }
+
+    function setupScrollObserver() {
+        const sentinel = document.getElementById('scrollSentinel');
+
+        if (scrollObserver) {
+            scrollObserver.disconnect();
+        }
+
+        scrollObserver = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting && renderedCount < allOrders.length) {
+                    const token = localStorage.getItem('token');
+                    renderNextBatch(token);
+                }
+            });
+        }, { rootMargin: '200px' });
+
+        scrollObserver.observe(sentinel);
     }
 
     async function loadOrderItems(orderId, status, token) {
