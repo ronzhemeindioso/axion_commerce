@@ -167,28 +167,57 @@
         }
 
         .form-group label {
-            font-size: 12px;
+            font-size: 11.5px;
             font-weight: 600;
             color: var(--muted);
             margin-bottom: 6px;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
+            letter-spacing: 0.2px;
         }
 
         .form-group input,
         .form-group select {
-            padding: 10px 12px;
+            padding: 9px 12px;
             border: 1px solid var(--line);
-            border-radius: 8px;
-            font-size: 14px;
+            border-radius: 6px;
+            font-size: 13.5px;
             font-family: inherit;
             outline: none;
             transition: border-color 0.15s;
+            background: #fff;
+            color: var(--ink);
         }
 
         .form-group input:focus,
         .form-group select:focus {
             border-color: var(--accent);
+        }
+
+        .save-address-row {
+            display: flex;
+            align-items: flex-start;
+            gap: 8px;
+            margin-top: 4px;
+        }
+
+        .save-address-row input[type="checkbox"] {
+            margin-top: 2px;
+            accent-color: var(--accent);
+            cursor: pointer;
+        }
+
+        .save-address-row label {
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--muted-strong);
+            cursor: pointer;
+        }
+
+        .save-address-row .hint {
+            display: block;
+            font-size: 11.5px;
+            font-weight: 400;
+            color: var(--muted);
+            margin-top: 2px;
         }
 
         .payment-option {
@@ -339,64 +368,81 @@
                 <div class="form-row">
                     <div class="form-group">
                         <label>First Name</label>
-                        <input type="text" id="firstName" required>
+                        <input type="text" id="firstName" autocomplete="given-name">
                     </div>
                     <div class="form-group">
                         <label>Last Name</label>
-                        <input type="text" id="lastName" required>
+                        <input type="text" id="lastName" autocomplete="family-name">
                     </div>
                 </div>
 
                 <div class="form-row full">
                     <div class="form-group">
                         <label>Email</label>
-                        <input type="email" id="email" required>
+                        <input type="text" id="email" autocomplete="email">
                     </div>
                 </div>
 
                 <div class="form-row full">
                     <div class="form-group">
                         <label>Address Line 1</label>
-                        <input type="text" id="addressLine1" required>
+                        <input type="text" id="addressLine1" placeholder="House/Unit no., Street name" autocomplete="address-line1">
                     </div>
                 </div>
 
                 <div class="form-row full">
                     <div class="form-group">
-                        <label>Address Line 2</label>
-                        <input type="text" id="addressLine2">
+                        <label>Address Line 2 (optional)</label>
+                        <input type="text" id="addressLine2" placeholder="Barangay, Subdivision, Building" autocomplete="address-line2">
                     </div>
                 </div>
 
                 <div class="form-row">
                     <div class="form-group">
                         <label>City / Municipality</label>
-                        <input type="text" id="city" required>
+                        <input type="text" id="city" placeholder="e.g. Cainta" autocomplete="address-level2">
                     </div>
                     <div class="form-group">
                         <label>Province / State</label>
-                        <input type="text" id="province" required>
+                        <input type="text" id="province" placeholder="e.g. Rizal" autocomplete="address-level1">
                     </div>
                 </div>
 
                 <div class="form-row">
                     <div class="form-group">
                         <label>ZIP / Postal Code</label>
-                        <input type="text" id="zipCode" required>
+                        <input type="text" id="zipCode" placeholder="e.g. 1900" autocomplete="postal-code" maxlength="4" inputmode="numeric">
                     </div>
                     <div class="form-group">
                         <label>Country</label>
-                        <input type="text" id="country" required>
+                        <select id="country">
+                            <option value="">Select country…</option>
+                            <option value="PH">Philippines</option>
+                            <option value="US">United States</option>
+                            <option value="SG">Singapore</option>
+                            <option value="MY">Malaysia</option>
+                            <option value="JP">Japan</option>
+                            <option value="OTHER">Other</option>
+                        </select>
                     </div>
                 </div>
 
                 <div class="form-row full">
                     <div class="form-group">
                         <label>Phone Number</label>
-                        <input type="tel" id="phone" required>
+                        <input type="text" id="phone" placeholder="09123456789" autocomplete="tel" maxlength="11" inputmode="numeric">
                     </div>
                 </div>
+
+                <div class="save-address-row">
+                    <input type="checkbox" id="saveToProfile">
+                    <label for="saveToProfile">
+                        Save this address to my profile
+                        <span class="hint">Leave unchecked to use this address for this order only — your saved profile address won't change.</span>
+                    </label>
+                </div>
             </div>
+
 
             <!-- Payment -->
             <div class="form-section">
@@ -496,6 +542,18 @@
         document.getElementById('orderTotal').textContent = `₱${total.toFixed(2)}`;
     }
 
+    // ZIP code: digits only, capped at 4
+    document.getElementById('zipCode').addEventListener('input', function () {
+        const cleaned = this.value.replace(/[^0-9]/g, '').slice(0, 4);
+        if (cleaned !== this.value) this.value = cleaned;
+    });
+
+    // Phone: digits only, capped at 11
+    document.getElementById('phone').addEventListener('input', function () {
+        const cleaned = this.value.replace(/[^0-9]/g, '').slice(0, 11);
+        if (cleaned !== this.value) this.value = cleaned;
+    });
+
     // Pulls every field out of the form so it actually travels with the order,
     // instead of only sending user_id like before.
     function collectCheckoutPayload() {
@@ -513,21 +571,53 @@
                 city: document.getElementById('city').value.trim(),
                 province: document.getElementById('province').value.trim(),
                 zip_code: document.getElementById('zipCode').value.trim(),
-                country: document.getElementById('country').value.trim()
+                country: document.getElementById('country').value.trim(),
+                save_to_profile: document.getElementById('saveToProfile').checked
             },
             payment_method: paymentMethod
         };
     }
 
+    function showError(msg) {
+        const el = document.getElementById('errorMsg');
+        el.textContent = msg;
+        el.style.display = 'block';
+    }
+
     document.getElementById('btnPlaceOrder').addEventListener('click', async () => {
         const token = localStorage.getItem('token');
-        const form = document.getElementById('checkoutForm');
 
         document.getElementById('successMsg').style.display = 'none';
         document.getElementById('errorMsg').style.display = 'none';
 
-        if (!form.checkValidity()) {
-            form.reportValidity();
+        const firstName    = document.getElementById('firstName').value.trim();
+        const lastName     = document.getElementById('lastName').value.trim();
+        const email        = document.getElementById('email').value.trim();
+        const addressLine1 = document.getElementById('addressLine1').value.trim();
+        const city         = document.getElementById('city').value.trim();
+        const province     = document.getElementById('province').value.trim();
+        const zipCode      = document.getElementById('zipCode').value.trim();
+        const country      = document.getElementById('country').value.trim();
+        const phone        = document.getElementById('phone').value.trim();
+
+        if (!firstName || !lastName) {
+            showError('Please enter your first and last name.');
+            return;
+        }
+        if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+            showError('Please enter a valid email address.');
+            return;
+        }
+        if (!addressLine1 || !city || !province || !zipCode || !country) {
+            showError('Please fill in your full shipping address.');
+            return;
+        }
+        if (!/^[0-9]{4}$/.test(zipCode)) {
+            showError('ZIP / postal code must be exactly 4 numbers.');
+            return;
+        }
+        if (!/^[0-9]{11}$/.test(phone)) {
+            showError('Phone number must be exactly 11 numbers.');
             return;
         }
 
@@ -554,14 +644,12 @@
                     window.location.href = `/profile-orders?orderId=${data.order_id}`;
                 }, 2000);
             } else {
-                document.getElementById('errorMsg').textContent = data.message || 'Checkout failed';
-                document.getElementById('errorMsg').style.display = 'block';
+                showError(data.message || 'Checkout failed');
                 btn.disabled = false;
                 btn.textContent = originalLabel;
             }
         } catch (err) {
-            document.getElementById('errorMsg').textContent = 'Error placing order';
-            document.getElementById('errorMsg').style.display = 'block';
+            showError('Error placing order');
             console.error('Error:', err);
             btn.disabled = false;
             btn.textContent = originalLabel;

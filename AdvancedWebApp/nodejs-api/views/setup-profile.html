@@ -490,13 +490,40 @@
         </form>
 
         <div class="skip-row">
-            <a href="/shop" id="skipLink" onclick="sessionStorage.removeItem('canAccessSetupProfile'); var u = JSON.parse(localStorage.getItem('user') || 'null'); this.href = (u && u.role === 'admin') ? '/products' : '/shop';">Skip for now — I'll fill this in later</a>
+            <a href="/shop" id="skipLink">Skip for now — I'll fill this in later</a>
         </div>
 
     </div>
 </div>
 
 <script>
+    // ── Skip for now ──
+    // Tell the server this user has seen the setup screen (even though they
+    // didn't fill it in) so login stops redirecting them here every time.
+    // Navigation happens regardless of whether the call succeeds — skipping
+    // should never feel blocked by the network.
+    document.getElementById('skipLink').addEventListener('click', function (e) {
+        e.preventDefault();
+
+        const token = localStorage.getItem('token');
+        const user  = JSON.parse(localStorage.getItem('user') || 'null');
+
+        if (user) {
+            user.hasSeenProfileSetup = true;
+            localStorage.setItem('user', JSON.stringify(user));
+        }
+
+        fetch('/api/auth/profile/setup/skip', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+            }
+        }).catch(() => {}).finally(() => {
+            window.location.href = (user && user.role === 'admin') ? '/products' : '/shop';
+        });
+    });
+
     // ── Avatar upload preview ──
     const avatarBtn     = document.getElementById('avatarBtn');
     const avatarInput   = document.getElementById('avatarInput');
@@ -628,6 +655,7 @@
                 // so future page loads don't bounce them back here.
                 if (user) {
                     user.profileComplete = true;
+                    user.hasSeenProfileSetup = true;
                     localStorage.setItem('user', JSON.stringify(user));
                 }
 

@@ -10,7 +10,7 @@
             if (token && user) {
                 if (user.role === 'admin') {
                     window.location.replace('/products');
-                } else if (!user.profileComplete) {
+                } else if (!user.hasSeenProfileSetup) {
                     window.location.replace('/setup-profile');
                 } else {
                     window.location.replace('/shop');
@@ -453,9 +453,6 @@
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
                     </button>
                 </div>
-                <div class="forgot-row">
-                    <a href="#">Forgot password?</a>
-                </div>
             </div>
 
             <button type="submit" class="btn-login">
@@ -535,9 +532,11 @@
             const user = data.user || {};
             if (user.role === 'admin') {
                 window.location.href = '/products';
-            } else if (!user.profileComplete) {
-                // First login after verifying — send them to finish their profile
-                // instead of dropping them straight into the shop.
+            } else if (!user.hasSeenProfileSetup) {
+                // First login ever (or first login since they last saw the
+                // setup screen) — send them to setup-profile once. Once they
+                // Save or Skip there, hasSeenProfileSetup flips to true and
+                // this stops firing on future logins.
                 window.location.href = '/setup-profile';
             } else {
                 window.location.href = '/shop';

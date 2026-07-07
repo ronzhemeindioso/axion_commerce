@@ -55,6 +55,16 @@ const User = sequelize.define('User', {
         allowNull: true
     },
 
+    // True once the user has been through the setup-profile screen at least
+    // once (whether they hit Save or Skip). Login uses this — not
+    // profileComplete — to decide whether to redirect there again, so a user
+    // who deliberately skips isn't nagged on every subsequent login.
+    has_seen_profile_setup: {
+        type: DataTypes.BOOLEAN,
+        allowNull: false,
+        defaultValue: false
+    },
+
     phone: {
         type: DataTypes.STRING,
         allowNull: true

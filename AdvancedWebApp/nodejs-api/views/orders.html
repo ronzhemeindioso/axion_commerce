@@ -1194,9 +1194,12 @@
                 currentViewOrder = data;
 
                 const c = data.customer;
-                const addressParts = c
-                    ? [c.address_line1, c.address_line2, c.city, c.province, c.zip_code, c.country].filter(Boolean).join(', ')
-                    : '';
+
+                const s = data.shipping || {};
+                const shipName = [s.first_name, s.last_name].filter(Boolean).join(' ');
+                const shipAddressParts = [s.address_line1, s.address_line2, s.city, s.province, s.zip_code, s.country]
+                    .filter(Boolean).join(', ');
+                const hasShippingSnapshot = !!(shipName || shipAddressParts || s.phone || s.email);
 
                 // Payment status is NOT in the database yet — this pill is a visual-only
                 // placeholder, styled neutral/gray so it never competes with the real order-status pill.
@@ -1210,17 +1213,15 @@
 
                 const customerHtml = c ? `
                     <div class="od-section">
-                        <div class="od-label">Customer Information</div>
+                        <div class="od-label">Customer Account</div>
                         <dl class="od-info-grid od-info-grid-2col">
                             <div><dt>Name</dt><dd><strong>${c.name || 'Unknown'}</strong></dd></div>
                             <div><dt>Email</dt><dd>${c.email ? `<a href="mailto:${c.email}">${c.email}</a>` : '—'}</dd></div>
-                            <div><dt>Phone</dt><dd>${c.phone ? `<a href="tel:${c.phone}">${c.phone}</a>` : '—'}</dd></div>
-                            <div><dt>Address</dt><dd>${addressParts || 'No address on file'}</dd></div>
                         </dl>
                         </div>
                 ` : `
                     <div class="od-section">
-                        <div class="od-label">Customer Information</div>
+                        <div class="od-label">Customer Account</div>
                         <div class="od-empty">This customer's account no longer exists.</div>
                     </div>
                 `;
@@ -1230,10 +1231,19 @@
                     cod: 'Cash on Delivery'
                 };
 
+                // Address the order was actually shipped to, frozen at checkout time —
+                // not the customer's current profile, which may have changed since.
                 const shippingHtml = `
                     <div class="od-section od-shipping-section">
                         <div class="od-label">Shipping Information</div>
                         <dl class="od-info-grid">
+                            ${hasShippingSnapshot ? `
+                                <div><dt>Recipient</dt><dd><strong>${shipName || '—'}</strong></dd></div>
+                                <div><dt>Phone</dt><dd>${s.phone ? `<a href="tel:${s.phone}">${s.phone}</a>` : '—'}</dd></div>
+                                <div><dt>Address</dt><dd>${shipAddressParts || '—'}</dd></div>
+                            ` : `
+                                <div><dt>Address</dt><dd>No shipping address recorded for this order.</dd></div>
+                            `}
                             <div><dt>Tracking Number</dt><dd>${data.tracking_number || '—'}</dd></div>
                         </dl>
                     </div>
