@@ -733,6 +733,25 @@
                 width: 100%;
             }
         }
+
+            .toast {
+                position: fixed;
+                bottom: 24px;
+                left: 50%;
+                transform: translateX(-50%) translateY(12px);
+                background: var(--ink);
+                color: #fff;
+                padding: 12px 20px;
+                border-radius: 10px;
+                font-size: 13.5px;
+                font-weight: 600;
+                box-shadow: 0 12px 28px rgba(43,34,32,0.25);
+                opacity: 0;
+                pointer-events: none;
+                transition: opacity .2s ease, transform .2s ease;
+                z-index: 200;
+            }
+            .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
     </style>
 </head>
 <body>
@@ -892,6 +911,20 @@
     function getToken() { return localStorage.getItem('token'); }
     function getUser()  { try { return JSON.parse(localStorage.getItem('user') || 'null'); } catch (e) { return null; } }
     function isAdmin()  { const u = getUser(); return !!(getToken() && u && u.role === 'admin'); }
+
+    function showToast(message) {
+    let toast = document.getElementById('toast');
+    if (!toast) {
+        toast = document.createElement('div');
+        toast.id = 'toast';
+        toast.className = 'toast';
+        document.body.appendChild(toast);
+    }
+    toast.textContent = message;
+    toast.classList.add('show');
+    clearTimeout(toast._hideTimer);
+    toast._hideTimer = setTimeout(() => toast.classList.remove('show'), 2200);
+}
 
     function refreshNav() {
         const token = getToken();
@@ -1058,7 +1091,6 @@
                     <button class="btn-add-cart" onclick="addToCart()" ${product.stock === 0 ? 'disabled' : ''}>
                         Add to Cart
                     </button>
-                    <button class="btn-wishlist" title="Add to wishlist">❤️</button>
                 </div>
                 `}
 
@@ -1130,7 +1162,7 @@
         })
         .then(res => res.json())
         .then(data => {
-            alert('Added to cart!');
+            showToast('Added to cart!');
             updateCartCount();
         })
         .catch(err => console.error('Error:', err));

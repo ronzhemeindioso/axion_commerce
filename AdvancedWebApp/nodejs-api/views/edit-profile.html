@@ -942,6 +942,17 @@
 
             if (res.ok) {
                 showSuccess('Profile updated successfully.');
+
+                // Keep the cached user object in sync — otherwise the "add a
+                // username" banner on /shop keeps showing until next login,
+                // since it reads profileComplete straight from localStorage.
+                const cachedUser = JSON.parse(localStorage.getItem('user') || 'null');
+                if (cachedUser) {
+                    cachedUser.username = username;
+                    cachedUser.profileComplete = true;
+                    cachedUser.hasSeenProfileSetup = true;
+                    localStorage.setItem('user', JSON.stringify(cachedUser));
+                }
             } else {
                 showError(data.message || 'Could not save profile.');
             }

@@ -136,10 +136,32 @@ exports.getOne = async (req, res) => {
 
         const orderCount = await Order.count({ where: { user_id: order.user_id } });
 
+        const orderJson = order.toJSON();
+
+        // The address this specific order was actually shipped to — frozen at
+        // checkout time. Distinct from `customer`, which is the account's
+        // current profile and can have since been edited. Orders placed before
+        // this snapshot existed will have all-null fields here; the frontend
+        // should treat that as "not recorded" rather than falling back to the
+        // live profile, since that's exactly the ambiguity this fixes.
+        const shipping = {
+            first_name: orderJson.ship_first_name,
+            last_name: orderJson.ship_last_name,
+            email: orderJson.ship_email,
+            phone: orderJson.ship_phone,
+            address_line1: orderJson.ship_address_line1,
+            address_line2: orderJson.ship_address_line2,
+            city: orderJson.ship_city,
+            province: orderJson.ship_province,
+            zip_code: orderJson.ship_zip_code,
+            country: orderJson.ship_country
+        };
+
         res.json({
-            ...order.toJSON(),
+            ...orderJson,
             items: itemsWithImages,
             customer: user,
+            shipping,
             customerOrderCount: orderCount,
             payment_status: derivePaymentStatus(order.status, order.payment_method)
         });

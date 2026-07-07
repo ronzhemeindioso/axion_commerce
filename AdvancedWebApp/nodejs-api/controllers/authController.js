@@ -283,7 +283,8 @@ exports.setupProfile = async (req, res) => {
                 province,
                 zip_code: zipCode,
                 country,
-                avatar
+                avatar,
+                has_seen_profile_setup: true
             },
             { where: { id } }
         );
@@ -298,6 +299,20 @@ exports.setupProfile = async (req, res) => {
                 res.status(500).json({ message: friendlyMessage });
             }
         };
+
+// SKIP PROFILE SETUP — user chose "Skip for now". No profile data is saved,
+// but we still mark the setup screen as seen so login stops redirecting here.
+exports.skipProfileSetup = async (req, res) => {
+    try {
+        await User.update(
+            { has_seen_profile_setup: true },
+            { where: { id: req.user.id } }
+        );
+        res.json({ message: 'Profile setup skipped' });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+};
 
 // LOGIN
 exports.login = async (req, res) => {
@@ -322,9 +337,15 @@ exports.login = async (req, res) => {
 
         await user.update({ token });
 
-        // A user counts as "set up" once they've gone through the profile
-        // setup form at least once (username is the first required field there).
+        // profileComplete drives the "no username yet" banner on /shop.
         const profileComplete = !!(user.username && user.username.trim());
+
+        // hasSeenProfileSetup drives the one-time redirect to /setup-profile
+        // after login. It's set the first time the user hits Save or Skip on
+        // that screen, and stays true from then on — separate from
+        // profileComplete, since a user can skip setup (seen = true) without
+        // ever picking a username (profileComplete = false).
+        const hasSeenProfileSetup = !!user.has_seen_profile_setup;
 
         res.json({
             message: 'Login successful',
@@ -334,7 +355,8 @@ exports.login = async (req, res) => {
                 name: user.name,
                 email: user.email,
                 role: user.role,
-                profileComplete
+                profileComplete,
+                hasSeenProfileSetup
             }
         });
     } catch (err) {

@@ -472,8 +472,10 @@
         }
 
         .empty-cart-icon {
-            font-size: 60px;
+            display: flex;
+            justify-content: center;
             margin-bottom: 16px;
+            color: var(--muted);
         }
 
         .empty-cart p {
@@ -583,9 +585,75 @@
 
             .nav-menu { display: none; }
         }
+
+        /* ── Confirm modal (replaces browser confirm()) ── */
+        .confirm-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(43,34,32,.45);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 500;
+        }
+        .confirm-overlay.show { display: flex; }
+
+        .confirm-card {
+            background: var(--panel);
+            border-radius: var(--radius);
+            padding: 28px 28px 20px;
+            width: 360px;
+            max-width: calc(100vw - 48px);
+            box-shadow: 0 20px 48px rgba(43,34,32,.25);
+            text-align: center;
+        }
+
+        .confirm-card p {
+            font-size: 15px;
+            color: var(--ink);
+            margin-bottom: 24px;
+        }
+
+        .confirm-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .confirm-btn {
+            flex: 1;
+            padding: 11px 16px;
+            border-radius: 8px;
+            font-weight: 700;
+            font-size: 14px;
+            cursor: pointer;
+            border: 1px solid var(--line);
+            transition: background .15s, border-color .15s;
+        }
+
+        .confirm-btn-cancel {
+            background: var(--panel);
+            color: var(--ink);
+        }
+        .confirm-btn-cancel:hover { background: var(--canvas); }
+
+        .confirm-btn-danger {
+            background: var(--bad);
+            border-color: var(--bad);
+            color: #fff;
+        }
+        .confirm-btn-danger:hover { background: #b73a32; }
     </style>
 </head>
 <body>
+    <div class="confirm-overlay" id="confirmOverlay">
+    <div class="confirm-card">
+        <p id="confirmMessage">Are you sure?</p>
+        <div class="confirm-actions">
+            <button class="confirm-btn confirm-btn-cancel" id="confirmCancelBtn">Cancel</button>
+            <button class="confirm-btn confirm-btn-danger" id="confirmOkBtn">Remove</button>
+        </div>
+    </div>
+</div>
 
 <div id="toastHost"></div>
 
@@ -771,6 +839,29 @@ function refreshNav() {
     }
 }
 
+function showConfirm(message) {
+    return new Promise((resolve) => {
+        const overlay = document.getElementById('confirmOverlay');
+        document.getElementById('confirmMessage').textContent = message;
+        overlay.classList.add('show');
+
+        const okBtn = document.getElementById('confirmOkBtn');
+        const cancelBtn = document.getElementById('confirmCancelBtn');
+
+        function cleanup(result) {
+            overlay.classList.remove('show');
+            okBtn.removeEventListener('click', onOk);
+            cancelBtn.removeEventListener('click', onCancel);
+            resolve(result);
+        }
+        function onOk() { cleanup(true); }
+        function onCancel() { cleanup(false); }
+
+        okBtn.addEventListener('click', onOk);
+        cancelBtn.addEventListener('click', onCancel);
+    });
+}
+
 function clearSession() {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
@@ -894,7 +985,13 @@ function displayEmptyCart() {
     const cartDiv = document.getElementById('cartItems');
     cartDiv.innerHTML = `
         <div class="empty-cart">
-            <div class="empty-cart-icon">🛒</div>
+            <div class="empty-cart-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" width="60" height="60">
+                    <circle cx="9" cy="21" r="1"/>
+                    <circle cx="20" cy="21" r="1"/>
+                    <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/>
+                </svg>
+            </div>
             <p>Your cart is empty</p>
             <a href="/shop" class="btn-continue-shopping">Continue Shopping</a>
         </div>
@@ -940,7 +1037,7 @@ async function updateQuantity(itemId, newQty) {
 
 // ---------- Remove ----------
 async function removeFromCart(itemId) {
-    if (!confirm('Remove this item from cart?')) return;
+    if (!(await showConfirm('Remove this item from cart?'))) return;
 
     try {
         const response = await fetch(`${CART_URL}/${itemId}`, {

@@ -34,6 +34,14 @@
 
         * { box-sizing: border-box; margin: 0; padding: 0; }
 
+        html {
+            /* Reserve scrollbar space at all times so the page doesn't
+               shift width when the search dropdown opens/closes and
+               briefly changes the document's scroll height. */
+            overflow-y: scroll;
+            scrollbar-gutter: stable;
+        }
+
         body {
             font-family: 'Inter', system-ui, sans-serif;
             color: var(--ink);
@@ -61,6 +69,37 @@
             background: none;
             border: none;
             color: var(--bad);
+            font-size: 16px;
+            cursor: pointer;
+            line-height: 1;
+        }
+
+        /* ── Profile nudge banner ────────────────────────── */
+        #profileNudgeBanner {
+            display: none;
+            background: var(--accent-soft);
+            color: var(--accent-dark);
+            border-bottom: 1px solid var(--accent);
+            padding: 12px 24px;
+            text-align: center;
+            font-size: 13px;
+            font-weight: 500;
+            position: relative;
+        }
+        #profileNudgeBanner.show { display: block; }
+        #profileNudgeBanner a {
+            color: var(--accent-dark);
+            font-weight: 700;
+            text-decoration: underline;
+        }
+        #profileNudgeBanner .close-banner {
+            position: absolute;
+            right: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            color: var(--accent-dark);
             font-size: 16px;
             cursor: pointer;
             line-height: 1;
@@ -388,6 +427,84 @@
         .search-input:focus { border-color: var(--accent); }
         .search-input::placeholder { color: var(--muted); }
 
+        /* ── Search autocomplete panel (jQuery + /api/products/search) ── */
+        .search-wrap { position: relative; }
+
+        .search-panel {
+            position: absolute;
+            top: calc(100% + 8px);
+            left: 0;
+            right: 0;
+            background: var(--panel);
+            border: 1px solid var(--line);
+            border-radius: 12px;
+            box-shadow: 0 12px 32px rgba(43,34,32,.14);
+            padding: 10px;
+            display: none;
+            flex-direction: column;
+            z-index: 200;
+        }
+        .search-panel.open { display: flex; }
+
+        .search-panel-results {
+            max-height: 380px;
+            overflow-y: auto;
+        }
+
+        .search-result-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 9px 10px;
+            border-radius: 9px;
+            text-decoration: none;
+            color: var(--ink);
+            cursor: pointer;
+        }
+        .search-result-item:hover { background: var(--accent-soft); }
+
+        .search-result-thumb {
+            width: 38px;
+            height: 38px;
+            border-radius: 8px;
+            background: var(--canvas);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 15px;
+            flex-shrink: 0;
+            overflow: hidden;
+        }
+        .search-result-thumb img { width: 100%; height: 100%; object-fit: cover; }
+
+        .search-result-info { min-width: 0; flex: 1; }
+        .search-result-name {
+            font-size: 13.5px;
+            font-weight: 600;
+            color: var(--ink);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .search-result-cat {
+            font-size: 12px;
+            color: var(--muted);
+        }
+        .search-result-price {
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--accent-dark);
+            flex-shrink: 0;
+        }
+
+        .search-panel-hint,
+        .search-panel-empty {
+            padding: 14px 10px;
+            font-size: 13px;
+            color: var(--muted);
+            text-align: center;
+        }
+
         /* ── Filter row (category dropdown + price) ────────────────────────── */
         .filter-row {
             display: flex;
@@ -458,6 +575,7 @@
             color: var(--ink);
             cursor: pointer;
             outline: none;
+            margin-left: auto;
         }
 
         .sort-select:focus {
@@ -524,7 +642,7 @@
             font-size: 11px;
             font-weight: 600;
             text-transform: uppercase;
-            color: var(--accent);
+            color: var(--muted);
             letter-spacing: 0.5px;
             margin-bottom: 6px;
         }
@@ -553,6 +671,10 @@
             color: var(--warn);
         }
 
+        .stars-empty {
+            color: var(--faint);
+        }
+
         .rating-count {
             color: var(--muted);
             font-size: 11px;
@@ -573,10 +695,16 @@
             font-size: 16px;
             font-weight: 700;
             color: var(--accent);
+            font-variant-numeric: tabular-nums;
         }
 
         .stock-low {
             color: var(--bad);
+            font-size: 11px;
+            font-weight: 600;
+        }
+        .stock-warn {
+            color: var(--warn);
             font-size: 11px;
             font-weight: 600;
         }
@@ -587,8 +715,8 @@
 
         .btn-add-cart {
             width: 100%;
-            background: var(--accent-soft);
-            color: var(--accent);
+            background: #D48D73;
+            color: white;
             border: none;
             padding: 10px;
             border-radius: 8px;
@@ -600,7 +728,6 @@
 
         .btn-add-cart:hover {
             background: var(--accent);
-            color: white;
         }
 
         .btn-add-cart:disabled {
@@ -734,6 +861,13 @@
     })();
 </script>
 
+<!-- Profile nudge: soft, dismissible reminder for users without a username set.
+     Never blocks navigation and never reappears once closed. -->
+<div id="profileNudgeBanner">
+    <span>Add a username to personalize your profile. <a href="/edit-profile">Set it up</a></span>
+    <button class="close-banner" id="profileNudgeClose" aria-label="Close">✕</button>
+</div>
+
 <div id="toastHost"></div>
 
 <!-- Storefront Navigation (customers & guests) -->
@@ -853,7 +987,12 @@
     <!-- Products -->
     <main class="main">
         <div class="search-row">
-            <input type="text" id="searchInput" class="search-input" placeholder="Search products…">
+            <div class="search-wrap" id="searchWrap">
+                <input type="text" id="searchInput" class="search-input" placeholder="Search products…" autocomplete="off">
+                <div class="search-panel" id="searchPanel">
+                    <div class="search-panel-results" id="searchPanelResults"></div>
+                </div>
+            </div>
         </div>
 
         <div class="filter-row">
@@ -866,18 +1005,16 @@
                 <span>—</span>
                 <input type="number" id="maxPrice" placeholder="Max" min="0">
             </div>
+            <select class="sort-select" id="sortSelect">
+                <option value="newest">Newest</option>
+                <option value="price-low">Price: Low to High</option>
+                <option value="price-high">Price: High to Low</option>
+                <option value="name">Name: A to Z</option>
+            </select>
         </div>
 
         <div class="topbar">
             <div class="topbar-left" id="productCount">Showing 0 products</div>
-            <div class="topbar-right">
-                <select class="sort-select" id="sortSelect">
-                    <option value="newest">Newest</option>
-                    <option value="price-low">Price: Low to High</option>
-                    <option value="price-high">Price: High to Low</option>
-                    <option value="name">Name: A to Z</option>
-                </select>
-            </div>
         </div>
 
         <div class="products-grid" id="productsGrid">
@@ -890,6 +1027,7 @@
     </main>
 </div>
 
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
 <script>
 const API_URL     = '/api/products';
 const CART_URL    = '/api/cart';
@@ -903,6 +1041,7 @@ let isLoadingBatch    = false;
 let searchQuery       = '';
 let searchTimer       = null;
 const productCache    = {};
+const ratingSummaries = {};
 
 // ---------- Auth helpers ----------
 function getToken() { return localStorage.getItem('token'); }
@@ -936,7 +1075,34 @@ function refreshNav() {
         navUser.style.display = 'none';
         navUser.textContent = '';
     }
+
+    updateProfileNudge(loggedIn ? user : null);
 }
+
+// ---------- Profile nudge (soft, dismissible — never a gate) ----------
+function updateProfileNudge(user) {
+    const banner = document.getElementById('profileNudgeBanner');
+    if (!user || user.role === 'admin') {
+        banner.classList.remove('show');
+        return;
+    }
+
+    const dismissKey = 'profileNudgeDismissed_' + user.id;
+    const dismissed = localStorage.getItem(dismissKey) === '1';
+
+    // profileComplete reflects whether a username has been set (see login response).
+    if (!user.profileComplete && !dismissed) {
+        banner.classList.add('show');
+    } else {
+        banner.classList.remove('show');
+    }
+}
+
+document.getElementById('profileNudgeClose').addEventListener('click', function () {
+    const user = getUser();
+    if (user) localStorage.setItem('profileNudgeDismissed_' + user.id, '1');
+    document.getElementById('profileNudgeBanner').classList.remove('show');
+});
 
 function logoutUser() {
     const token = getToken();
@@ -1096,10 +1262,32 @@ async function loadAllProducts() {
         allProducts = data.data || [];
         allProducts.forEach(p => { productCache[p.id] = p; });
         populateFilters();
+        await loadRatingSummaries();
         applyFilters();
     } catch (err) {
         console.error('Error loading products:', err);
     }
+}
+
+// Fetches average rating + review count for every product in one request,
+// so the shop grid doesn't need a separate call per card.
+async function loadRatingSummaries() {
+    try {
+        const ids = allProducts.map(p => p.id).join(',');
+        if (!ids) return;
+        const response = await fetch(`/api/reviews/summary?product_ids=${ids}`);
+        if (!response.ok) return;
+        const summaries = await response.json();
+        summaries.forEach(s => { ratingSummaries[s.product_id] = s; });
+    } catch (err) {
+        console.error('Error loading rating summaries:', err);
+    }
+}
+
+// Builds a ★/☆ string for a given average rating (rounded to the nearest star).
+function renderStars(average) {
+    const filled = Math.round(average);
+    return '★'.repeat(filled) + '☆'.repeat(5 - filled);
 }
 
 function populateFilters() {
@@ -1153,17 +1341,29 @@ function sortProducts() {
 // filter/search/sort criteria change.
 function resetAndRenderProducts() {
     renderedCount = 0;
-    document.getElementById('productsGrid').innerHTML = '';
+    isLoadingBatch = false;
+
+    const grid = document.getElementById('productsGrid');
 
     if (filteredProducts.length === 0) {
-        document.getElementById('productsGrid').innerHTML =
-            `<div class="empty-state">No products match your filters.</div>`;
+        grid.innerHTML = `<div class="empty-state">No products match your filters.</div>`;
         document.getElementById('productCount').textContent = 'Showing 0 products';
         document.getElementById('infiniteStatus').innerHTML = '';
         return;
     }
 
-    renderNextBatch();
+    // Write the first batch in the same tick as the clear, so the grid
+    // never sits empty for a moment before refilling (that gap-then-fill
+    // was what caused the page to visibly jump/shake while typing).
+    const end = Math.min(BATCH_SIZE, filteredProducts.length);
+    grid.innerHTML = filteredProducts.slice(0, end).map(buildProductCard).join('');
+    renderedCount = end;
+
+    document.getElementById('productCount').textContent =
+        `Showing ${renderedCount} of ${filteredProducts.length} products`;
+
+    updateInfiniteStatus();
+    recheckSentinel();
 }
 
 function buildProductCard(product) {
@@ -1172,7 +1372,9 @@ function buildProductCard(product) {
         ? `<span class="stock-low">Out of stock</span>`
         : product.stock <= 5
             ? `<span class="stock-low">Only ${product.stock} left!</span>`
-            : `<span class="stock-ok">${product.stock} in stock</span>`;
+            : product.stock <= 10
+                ? `<span class="stock-warn">Only ${product.stock} left</span>`
+                : `<span class="stock-ok">${product.stock} in stock</span>`;
 
     const actionButton = isAdmin()
         ? ''
@@ -1180,17 +1382,22 @@ function buildProductCard(product) {
                 ${outOfStock ? 'Out of stock' : 'Add to Cart'}
            </button>`;
 
+    const summary = ratingSummaries[product.id];
+    const hasReviews = !!(summary && summary.count > 0);
+    const ratingHtml = hasReviews
+        ? `<span class="stars">${renderStars(summary.average)}</span><span class="rating-count">(${summary.count})</span>`
+        : `<span class="stars stars-empty">☆☆☆☆☆</span><span class="rating-count">No ratings</span>`;
+
     return `
     <div class="product-card" onclick="window.location.href='product-detail.html?id=${product.id}'">
         <div class="product-image">
-            ${product.images ? `<img src="${UPLOADS_URL}${product.images.split(',')[0]}" alt="${product.name}" loading="lazy">` : '📷'}
+            ${product.images ? `<img src="${UPLOADS_URL}${product.images.split(',')[0]}" alt="${product.name}" loading="lazy">` : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" width="48" height="48"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>'}
         </div>
         <div class="product-info">
             <div class="product-category">${product.category || 'Uncategorized'}</div>
             <div class="product-name">${product.name}</div>
             <div class="product-rating">
-                <span class="stars">★★★★★</span>
-                <span class="rating-count">(48)</span>
+                ${ratingHtml}
             </div>
             <div class="product-bottom">
                 <div class="product-price-row">
@@ -1283,11 +1490,13 @@ document.getElementById('maxPrice').addEventListener('change', applyFilters);
 document.getElementById('sortSelect').addEventListener('change', applyFilters);
 
 document.getElementById('searchInput').addEventListener('input', function () {
+    const value = this.value;
     clearTimeout(searchTimer);
     searchTimer = setTimeout(() => {
-        searchQuery = this.value;
+        searchQuery = value;
         applyFilters();
-    }, 400);
+        if (window.runShopAutocomplete) window.runShopAutocomplete(value.trim());
+    }, 300);
 });
 
 refreshNav();
@@ -1304,6 +1513,94 @@ loadAllProducts();
         applyFilters();
     }
 })();
+
+// ── Search autocomplete dropdown (jQuery + /api/products/search) ──
+// This runs alongside the live in-page filtering above: typing still
+// narrows the grid, and this dropdown additionally offers instant
+// suggestions pulled from the API, same as the homepage search widget.
+$(function () {
+    const $wrap    = $('#searchWrap');
+    const $panel   = $('#searchPanel');
+    const $input   = $('#searchInput');
+    const $results = $('#searchPanelResults');
+
+    function openPanel() { $panel.addClass('open'); }
+    function closePanel() { $panel.removeClass('open'); }
+
+    // Close when clicking outside the search widget
+    $(document).on('click', function (e) {
+        if (!$wrap.is(e.target) && $wrap.has(e.target).length === 0) {
+            closePanel();
+        }
+    });
+
+    // Close on Escape
+    $(document).on('keydown', function (e) {
+        if (e.key === 'Escape') closePanel();
+    });
+
+    function renderResults(query, products) {
+        if (!query) {
+            $results.html('');
+            closePanel();
+            return;
+        }
+
+        if (!products.length) {
+            $results.html('<div class="search-panel-empty">No products found for “' + $('<div>').text(query).html() + '”.</div>');
+            openPanel();
+            return;
+        }
+
+        const items = products.map(function (p) {
+            const img = p.images
+                ? '<img src="' + UPLOADS_URL + p.images.split(',')[0] + '" alt="">'
+                : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" width="18" height="18"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>';
+            const price = '₱' + parseFloat(p.price).toFixed(2);
+            return (
+                '<a class="search-result-item" href="product-detail.html?id=' + p.id + '">' +
+                    '<div class="search-result-thumb">' + img + '</div>' +
+                    '<div class="search-result-info">' +
+                        '<div class="search-result-name">' + $('<div>').text(p.name).html() + '</div>' +
+                        '<div class="search-result-cat">' + $('<div>').text(p.category || '').html() + '</div>' +
+                    '</div>' +
+                    '<div class="search-result-price">' + price + '</div>' +
+                '</a>'
+            );
+        }).join('');
+
+        $results.html(items);
+        openPanel();
+    }
+
+    function runAutocomplete(query) {
+        if (!query) {
+            renderResults('', []);
+            return;
+        }
+
+        $.getJSON('/api/products/search', { q: query })
+            .done(function (products) {
+                // Guard against out-of-order responses
+                if (query === $input.val().trim()) {
+                    renderResults(query, Array.isArray(products) ? products : []);
+                }
+            })
+            .fail(function () {
+                $results.html('<div class="search-panel-empty">Couldn\'t search right now. Please try again.</div>');
+                openPanel();
+            });
+    }
+
+    $input.on('focus', function () {
+        const query = $(this).val().trim();
+        if (query) runAutocomplete(query);
+    });
+
+    // Called from the single shared debounce timer above, so the dropdown
+    // and the in-page grid update together instead of on two separate clocks.
+    window.runShopAutocomplete = runAutocomplete;
+});
 </script>
 
 </body>
