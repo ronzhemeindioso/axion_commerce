@@ -5,65 +5,112 @@ const Product = require('../sequelize/models/Product');
 const User = require('../sequelize/models/User');
 
 // GET all cart items for a user
-exports.getCart = async (req, res) => {
+exports.getCart = async (req, res, next) => {
     try {
-        const user_id = req.params.user_id;
-        const items = await Cart.findAll({ where: { user_id } });
+        // A user can only ever fetch their OWN cart — the :user_id in the
+        // URL must match the id embedded in their verified token.
+        if (String(req.params.user_id) !== String(req.user.id)) {
+            return res.status(403).json({ message: 'You cannot view another user\'s cart' });
+        }
+
+        const items = await Cart.findAll({ where: { user_id: req.user.id } });
         res.json(items);
     } catch (err) {
-        res.status(500).json({ error: err.message });
+        next(err);
     }
 };
 
 // ADD to cart
-exports.addToCart = async (req, res) => {
+exports.addToCart = async (req, res, next) => {
     try {
-        const { user_id, product_id, name, description, price, quantity, images } = req.body;
+        // user_id always comes from the verified token, never from the request
+        // body — otherwise a caller could add items to someone else's cart.
+        const user_id = req.user.id;
+        const { product_id, quantity } = req.body;
+
+        if (!product_id) {
+            return res.status(400).json({ message: 'product_id is required' });
+        }
+
+        const qty = parseInt(quantity, 10) || 1;
+        if (qty < 1) {
+            return res.status(400).json({ message: 'Quantity must be at least 1' });
+        }
+
+        // Price, name, description, and images are never trusted from the client —
+        // they're always pulled fresh from the Product record so a request can't
+        // add an item to the cart at an arbitrary (attacker-chosen) price.
+        const product = await Product.findByPk(product_id);
+        if (!product) {
+            return res.status(404).json({ message: 'Product not found' });
+        }
 
         const existing = await Cart.findOne({ where: { user_id, product_id } });
         if (existing) {
-            await existing.update({ quantity: existing.quantity + (quantity || 1) });
+            await existing.update({ quantity: existing.quantity + qty });
             return res.json({ message: 'Cart updated successfully' });
         }
 
         const item = await Cart.create({
-            user_id, product_id, name, description, price, quantity: quantity || 1, images
+            user_id,
+            product_id,
+            name: product.name,
+            description: product.description,
+            price: product.price,
+            quantity: qty,
+            images: product.images
         });
         res.status(201).json(item);
     } catch (err) {
-        res.status(500).json({ error: err.message });
+        next(err);
     }
 };
 
 // UPDATE cart item quantity
-exports.updateCart = async (req, res) => {
+exports.updateCart = async (req, res, next) => {
     try {
         const { quantity } = req.body;
         const item = await Cart.findByPk(req.params.id);
         if (!item) return res.status(404).json({ message: 'Cart item not found' });
+
+        // Only the owner of this cart row may modify it.
+        if (String(item.user_id) !== String(req.user.id)) {
+            return res.status(403).json({ message: 'You cannot modify another user\'s cart item' });
+        }
+
         await item.update({ quantity });
         res.json({ message: 'Cart updated successfully' });
     } catch (err) {
-        res.status(500).json({ error: err.message });
+        next(err);
     }
 };
 
 // DELETE cart item
-exports.deleteCart = async (req, res) => {
+exports.deleteCart = async (req, res, next) => {
     try {
         const item = await Cart.findByPk(req.params.id);
         if (!item) return res.status(404).json({ message: 'Cart item not found' });
+
+        // Only the owner of this cart row may delete it.
+        if (String(item.user_id) !== String(req.user.id)) {
+            return res.status(403).json({ message: 'You cannot modify another user\'s cart item' });
+        }
+
         await item.destroy();
         res.json({ message: 'Item removed from cart' });
     } catch (err) {
-        res.status(500).json({ error: err.message });
+        next(err);
     }
 };
 
 // CHECKOUT - convert cart to order + decrement stock
-exports.checkout = async (req, res) => {
+exports.checkout = async (req, res, next) => {
     try {
-        const { user_id, payment_method, billing } = req.body;
+        // user_id always comes from the verified token, never from the request
+        // body — otherwise a caller could place (and pay for/ship) an order
+        // under someone else's account.
+        const user_id = req.user.id;
+        const { payment_method, billing } = req.body;
 
         // Same rules enforced client-side on setup-profile/edit-profile/checkout:
         // phone must be exactly 11 digits, ZIP exactly 4 digits, no letters.
@@ -81,7 +128,12 @@ exports.checkout = async (req, res) => {
             return res.status(400).json({ message: 'Cart is empty' });
         }
 
-        // Check stock availability first
+        // Check stock availability first, and capture each item's CURRENT price
+        // from the Product table. The price on the cart row is only ever a
+        // convenience snapshot for display — it is never trusted for the
+        // actual charge, since that would let a tampered or stale cart entry
+        // (e.g. added before a price change) be checked out at the wrong price.
+        const currentPriceByProductId = {};
         for (const item of cartItems) {
             const product = await Product.findByPk(item.product_id);
             if (!product) {
@@ -90,11 +142,12 @@ exports.checkout = async (req, res) => {
             if (product.stock < item.quantity) {
                 return res.status(400).json({ message: `Not enough stock for "${item.name}". Available: ${product.stock}` });
             }
+            currentPriceByProductId[item.product_id] = parseFloat(product.price);
         }
 
-        // Calculate total
+        // Calculate total using the authoritative, just-fetched product price
         const total_amount = cartItems.reduce((sum, item) => {
-            return sum + (parseFloat(item.price) * item.quantity);
+            return sum + (currentPriceByProductId[item.product_id] * item.quantity);
         }, 0);
 
         // payment_method comes from the checkout form's radio buttons ('card' / 'cod').
@@ -125,13 +178,14 @@ exports.checkout = async (req, res) => {
 
         // Create order items + decrement stock
         for (const item of cartItems) {
+            const currentPrice = currentPriceByProductId[item.product_id];
             await OrderItem.create({
                 order_id: order.id,
                 product_id: item.product_id,
                 name: item.name,
-                price: item.price,
+                price: currentPrice,
                 quantity: item.quantity,
-                subtotal: parseFloat(item.price) * item.quantity
+                subtotal: currentPrice * item.quantity
             });
 
             await Product.decrement('stock', {
@@ -170,6 +224,6 @@ exports.checkout = async (req, res) => {
             total_amount
         });
     } catch (err) {
-        res.status(500).json({ error: err.message });
+        next(err);
     }
 };

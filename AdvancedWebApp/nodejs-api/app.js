@@ -52,7 +52,14 @@ app.use('/api/cart', cartRoutes);
 app.use('/api/orders', orderRoutes);
 app.use('/api/reviews', reviewRoutes);
 
-sequelize.sync({ alter: true })
+// Centralized error handler — must be registered after all routes.
+// Controllers that call next(err) instead of handling the error inline
+// end up here, so there's one place responsible for logging errors and
+// shaping the JSON response instead of every controller repeating it.
+const errorHandler = require('./middleware/errorHandler');
+app.use(errorHandler);
+
+sequelize.sync()
     .then(() => console.log('Database synced!'))
     .catch(err => console.log('Sequelize sync error:', err));
 

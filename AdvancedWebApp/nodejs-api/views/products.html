@@ -6,7 +6,7 @@
             var token = localStorage.getItem('token');
             var user = JSON.parse(localStorage.getItem('user') || 'null');
             if (!token || !user || user.role !== 'admin') {
-                sessionStorage.setItem('accessDeniedMessage', 'You cannot access this page.');
+                sessionStorage.setItem('accessDeniedMessage', 'The page you are trying to access is restricted to administrators only.');
                 window.location.replace('/shop');
             }
         })();

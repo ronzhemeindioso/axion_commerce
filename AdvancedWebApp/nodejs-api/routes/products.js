@@ -16,8 +16,8 @@ router.get('/alerts/low-stock', verifyToken, isAdmin, productController.getLowSt
 
 router.get('/', productController.getAll);
 router.get('/:id', productController.getOne);
-router.post('/', verifyToken, isAdmin, productController.upload.array('images', 5), productController.handleUploadError, productController.create);
-router.put('/:id', verifyToken, isAdmin, productController.upload.array('images', 5), productController.handleUploadError, productController.update);
+router.post('/', verifyToken, isAdmin, productController.upload.array('images', 5), productController.handleUploadError, productController.verifyImageContents, productController.create);
+router.put('/:id', verifyToken, isAdmin, productController.upload.array('images', 5), productController.handleUploadError, productController.verifyImageContents, productController.update);
 router.delete('/:id', verifyToken, isAdmin, productController.delete);
 
 module.exports = router;

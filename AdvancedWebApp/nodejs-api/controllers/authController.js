@@ -116,7 +116,7 @@ async function sendVerificationEmail(user, token) {
 }
 
 // REGISTER
-exports.register = async (req, res) => {
+exports.register = async (req, res, next) => {
     try {
         const { name, firstName, lastName, email, password } = req.body;
         const fullName = name || [firstName, lastName].filter(Boolean).join(' ');
@@ -158,12 +158,12 @@ exports.register = async (req, res) => {
             message: 'Registration successful! Please check your email to verify your account before logging in.'
         });
     } catch (err) {
-        res.status(500).json({ error: err.message });
+        next(err);
     }
 };
 
 // VERIFY EMAIL — public link clicked from the email
-exports.verifyEmail = async (req, res) => {
+exports.verifyEmail = async (req, res, next) => {
     try {
         const { token } = req.query;
         if (!token) return res.redirect('/login?verified=0');
@@ -187,7 +187,7 @@ exports.verifyEmail = async (req, res) => {
 };
 
 // RESEND VERIFICATION EMAIL
-exports.resendVerification = async (req, res) => {
+exports.resendVerification = async (req, res, next) => {
     try {
         const { email } = req.body;
         const user = await User.findOne({ where: { email } });
@@ -209,11 +209,11 @@ exports.resendVerification = async (req, res) => {
 
         res.json({ message: 'If that account exists and is unverified, a new link has been sent.' });
     } catch (err) {
-        res.status(500).json({ error: err.message });
+        next(err);
     }
 };
 // GET OWN PROFILE
-exports.getProfile = async (req, res) => {
+exports.getProfile = async (req, res, next) => {
     try {
         const id = req.user.id;
         const user = await User.findByPk(id, {
@@ -227,12 +227,12 @@ exports.getProfile = async (req, res) => {
 
         res.json({ user });
     } catch (err) {
-        res.status(500).json({ error: err.message });
+        next(err);
     }
 };
 
 // SETUP PROFILE
-exports.setupProfile = async (req, res) => {
+exports.setupProfile = async (req, res, next) => {
     try {
         const {
             username, phone,
@@ -302,7 +302,7 @@ exports.setupProfile = async (req, res) => {
 
 // SKIP PROFILE SETUP — user chose "Skip for now". No profile data is saved,
 // but we still mark the setup screen as seen so login stops redirecting here.
-exports.skipProfileSetup = async (req, res) => {
+exports.skipProfileSetup = async (req, res, next) => {
     try {
         await User.update(
             { has_seen_profile_setup: true },
@@ -310,12 +310,12 @@ exports.skipProfileSetup = async (req, res) => {
         );
         res.json({ message: 'Profile setup skipped' });
     } catch (err) {
-        res.status(500).json({ error: err.message });
+        next(err);
     }
 };
 
 // LOGIN
-exports.login = async (req, res) => {
+exports.login = async (req, res, next) => {
     try {
         const { email, password } = req.body;
 
@@ -360,35 +360,35 @@ exports.login = async (req, res) => {
             }
         });
     } catch (err) {
-        res.status(500).json({ error: err.message });
+        next(err);
     }
 };
 
 // LOGOUT
-exports.logout = async (req, res) => {
+exports.logout = async (req, res, next) => {
     try {
         const id = req.user.id; // now from verified token, not client input
         await User.update({ token: null }, { where: { id } });
         res.json({ message: 'Logged out successfully' });
     } catch (err) {
-        res.status(500).json({ error: err.message });
+        next(err);
     }
 };
 
 // GET ALL USERS
-exports.getAll = async (req, res) => {
+exports.getAll = async (req, res, next) => {
     try {
         const users = await User.findAll({
             attributes: ['id', 'name', 'email', 'role', 'is_active', 'created_at']
         });
         res.json(users);
     } catch (err) {
-        res.status(500).json({ error: err.message });
+        next(err);
     }
 };
 
 // UPDATE ROLE
-exports.updateRole = async (req, res) => {
+exports.updateRole = async (req, res, next) => {
     try {
         if (String(req.user.id) === String(req.params.id)) {
             return res.status(403).json({ message: 'You cannot change your own role.' });
@@ -398,12 +398,12 @@ exports.updateRole = async (req, res) => {
         await User.update({ role }, { where: { id: req.params.id } });
         res.json({ message: 'Role updated successfully' });
     } catch (err) {
-        res.status(500).json({ error: err.message });
+        next(err);
     }
 };
 
 // DEACTIVATE / ACTIVATE USER
-exports.toggleActive = async (req, res) => {
+exports.toggleActive = async (req, res, next) => {
     try {
         if (String(req.user.id) === String(req.params.id)) {
             return res.status(403).json({ message: 'You cannot change your own status.' });
@@ -413,6 +413,6 @@ exports.toggleActive = async (req, res) => {
         await User.update({ is_active }, { where: { id: req.params.id } });
         res.json({ message: is_active ? 'User activated' : 'User deactivated' });
     } catch (err) {
-        res.status(500).json({ error: err.message });
+        next(err);
     }
 };

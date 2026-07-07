@@ -18,7 +18,7 @@ function derivePaymentStatus(status, paymentMethod) {
 }
 
 // GET all orders (admin)
-exports.getAll = async (req, res) => {
+exports.getAll = async (req, res, next) => {
     try {
         const orders = await Order.findAll({ order: [['created_at', 'DESC']] });
 
@@ -39,11 +39,11 @@ exports.getAll = async (req, res) => {
 
         res.json(ordersWithCustomer);
     } catch (err) {
-        res.status(500).json({ error: err.message });
+        next(err);
     }
 };
 // GET analytics summary for dashboard charts (admin)
-exports.getAnalytics = async (req, res) => {
+exports.getAnalytics = async (req, res, next) => {
     try {
         const orders = await Order.findAll();
         const items = await OrderItem.findAll();
@@ -95,23 +95,37 @@ exports.getAnalytics = async (req, res) => {
 };
 
 // GET orders by user_id
-exports.getByUser = async (req, res) => {
+exports.getByUser = async (req, res, next) => {
     try {
+        // A regular user can only fetch their OWN order history. Admins can
+        // still look up any user's orders (used by the admin dashboard).
+        const isSelf = String(req.params.user_id) === String(req.user.id);
+        if (!isSelf && req.user.role !== 'admin') {
+            return res.status(403).json({ message: 'You cannot view another user\'s orders' });
+        }
+
         const orders = await Order.findAll({
             where: { user_id: req.params.user_id },
             order: [['created_at', 'DESC']]
         });
         res.json(orders);
     } catch (err) {
-        res.status(500).json({ error: err.message });
+        next(err);
     }
 };
 
 // GET single order with items
-exports.getOne = async (req, res) => {
+exports.getOne = async (req, res, next) => {
     try {
         const order = await Order.findByPk(req.params.id);
         if (!order) return res.status(404).json({ message: 'Order not found' });
+
+        // A regular user can only view their OWN order. Admins can view any
+        // order (used by the admin order-detail screen).
+        const isOwner = String(order.user_id) === String(req.user.id);
+        if (!isOwner && req.user.role !== 'admin') {
+            return res.status(403).json({ message: 'You cannot view another user\'s order' });
+        }
 
         const items = await OrderItem.findAll({ where: { order_id: order.id } });
 
@@ -166,12 +180,12 @@ exports.getOne = async (req, res) => {
             payment_status: derivePaymentStatus(order.status, order.payment_method)
         });
     } catch (err) {
-        res.status(500).json({ error: err.message });
+        next(err);
     }
 };
 
 // UPDATE order status + send email with PDF receipt
-exports.updateStatus = async (req, res) => {
+exports.updateStatus = async (req, res, next) => {
     try {
         const { status, email, trackingNumber } = req.body;
         const order = await Order.findByPk(req.params.id);
@@ -381,12 +395,12 @@ exports.updateStatus = async (req, res) => {
 
         res.json({ message: `Status updated to "${status}" and receipt sent to ${email}` });
     } catch (err) {
-        res.status(500).json({ error: err.message });
+        next(err);
     }
 };
 
 // DELETE order
-exports.deleteOrder = async (req, res) => {
+exports.deleteOrder = async (req, res, next) => {
     try {
         const order = await Order.findByPk(req.params.id);
         if (!order) return res.status(404).json({ message: 'Order not found' });
@@ -394,7 +408,7 @@ exports.deleteOrder = async (req, res) => {
         await order.destroy();
         res.json({ message: 'Order deleted successfully' });
     } catch (err) {
-        res.status(500).json({ error: err.message });
+        next(err);
     }
 };
 

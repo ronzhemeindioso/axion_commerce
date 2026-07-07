@@ -6,7 +6,7 @@ const User = require('../sequelize/models/User');
 
 // CREATE a review — only allowed if the order belongs to this user,
 // is delivered, and actually contains this product.
-exports.createReview = async (req, res) => {
+exports.createReview = async (req, res, next) => {
     try {
         const user_id = req.user.id;
         const { product_id, order_id, rating, comment } = req.body;
@@ -42,12 +42,12 @@ exports.createReview = async (req, res) => {
         const review = await Review.create({ user_id, product_id, order_id, rating, comment });
         res.status(201).json(review);
     } catch (err) {
-        res.status(500).json({ error: err.message });
+        next(err);
     }
 };
 
 // UPDATE a review — only the review's own author can edit it.
-exports.updateReview = async (req, res) => {
+exports.updateReview = async (req, res, next) => {
     try {
         const review = await Review.findByPk(req.params.id);
         if (!review) {
@@ -69,12 +69,12 @@ exports.updateReview = async (req, res) => {
 
         res.json(review);
     } catch (err) {
-        res.status(500).json({ error: err.message });
+        next(err);
     }
 };
 
 // DELETE a review — the author can delete their own, admins can delete any (moderation).
-exports.deleteReview = async (req, res) => {
+exports.deleteReview = async (req, res, next) => {
     try {
         const review = await Review.findByPk(req.params.id);
         if (!review) {
@@ -91,14 +91,14 @@ exports.deleteReview = async (req, res) => {
         await review.destroy();
         res.json({ message: 'Review deleted' });
     } catch (err) {
-        res.status(500).json({ error: err.message });
+        next(err);
     }
 };
 
 // GET paginated reviews for a single product, newest first, plus the
 // overall average rating and review count (computed across ALL reviews,
 // not just the current page).
-exports.getReviewsByProduct = async (req, res) => {
+exports.getReviewsByProduct = async (req, res, next) => {
     try {
         const product_id = req.params.product_id;
         const page = parseInt(req.query.page) || 1;
@@ -132,13 +132,13 @@ exports.getReviewsByProduct = async (req, res) => {
             count: summary && summary.total ? parseInt(summary.total) : 0
         });
     } catch (err) {
-        res.status(500).json({ error: err.message });
+        next(err);
     }
 };
 
 // GET all reviews written by the currently logged-in user — used by the
 // order history page to know which delivered items already have a review.
-exports.getMyReviews = async (req, res) => {
+exports.getMyReviews = async (req, res, next) => {
     try {
         const reviews = await Review.findAll({
             where: { user_id: req.user.id },
@@ -146,13 +146,13 @@ exports.getMyReviews = async (req, res) => {
         });
         res.json(reviews);
     } catch (err) {
-        res.status(500).json({ error: err.message });
+        next(err);
     }
 };
 
 // GET average rating + count for MULTIPLE products at once — used on
 // listing pages (e.g. the shop grid) so it doesn't need one request per card.
-exports.getRatingSummaries = async (req, res) => {
+exports.getRatingSummaries = async (req, res, next) => {
     try {
         const idsParam = req.query.product_ids;
         if (!idsParam) {
@@ -180,6 +180,6 @@ exports.getRatingSummaries = async (req, res) => {
 
         res.json(result);
     } catch (err) {
-        res.status(500).json({ error: err.message });
+        next(err);
     }
 };
